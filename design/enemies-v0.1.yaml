@@ -1,0 +1,116 @@
+# 이세계 리뷰용사 — 적 데이터 v0.1
+# 일반 적 5종 + 보스 1종.
+# 각 적은 "특정 계열의 교본"이 되도록 설계 — 약점 태그가 곧 그 적의 공략 학습 포인트.
+# fixed_reviews: 장비에 이미 달려 있는 고정 리뷰. 수정 불가. 약점 태그의 힌트로 기능.
+
+enemies:
+  - id: E01
+    name: 고블린 잡상인
+    role: 튜토리얼 (품질 계열 교본)
+    will: 14
+    weakness_tags: [마감]
+    null_tags: [연비, 이펙트]   # 기계·마법 아님 → 배터리/이펙트 접두는 헛소리 판정
+    equipment:
+      - name: 짝퉁 단검
+        durability: 6
+        tags: [마감, 내구도]
+        fixed_review: "★★ 손잡이가 벌써 흔들거려요. 정품 맞나요?"
+    actions:
+      - {name: 찌르기, type: attack, value: 5}
+      - {name: 바가지 씌우기, type: steal, value: "골드 -3"}
+    pattern: [찌르기, 찌르기, 바가지 씌우기]
+
+  - id: E02
+    name: 오크 중량 전사
+    role: 정예 (둔화·행동 캔슬 학습)
+    will: 24
+    weakness_tags: [무게]
+    null_tags: [이펙트, 개연성]
+    equipment:
+      - name: 초대형 둔기
+        durability: 12
+        tags: [무게, 내구도]
+        fixed_review: "★★★ 위력은 확실한데 손목 나갑니다. 데드리프트 3년 하고 오세요."
+    actions:
+      - {name: 내려찍기, type: attack, value: 9, note: "1턴 준비 후 발동. 준비 중 둔화/지연 적중 시 캔슬"}
+      - {name: 포효, type: buff, value: "공격력 +2"}
+    pattern: [포효, 내려찍기(준비), 내려찍기(발동)]
+
+  - id: E03
+    name: 엘프 이펙트 마법사
+    role: 정예 (성능 계열 교본, 영창 카운터 학습)
+    will: 18
+    weakness_tags: [이펙트, 연비]
+    null_tags: [무게]
+    equipment:
+      - name: 과장된 지팡이
+        durability: 8
+        tags: [이펙트, 연비]
+        fixed_review: "★★★★ 이펙트는 진짜 예쁨. 근데 마나 순삭임. 관상용."
+    actions:
+      - {name: 화려한 파이어볼, type: attack, value: 7, note: "영창 1턴. 영창 중 '이펙트가…' 접두 효과 ×2 적용 대상"}
+      - {name: 마나 실드, type: buff, value: "다음 피해 -5"}
+    pattern: [파이어볼(영창), 파이어볼(발동), 마나 실드]
+
+  - id: E04
+    name: 야매 배송 도적
+    role: 정예 (배송 계열 교본, 은신 해제 학습)
+    will: 16
+    weakness_tags: [속도]
+    null_tags: [감성, 디자인]
+    trait: "은신 중에는 배송/CS 계열 리뷰만 명중한다 (물건 안 왔는데 품질 평가 불가)"
+    equipment:
+      - name: 삐걱거리는 쌍단검
+        durability: 5
+        tags: [속도, 마감]
+        fixed_review: "★ 빠른 건 인정. 근데 소리가 너무 나서 옆집도 알겠어요."
+      - name: 삐걱거리는 쌍단검 (한 짝)
+        durability: 5
+        tags: [속도, 마감]
+        fixed_review: "★ 구성품 누락인 줄. 한 짝씩 배송됨."
+    actions:
+      - {name: 은신, type: stealth, value: "다음 턴 기습 예고"}
+      - {name: 기습, type: attack, value: 12, note: "은신 해제 시 위력 6으로 감소"}
+    pattern: [은신, 기습, 은신, 기습]
+
+  - id: E05
+    name: 나르시시스트 기사
+    role: 정예 (감성 계열 교본, 멘탈 직격 학습)
+    will: 22
+    weakness_tags: [디자인, 감성]
+    null_tags: [출력]
+    trait: "감성 계열 의지 데미지 ×2 (외모 지적에 극도로 취약)"
+    equipment:
+      - name: 도금 갑옷
+        durability: 10
+        tags: [디자인, 감성]
+        fixed_review: "★★★★★ 광택 미쳤음. 방어력은 모르겠고 일단 사진이 잘 나옴."
+    actions:
+      - {name: 검격, type: attack, value: 6}
+      - {name: 포즈 잡기, type: buff, value: "다음 피해 -4, 반사 2"}
+      - {name: 찬양 강요, type: debuff, value: "플레이어 신뢰도 게이지 -1"}
+    pattern: [포즈 잡기, 검격, 찬양 강요, 검격]
+
+bosses:
+  - id: B01
+    name: 던전 지배인 「답글 없는 사장」
+    role: 1막 보스 (사장님 답글 기믹 + 비동기 보스 리뷰 시스템 연동)
+    will: 60
+    weakness_tags: [응대, 개연성]
+    null_tags: []          # 보스는 무효 태그 없음. 단, 아래 답글 기믹으로 대응
+    equipment:
+      - name: 노예 계약서 낫
+        durability: 15
+        tags: [응대, 개연성]
+        fixed_review: "★ 환불 문의 3주째 답이 없습니다. 낫은 잘 듭니다. 제 월급을 베어갔거든요."
+    actions:
+      - {name: 계약 갱신 베기, type: attack, value: 8}
+      - {name: 야근 강요, type: attack, value: "4 + 플레이어 에너지 -1 (다음 턴)"}
+      - {name: 사장님 답글, type: gimmick, value: "플레이어가 건 디버프 1개 반박·제거 + 의지 회복 5", note: "3턴마다 발동"}
+    phase2:
+      trigger: "의지 30 이하"
+      name: 리뷰 조작
+      effect: "자신에게 5성 알바 리뷰 부착: 공격력 +3. '고객센터가…(P11)' 접두로 이 버프를 저격 가능"
+    on_player_defeat: >
+      패배 시 [보스 리뷰 남기기] 발동 (Layer 3 비동기 시스템).
+      HP 30% 이상 깎았을 경우에만 작성 가능(구매 인증). 상위 5개 슬롯 경쟁.

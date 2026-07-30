@@ -1,0 +1,238 @@
+# 이세계 리뷰용사 — 카드 데이터 v0.1
+# 총 40장 = 접두 16 + 접미 16 + 특수 8
+# 규칙은 combat-model-v0.1.md 참조.
+# 접두: 리뷰의 "대상 측면"을 지정. 태그 판정의 기준이 된다.
+# 접미: 리뷰의 "판정+효과". 계열 무관 범용이며, 조합 시 접두의 계열을 따른다.
+
+prefixes:
+  # ── 품질/마감 계열 (물리) ──────────────────────
+  - id: P01
+    name: "마감이…"
+    suit: 품질
+    tag: 마감
+    cost: 0
+  - id: P02
+    name: "재질이…"
+    suit: 품질
+    tag: 내구도
+    cost: 0
+    special: "장비 대상 리뷰일 때 내구도 피해 +1"
+  - id: P03
+    name: "무게가…"
+    suit: 품질
+    tag: 무게
+    cost: 0
+    special: "둔화/지연 효과의 지속 +1턴"
+  - id: P04
+    name: "조립 상태가…"
+    suit: 품질
+    tag: [마감, 내구도]
+    cost: 1
+    special: "태그 2개로 판정 (적중 범위가 넓음)"
+
+  # ── 성능/최적화 계열 (마법) ────────────────────
+  - id: P05
+    name: "최적화가…"
+    suit: 성능
+    tag: 출력
+    cost: 0
+  - id: P06
+    name: "이펙트가…"
+    suit: 성능
+    tag: 이펙트
+    cost: 0
+    special: "영창(캐스팅) 중인 적에게 효과 ×2"
+  - id: P07
+    name: "배터리가…"
+    suit: 성능
+    tag: 연비
+    cost: 0
+    special: "도트 효과의 지속 +1턴"
+  - id: P08
+    name: "스펙이…"
+    suit: 성능
+    tag: 출력
+    cost: 1
+    special: "헛소리 판정 면제 (최소 일반 판정 보장)"
+
+  # ── 배송/CS 계열 (시공간) ──────────────────────
+  - id: P09
+    name: "배송이…"
+    suit: 배송
+    tag: 속도
+    cost: 0
+  - id: P10
+    name: "구성품이…"
+    suit: 배송
+    tag: 구성품
+    cost: 0
+    special: "소환수/증원 대상 효과 ×2"
+  - id: P11
+    name: "고객센터가…"
+    suit: 배송
+    tag: 응대
+    cost: 0
+    special: "적의 버프/회복 행동을 대상으로 지정 가능"
+  - id: P12
+    name: "포장이…"
+    suit: 배송
+    tag: 구성품
+    cost: 1
+    special: "적중(팩트) 판정 시 카드 1장 드로우"
+
+  # ── 감성/디자인 계열 (정신) ────────────────────
+  - id: P13
+    name: "디자인이…"
+    suit: 감성
+    tag: 디자인
+    cost: 0
+  - id: P14
+    name: "감성이…"
+    suit: 감성
+    tag: 감성
+    cost: 0
+    special: "의지 데미지 +2"
+  - id: P15
+    name: "스토리가…"
+    suit: 감성
+    tag: 개연성
+    cost: 1
+    special: "적의 기믹/페이즈 전환 행동에 효과 ×2"
+  - id: P16
+    name: "브랜드가…"
+    suit: 감성
+    tag: 감성
+    cost: 0
+    special: "보스에게 효과 +50%"
+
+suffixes:
+  # ── 데미지계 (적 본체 의지 대상) ───────────────
+  - id: S01
+    name: "…쓰레기네요."
+    type: damage
+    cost: 1
+    effect: "의지 데미지 6"
+  - id: S02
+    name: "…돈이 아깝습니다."
+    type: damage
+    cost: 2
+    effect: "의지 데미지 9"
+  - id: S03
+    name: "…실망입니다. 또 실망입니다."
+    type: damage
+    cost: 1
+    effect: "의지 데미지 3 ×2회 (판정도 2회 → 게이지 수급용)"
+  - id: S04
+    name: "…별 반 개도 아깝네요."
+    type: damage
+    cost: 2
+    effect: "의지 데미지 12, 신뢰도 게이지 -1 (과격한 혹평의 대가)"
+
+  # ── 장비계 (적 장비 대상) ─────────────────────
+  - id: S05
+    name: "…처참합니다."
+    type: equipment
+    cost: 1
+    effect: "장비 내구도 -4"
+  - id: S06
+    name: "…수리가 시급합니다."
+    type: equipment
+    cost: 1
+    effect: "장비 내구도 도트: 매턴 -2, 2턴"
+  - id: S07
+    name: "…반품합니다."
+    type: equipment
+    cost: 2
+    effect: "장비 1개 1턴 비활성화 (해당 행동 봉인)"
+  - id: S08
+    name: "…불량입니다."
+    type: equipment
+    cost: 2
+    effect: "적의 다음 행동 위력 -50%"
+
+  # ── 방해계 (상태이상/제어) ─────────────────────
+  - id: S09
+    name: "…고소합니다."
+    type: control
+    cost: 3
+    effect: "기절 1턴"
+  - id: S10
+    name: "…환불 요청합니다."
+    type: control
+    cost: 1
+    effect: "적 버프 1개 제거"
+  - id: S11
+    name: "…그럭저럭 쓸만하네요."
+    type: control
+    cost: 0
+    effect: "의지 데미지 1, 신뢰도 게이지 -1 (무난한 리뷰는 노이즈다)"
+  - id: S12
+    name: "…두 번 다시 안 삽니다."
+    type: control
+    cost: 2
+    effect: "적 공격력 -2 (전투 내 영구)"
+
+  # ── 버프계 (내 장비/자신 대상, 5성 리뷰) ───────
+  - id: S13
+    name: "…인생템입니다."
+    type: buff
+    cost: 1
+    effect: "내 리뷰 데미지 +2 (전투 내 지속)"
+  - id: S14
+    name: "…사장님이 미쳤어요."
+    type: buff
+    cost: 1
+    effect: "카드 2장 드로우"
+  - id: S15
+    name: "…재구매 의사 있습니다."
+    type: buff
+    cost: 1
+    effect: "다음 턴 에너지 +1"
+  - id: S16
+    name: "…믿고 쓰는 브랜드죠."
+    type: buff
+    cost: 1
+    effect: "의지 회복 5"
+
+specials:
+  # 완성형 진상 카드. 단독 사용. 태그 판정 없음(맥락 무시가 컨셉).
+  - id: X01
+    name: "배송 지연"
+    flavor: "아직도 안 왔어요. 별 1개."
+    cost: 2
+    effect: "적의 다음 행동을 1턴 지연, 신뢰도 게이지 -1"
+  - id: X02
+    name: "별점 테러"
+    flavor: "안 써봤지만 태도가 맘에 안 들어서 1점."
+    cost: 3
+    effect: "적 전체 장비 내구도 -3, 신뢰도 게이지 -2"
+  - id: X03
+    name: "안 시켰는데 이게 왔네요"
+    flavor: "?"
+    cost: 0
+    effect: "무작위 접미 카드 1장을 손패에 생성"
+  - id: X04
+    name: "무료 나눔"
+    flavor: "필요하신 분 가져가세요^^ (환불 불가)"
+    cost: 1
+    effect: "손패 1장을 적에게 증정(버림). 그 카드 비용 ×4 의지 데미지"
+  - id: X05
+    name: "정신적 피해보상 청구"
+    flavor: "이거 때문에 잠을 못 잤습니다."
+    cost: 1
+    effect: "이번 턴 받은 피해량만큼 다음 내 리뷰 데미지에 가산"
+  - id: X06
+    name: "우리 애가 다쳤잖아요"
+    flavor: "고소합니다. 애가 만졌는데 다쳤어요."
+    cost: 2
+    effect: "리액션: 다음 적 공격 위력 -50%, 받은 피해의 50% 반사"
+  - id: X07
+    name: "내가 여길 다시 오나 봐라"
+    flavor: "지인 열 명한테 다 말할 겁니다."
+    cost: 0
+    effect: "전투 이탈 (보상 포기, 일반 전투에서만 사용 가능)"
+  - id: X08
+    name: "공감 좀 눌러주세요"
+    flavor: "도움이 되셨다면 👍 부탁드립니다."
+    cost: 1
+    effect: "신뢰도 게이지 +2"
