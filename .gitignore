@@ -1,0 +1,15 @@
+# Obsidian 개인 설정 (볼트 공유 설정은 커밋하지 않음)
+.obsidian/
+
+# macOS
+.DS_Store
+
+# Node (구현 단계)
+node_modules/
+dist/
+coverage/
+
+# 환경 변수·비밀키 (Firebase 키 포함)
+.env
+.env.*
+*-service-account*.json
