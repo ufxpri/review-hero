@@ -106,30 +106,47 @@
 
 <div class="wrap">
   <header>
-    <div class="eyebrow">REVIEW HERO · 밸런스 리포트 v1</div>
+    <div class="eyebrow">REVIEW HERO · 밸런스 리포트 v1 → v2</div>
     <h1>전투 시뮬레이터 실측 검증 — 기준선 판정</h1>
-    <div class="meta">2026-07-31 · seed 42 고정 · 실험당 2,500판 · 감사 18건 반영판 · 테스트 31/31 통과 · 정본(GDD) 미수정</div>
+    <div class="meta">2026-07-31 · seed 42 고정 · 실험당 2,500판 · <b>라운드 1(GDD v1.1) 적용 완료 — 제안 7건 전건 채택 (ADR-009)</b> · 테스트 37/37 통과</div>
   </header>
 
   <div class="hero">
     <div class="review-card">
-      <div class="stars">★<span class="off">★★★★</span></div>
-      <div class="review-quote">"코어 룰은 도는데, 숫자가 아직 게임을 못 만들어요."</div>
-      <div class="review-by">— 시뮬레이터 2,500판 × 20설정 실측 후기 · 구매 인증</div>
+      <div class="stars">★★<span class="off">★★★</span></div>
+      <div class="review-quote">"역설은 잡았는데, 이번엔 다들 너무 잘 이겨요."</div>
+      <div class="review-by">— 라운드 1 적용 후 재검증 (balance-report-v2) · 재구매 인증</div>
     </div>
     <div class="kpis">
-      <div class="kpi"><b class="bad-t">1 / 9</b><span>기준선 통과 항목</span></div>
-      <div class="kpi"><b class="warn-t">−12.3%p</b><span>R11 역설 — 보스 의지 하향 시 승률 <u>하락</u></span></div>
-      <div class="kpi"><b>42~47%</b><span>손패 폴백률 — 게이지 병목의 진짜 원인</span></div>
-      <div class="kpi"><b class="bad-t">87~97%</b><span>억지(reckless) 플레이의 일반·정예 승률</span></div>
-      <div class="kpi"><b class="ok-t">2.12턴</b><span>일반 전투 길이 — 유일한 통과</span></div>
-      <div class="kpi"><b>7 + 6</b><span>GDD 변경 제안 + 침묵 규칙 (결정 대기)</span></div>
+      <div class="kpi"><b class="ok-t">0건</b><span>교착 패배 (v1.0: ~2%) — 퇴고가 완전 해소</span></div>
+      <div class="kpi"><b class="ok-t">86.0%</b><span>R11 재검증 — 48 하향이 완화로 작동 (역설 해소)</span></div>
+      <div class="kpi"><b class="ok-t">0.80회</b><span>표준 크리 발동 (0.48 → 목표 1회 근접)</span></div>
+      <div class="kpi"><b class="bad-t">83.2%</b><span>B01 표준 승률 — 승률 인플레 (라운드 2 과제)</span></div>
+      <div class="kpi"><b class="bad-t">~100%</b><span>억지 플레이 정예 승률 — 처벌 여전히 미달</span></div>
+      <div class="kpi"><b>라운드 2</b><span>레버 1~2개씩 짧은 사이클로 (ADR-009 교훈)</span></div>
     </div>
   </div>
 
   <section>
-    <h2><span class="no">§0</span>기준선 판정 총괄</h2>
-    <p class="sub">GDD가 스스로 정한 기준선 대비 실측 결과. 상세 근거는 아래 실험 카드에.</p>
+    <h2><span class="no">v1.1</span>라운드 1 적용 결과 — 전 → 후</h2>
+    <p class="sub">제안 7건 전건 채택 후 재실측 (2,500판, 표준 검증 덱). 상세는 design/balance-report-v2.md.</p>
+    <div class="tbl-scroll"><table>
+      <tr><th>항목</th><th class="num">v1.0</th><th class="num">v1.1</th><th>기준</th><th>판정</th></tr>
+      <tr><td>교착 패배</td><td class="num">1.7~2.0%</td><td class="num"><b>0건</b></td><td>0</td><td><span class="chip c-ok">해소</span></td></tr>
+      <tr><td>R11 — B01 48 하향 (standard)</td><td class="num">46.7% (역설)</td><td class="num"><b>86.0%</b> &gt; 60 기준 83.2%</td><td>하향 = 완화</td><td><span class="chip c-ok">해소</span></td></tr>
+      <tr><td>표준 크리 발동 (B01)</td><td class="num">0.48회</td><td class="num"><b>0.80회</b></td><td>1회</td><td><span class="chip c-ok">근접</span></td></tr>
+      <tr><td>숙련 크리 발동</td><td class="num">0.72회</td><td class="num">0.93회</td><td>2회</td><td><span class="chip c-bad">미달</span> (손패 레버 필요)</td></tr>
+      <tr><td>정예 전투 길이</td><td class="num">2.81~3.82턴</td><td class="num">3.51~4.06턴</td><td>5~6턴</td><td><span class="chip c-bad">미달</span> (개선)</td></tr>
+      <tr><td>보스 전투 길이</td><td class="num">6.11턴</td><td class="num">5.71턴</td><td>6~7턴 (v1.1)</td><td><span class="chip c-warn">근접 미달</span></td></tr>
+      <tr><td>B01 표준 승률</td><td class="num">59.0%</td><td class="num"><b>83.2%</b></td><td>30~50%</td><td><span class="chip c-bad">인플레 — 라운드 2</span></td></tr>
+      <tr><td>억지 처벌 (정예 승률)</td><td class="num">87~97%</td><td class="num">84~100%</td><td>자주 패배</td><td><span class="chip c-bad">미달</span></td></tr>
+    </table></div>
+    <div class="callout"><b>라운드 1의 교훈 (ADR-009):</b> 구조 결함 2건(교착·R11 역설)은 해소. 그러나 플레이어 강화 4종(게이지 +3 · 불편러 −50% · 바이럴 바닥 · 퇴고)을 동시 적용해 총 전력이 순증 → <b>승률 인플레.</b> 라운드 2부터는 레버 1~2개씩 적용→재시뮬. 후보: (a) 적 화력 상향 (b) 퇴고 턴당 1회 제한 (c) 시작 덱 접두 구성 재편.</div>
+  </section>
+
+  <section>
+    <h2><span class="no">§0</span>기준선 판정 총괄 <span class="chip c-info">v1.0 스냅샷 — 라운드 1 이전</span></h2>
+    <p class="sub">아래 실험 1~5는 라운드 1 적용 <b>이전</b>(v1.0) 실측의 역사적 기록이다. 최신 수치는 위 전→후 표와 balance-report-v2.md가 정본.</p>
     <div class="tbl-scroll"><table>
       <tr><th>항목</th><th>기준</th><th>실측</th><th>판정</th></tr>
       <tr><td>일반 전투 길이</td><td>2~4턴</td><td class="num">2.12턴</td><td><span class="chip c-ok">통과</span></td></tr>
