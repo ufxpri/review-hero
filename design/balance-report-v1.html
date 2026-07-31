@@ -1,0 +1,281 @@
+<title>이세계 리뷰용사 — 밸런스 리포트 v1</title>
+<style>
+  :root {
+    --surface: #FBFBF9; --panel: #FFFFFF; --ink: #22262B; --ink-2: #5B6470; --ink-3: #8A93A0;
+    --line: #E4E7EB; --track: #EEF0F3;
+    --acc: #3E6FD9; --acc-soft: #E3EAF9; --cmp: #2E9E8F; --cmp-soft: #DFF1EE;
+    --ghost: #C9CFD8;
+    --ok: #1D7A46; --ok-bg: #E2F2E8; --bad: #BE4436; --bad-bg: #F9E8E5; --warn: #A16A1B; --warn-bg: #F7EEDC; --info: #52606D; --info-bg: #EAEEF2;
+    --star: #D9930D;
+  }
+  @media (prefers-color-scheme: dark) { :root {
+    --surface: #16181C; --panel: #1E2127; --ink: #E6E8EB; --ink-2: #A6ADB8; --ink-3: #767E8A;
+    --line: #2E323A; --track: #262A31;
+    --acc: #5B84E8; --acc-soft: #22304D; --cmp: #2FA893; --cmp-soft: #1D3833;
+    --ghost: #4A515C;
+    --ok: #4CBF7E; --ok-bg: #1E3327; --bad: #E07364; --bad-bg: #3D2422; --warn: #D9A24A; --warn-bg: #3A2F1C; --info: #9AA6B2; --info-bg: #272C33;
+    --star: #E8B341;
+  } }
+  :root[data-theme="dark"] {
+    --surface: #16181C; --panel: #1E2127; --ink: #E6E8EB; --ink-2: #A6ADB8; --ink-3: #767E8A;
+    --line: #2E323A; --track: #262A31;
+    --acc: #5B84E8; --acc-soft: #22304D; --cmp: #2FA893; --cmp-soft: #1D3833;
+    --ghost: #4A515C;
+    --ok: #4CBF7E; --ok-bg: #1E3327; --bad: #E07364; --bad-bg: #3D2422; --warn: #D9A24A; --warn-bg: #3A2F1C; --info: #9AA6B2; --info-bg: #272C33;
+    --star: #E8B341;
+  }
+  :root[data-theme="light"] {
+    --surface: #FBFBF9; --panel: #FFFFFF; --ink: #22262B; --ink-2: #5B6470; --ink-3: #8A93A0;
+    --line: #E4E7EB; --track: #EEF0F3;
+    --acc: #3E6FD9; --acc-soft: #E3EAF9; --cmp: #2E9E8F; --cmp-soft: #DFF1EE;
+    --ghost: #C9CFD8;
+    --ok: #1D7A46; --ok-bg: #E2F2E8; --bad: #BE4436; --bad-bg: #F9E8E5; --warn: #A16A1B; --warn-bg: #F7EEDC; --info: #52606D; --info-bg: #EAEEF2;
+    --star: #D9930D;
+  }
+  * { box-sizing: border-box; }
+  body { background: var(--surface); color: var(--ink); margin: 0;
+    font-family: -apple-system, "Apple SD Gothic Neo", Pretendard, "Noto Sans KR", "Segoe UI", sans-serif;
+    line-height: 1.6; font-size: 15px; }
+  .wrap { max-width: 1000px; margin: 0 auto; padding: 40px 24px 80px; }
+  .eyebrow { font-size: 11.5px; font-weight: 700; letter-spacing: .14em; color: var(--ink-3); }
+  h1 { font-size: 27px; font-weight: 800; letter-spacing: -.01em; margin: 6px 0 4px; text-wrap: balance; }
+  .meta { color: var(--ink-2); font-size: 13px; }
+  h2 { font-size: 18px; font-weight: 800; margin: 0 0 2px; }
+  h2 .no { color: var(--ink-3); font-weight: 700; margin-right: 6px; }
+  .sub { color: var(--ink-2); font-size: 13.5px; margin: 0 0 16px; }
+  section { background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
+    padding: 24px 26px; margin-top: 22px; }
+  /* 리뷰 히어로 */
+  .hero { display: flex; gap: 26px; flex-wrap: wrap; align-items: stretch; margin-top: 26px; }
+  .review-card { flex: 1 1 300px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 22px 24px; }
+  .stars { font-size: 24px; letter-spacing: 3px; color: var(--star); }
+  .stars .off { color: var(--ghost); }
+  .review-quote { font-size: 16.5px; font-weight: 700; margin: 6px 0 2px; }
+  .review-by { font-size: 12.5px; color: var(--ink-3); }
+  .kpis { flex: 2 1 420px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .kpi { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; }
+  .kpi b { display: block; font-size: 24px; font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
+  .kpi span { font-size: 12.5px; color: var(--ink-2); }
+  .kpi .bad-t { color: var(--bad); } .kpi .ok-t { color: var(--ok); } .kpi .warn-t { color: var(--warn); }
+  /* 칩 */
+  .chip { display: inline-block; padding: 1px 9px; border-radius: 999px; font-size: 11.5px; font-weight: 700; white-space: nowrap; }
+  .c-ok { background: var(--ok-bg); color: var(--ok); } .c-bad { background: var(--bad-bg); color: var(--bad); }
+  .c-warn { background: var(--warn-bg); color: var(--warn); } .c-info { background: var(--info-bg); color: var(--info); }
+  /* 판정 총괄 표 */
+  table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+  th { text-align: left; font-size: 12px; color: var(--ink-3); font-weight: 700; padding: 6px 10px; border-bottom: 1px solid var(--line); }
+  td { padding: 7px 10px; border-bottom: 1px solid var(--line); font-variant-numeric: tabular-nums; }
+  tr:last-child td { border-bottom: none; }
+  .num { text-align: right; }
+  .tbl-scroll { overflow-x: auto; }
+  /* 바 차트 */
+  .chart { display: grid; gap: 9px; margin-top: 14px; }
+  .row { display: grid; grid-template-columns: 150px 1fr 118px; gap: 12px; align-items: center; }
+  .row .lbl { font-size: 13px; color: var(--ink); text-align: right; line-height: 1.3; }
+  .row .lbl small { display: block; color: var(--ink-3); font-size: 11px; }
+  .track { position: relative; height: 22px; background: var(--track); border-radius: 4px; }
+  .band { position: absolute; top: 0; bottom: 0; background: var(--ok-bg); border-left: 1px dashed var(--ok); border-right: 1px dashed var(--ok); opacity: .85; }
+  .bar { position: absolute; top: 4px; height: 14px; border-radius: 0 4px 4px 0; background: var(--acc); }
+  .bar.cmp { background: var(--cmp); }
+  .bar.ghost { background: var(--ghost); }
+  .wall { position: absolute; top: -4px; bottom: -4px; width: 2px; background: var(--bad); }
+  .goal { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--ink-2); }
+  .val { font-size: 12.5px; font-variant-numeric: tabular-nums; color: var(--ink-2); white-space: nowrap; }
+  .val b { color: var(--ink); }
+  .legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 12px; color: var(--ink-2); margin-top: 12px; }
+  .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
+  .axis-note { font-size: 11.5px; color: var(--ink-3); margin-top: 6px; }
+  /* 콜아웃 */
+  .callout { border-left: 3px solid var(--acc); background: var(--acc-soft); border-radius: 0 8px 8px 0;
+    padding: 12px 16px; font-size: 13.5px; margin-top: 16px; }
+  .callout.bad { border-color: var(--bad); background: var(--bad-bg); }
+  .callout.ok { border-color: var(--cmp); background: var(--cmp-soft); }
+  .callout b { font-weight: 800; }
+  /* 결정 카드 */
+  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 12px; margin-top: 14px; }
+  .card { border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; font-size: 13px; }
+  .card h3 { margin: 4px 0 6px; font-size: 13.5px; font-weight: 800; }
+  .card p { margin: 0; color: var(--ink-2); }
+  .pr { font-size: 11px; font-weight: 800; color: var(--ink-3); letter-spacing: .1em; }
+  ol.silent { margin: 10px 0 0; padding-left: 20px; font-size: 13.5px; color: var(--ink-2); }
+  ol.silent li { margin-bottom: 5px; } ol.silent b { color: var(--ink); }
+  footer { margin-top: 28px; color: var(--ink-3); font-size: 12px; }
+  footer code { background: var(--track); padding: 1px 6px; border-radius: 4px; font-size: 11.5px; }
+  @media (max-width: 640px) { .row { grid-template-columns: 96px 1fr; } .row .val { grid-column: 2; margin-top: -4px; } .kpis { grid-template-columns: 1fr 1fr; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">REVIEW HERO · 밸런스 리포트 v1</div>
+    <h1>전투 시뮬레이터 실측 검증 — 기준선 판정</h1>
+    <div class="meta">2026-07-31 · seed 42 고정 · 실험당 2,500판 · 감사 18건 반영판 · 테스트 31/31 통과 · 정본(GDD) 미수정</div>
+  </header>
+
+  <div class="hero">
+    <div class="review-card">
+      <div class="stars">★<span class="off">★★★★</span></div>
+      <div class="review-quote">"코어 룰은 도는데, 숫자가 아직 게임을 못 만들어요."</div>
+      <div class="review-by">— 시뮬레이터 2,500판 × 20설정 실측 후기 · 구매 인증</div>
+    </div>
+    <div class="kpis">
+      <div class="kpi"><b class="bad-t">1 / 9</b><span>기준선 통과 항목</span></div>
+      <div class="kpi"><b class="warn-t">−12.3%p</b><span>R11 역설 — 보스 의지 하향 시 승률 <u>하락</u></span></div>
+      <div class="kpi"><b>42~47%</b><span>손패 폴백률 — 게이지 병목의 진짜 원인</span></div>
+      <div class="kpi"><b class="bad-t">87~97%</b><span>억지(reckless) 플레이의 일반·정예 승률</span></div>
+      <div class="kpi"><b class="ok-t">2.12턴</b><span>일반 전투 길이 — 유일한 통과</span></div>
+      <div class="kpi"><b>7 + 6</b><span>GDD 변경 제안 + 침묵 규칙 (결정 대기)</span></div>
+    </div>
+  </div>
+
+  <section>
+    <h2><span class="no">§0</span>기준선 판정 총괄</h2>
+    <p class="sub">GDD가 스스로 정한 기준선 대비 실측 결과. 상세 근거는 아래 실험 카드에.</p>
+    <div class="tbl-scroll"><table>
+      <tr><th>항목</th><th>기준</th><th>실측</th><th>판정</th></tr>
+      <tr><td>일반 전투 길이</td><td>2~4턴</td><td class="num">2.12턴</td><td><span class="chip c-ok">통과</span></td></tr>
+      <tr><td>정예 전투 길이</td><td>5~6턴</td><td class="num">2.81~3.82턴</td><td><span class="chip c-bad">미달</span></td></tr>
+      <tr><td>보스 전투 길이</td><td>8~10턴</td><td class="num">6.11턴 (상한 7턴 벽)</td><td><span class="chip c-bad">미달</span></td></tr>
+      <tr><td>크리 발동 — 표준 / 숙련 / 억지</td><td>1 / 2 / 0회</td><td class="num">0.48 / 0.72 / 0.39회</td><td><span class="chip c-bad">미달</span> <span class="chip c-warn">억지 초과</span></td></tr>
+      <tr><td>게이지 순증 — 표준 / 숙련 / 억지</td><td>+1.44 / +2.8 / +0.2</td><td class="num">+0.84 / +1.26 / +0.76</td><td><span class="chip c-bad">미달</span> <span class="chip c-warn">억지 초과</span></td></tr>
+      <tr><td>성향 크리 가치 (16~24딜 상당)</td><td>4성향 등가</td><td class="num">팩트 폭격기만 등가</td><td><span class="chip c-bad">부분 미달</span></td></tr>
+      <tr><td>억지 플레이 처벌</td><td>일반 적에도 자주 패배</td><td class="num">87~97% 승</td><td><span class="chip c-bad">미달</span></td></tr>
+      <tr><td>표준 정책 보스 승률</td><td>초회 30~50%</td><td class="num">59.0% (boss1 덱 조건부)</td><td><span class="chip c-warn">경계 초과</span></td></tr>
+      <tr><td>R11 — 보스 의지 48 하향</td><td>하향 = 완화</td><td class="num">승률 −12.3%p 역효과</td><td><span class="chip c-bad">불통과</span> <span class="chip c-info">조건부안 有</span></td></tr>
+    </table></div>
+  </section>
+
+  <section>
+    <h2><span class="no">실험 1</span>전투 길이 — 정예가 너무 빨리 죽는다</h2>
+    <p class="sub">막대 = 승리 평균 턴 (standard 정책) · 초록 구간 = GDD 기준선 · 빨간 선 = 구조적 사망 벽</p>
+    <div class="chart">
+      <div class="row"><div class="lbl">E01 고블린 잡상인<small>일반</small></div>
+        <div class="track"><div class="band" style="left:20%;width:20%"></div><div class="bar" style="left:0;width:21.2%" title="승리 평균 2.12턴 / 기준 2~4턴"></div></div>
+        <div class="val"><b>2.12턴</b> <span class="chip c-ok">통과</span></div></div>
+      <div class="row"><div class="lbl">E02 오크 중량 전사<small>정예</small></div>
+        <div class="track"><div class="band" style="left:50%;width:10%"></div><div class="bar" style="left:0;width:38.2%" title="승리 평균 3.82턴 / 기준 5~6턴"></div></div>
+        <div class="val"><b>3.82턴</b> <span class="chip c-bad">미달</span></div></div>
+      <div class="row"><div class="lbl">E03 엘프 마법사<small>정예</small></div>
+        <div class="track"><div class="band" style="left:50%;width:10%"></div><div class="bar" style="left:0;width:28.1%" title="승리 평균 2.81턴 / 기준 5~6턴"></div></div>
+        <div class="val"><b>2.81턴</b> <span class="chip c-bad">미달</span></div></div>
+      <div class="row"><div class="lbl">E04 야매 배송 도적<small>정예</small></div>
+        <div class="track"><div class="band" style="left:50%;width:10%"></div><div class="bar" style="left:0;width:36.9%" title="승리 평균 3.69턴 / 기준 5~6턴"></div></div>
+        <div class="val"><b>3.69턴</b> <span class="chip c-bad">미달</span></div></div>
+      <div class="row"><div class="lbl">E05 나르시시스트 기사<small>정예</small></div>
+        <div class="track"><div class="band" style="left:50%;width:10%"></div><div class="bar" style="left:0;width:32%" title="승리 평균 3.20턴 / 기준 5~6턴"></div></div>
+        <div class="val"><b>3.20턴</b> <span class="chip c-bad">미달</span></div></div>
+      <div class="row"><div class="lbl">B01 답글 없는 사장<small>보스 · boss1 덱</small></div>
+        <div class="track"><div class="band" style="left:80%;width:20%"></div><div class="bar" style="left:0;width:61.1%" title="승리 평균 6.11턴 / 기준 8~10턴 / 7턴 사망 벽"></div><div class="wall" style="left:70%" title="7턴 사망 벽 — B01 사이클 누적 32딜 > 플레이어 의지 30"></div></div>
+        <div class="val"><b>6.11턴</b> <span class="chip c-bad">미달</span></div></div>
+    </div>
+    <div class="axis-note">축: 0~10턴</div>
+    <div class="callout bad"><b>7턴 사망 벽:</b> B01 공격 사이클의 누적 피해가 7턴째 32로 플레이어 의지 30을 초과 — 2,500판 중 7턴을 넘긴 판이 <b>0판</b>. 기준선 8~10턴은 현행 수치로는 도달 자체가 불가능하다 (제안 4).</div>
+  </section>
+
+  <section>
+    <h2><span class="no">실험 2</span>게이지 경제 — 병목은 계수가 아니라 손패</h2>
+    <p class="sub">이론(회색) vs 실측(파랑) 판정 순증/턴. 의도 적중률은 이론 전제와 일치하지만, 맞는 접두가 손에 없어(폴백 42~47%) 실현이 압착된다.</p>
+    <div class="chart">
+      <div class="row"><div class="lbl">standard</div>
+        <div class="track"><div class="bar ghost" style="left:0;width:48%;top:2px;height:7px" title="이론 +1.44"></div><div class="bar" style="left:0;width:28%;top:12px;height:7px" title="실측 +0.84"></div></div>
+        <div class="val">+0.84 <b>/ 이론 +1.44</b></div></div>
+      <div class="row"><div class="lbl">skilled</div>
+        <div class="track"><div class="bar ghost" style="left:0;width:93.3%;top:2px;height:7px" title="이론 +2.8"></div><div class="bar" style="left:0;width:42%;top:12px;height:7px" title="실측 +1.26"></div></div>
+        <div class="val">+1.26 <b>/ 이론 +2.8</b></div></div>
+      <div class="row"><div class="lbl">reckless</div>
+        <div class="track"><div class="bar ghost" style="left:0;width:6.7%;top:2px;height:7px" title="이론 +0.2"></div><div class="bar" style="left:0;width:25.3%;top:12px;height:7px" title="실측 +0.76 — 이론을 초과"></div></div>
+        <div class="val">+0.76 <b>/ 이론 +0.2</b> <span class="chip c-warn">초과</span></div></div>
+    </div>
+    <div class="legend"><span><i style="background:var(--ghost)"></i>이론 (GDD §3.4)</span><span><i style="background:var(--acc)"></i>실측 (judgement_net/턴)</span></div>
+    <div class="callout"><b>숙련도 변별 실종:</b> 실현 팩트율이 standard <b>25.5%</b> vs reckless <b>23.3%</b> — 차이가 <b>2.2%p</b>뿐. 잘하는 플레이와 막 하는 플레이가 손패 추첨에 씻겨 비슷해진다. 1순위 레버(팩트 +2→+3) 실측: standard 크리 0.48→0.73회로 목표 근접하지만 reckless도 0.39→0.62회로 함께 악화 — <b>레버 단독으로는 해결 불가, 제안 1+2 묶음 필요.</b></div>
+  </section>
+
+  <section>
+    <h2><span class="no">실험 3</span>R11 역설 — 보스를 약하게 만들었더니 더 어려워졌다</h2>
+    <p class="sub">B01 의지 하향(60→48) 시 standard 승률. 페이즈2 트리거가 "의지 30" 절대값이라, 하향하면 18딜 만에 강화 페이즈가 열린다.</p>
+    <div class="chart">
+      <div class="row"><div class="lbl">현행 (의지 60)</div>
+        <div class="track"><div class="bar" style="left:0;width:59%" title="승률 59.0% [57.1~60.9]"></div></div>
+        <div class="val"><b>59.0%</b></div></div>
+      <div class="row"><div class="lbl">48 하향<small>트리거 30 유지</small></div>
+        <div class="track"><div class="bar" style="left:0;width:46.7%" title="승률 46.7% [44.7~48.6] — 사망 벽 7→5턴"></div></div>
+        <div class="val"><b>46.7%</b> <span class="chip c-bad">▼ 12.3%p</span></div></div>
+      <div class="row"><div class="lbl">48 + 트리거 24<small>비례(50%) 동반 하향</small></div>
+        <div class="track"><div class="bar cmp" style="left:0;width:66.6%" title="승률 66.6% — 하향 의도 회복"></div></div>
+        <div class="val"><b>66.6%</b> <span class="chip c-ok">▲ 의도 회복</span></div></div>
+    </div>
+    <div class="axis-note">축: 승률 0~100% · skilled에서도 동일 패턴 (82.0 → 76.1 → 84.9%)</div>
+    <div class="callout ok"><b>결론:</b> 현행 데이터 그대로의 48 하향은 R11 <b>불통과</b>. 페이즈2 트리거를 "의지 50% 이하" 비례식으로 바꾸면 <b>조건부 통과</b> — 현행 의지 60에선 30=50%라 지금 바꿔도 MVP에 무영향 (제안 3).</div>
+  </section>
+
+  <section>
+    <h2><span class="no">실험 4</span>성향별 크리티컬 가치 — 팩트 폭격기만 제값</h2>
+    <p class="sub">B01전 standard 승률 (CRN 통제 — 성향 간 크리 발동 수 동일, 승률 차 = 순수 크리 효과 차). 점선 = 팩트 폭격기 기준.</p>
+    <div class="chart">
+      <div class="row"><div class="lbl">팩트 폭격기<small>고정 20딜</small></div>
+        <div class="track"><div class="goal" style="left:59%"></div><div class="bar" style="left:0;width:59%" title="59.0% — 기대 구간(16~24딜) 정중앙"></div></div>
+        <div class="val"><b>59.0%</b> <span class="chip c-ok">통과</span></div></div>
+      <div class="row"><div class="lbl">힙스터 평론가<small>공격 −50%</small></div>
+        <div class="track"><div class="goal" style="left:59%"></div><div class="bar" style="left:0;width:42.5%" title="42.5% — 단 B01은 답글 최우선 반박 = 설계된 카운터"></div></div>
+        <div class="val"><b>42.5%</b> <span class="chip c-info">유보*</span></div></div>
+      <div class="row"><div class="lbl">프로 불편러<small>기절+25G</small></div>
+        <div class="track"><div class="goal" style="left:59%"></div><div class="bar" style="left:0;width:41.6%" title="41.6% — 기절 1턴 ≈ 6~8딜 회피 상당"></div></div>
+        <div class="val"><b>41.6%</b> <span class="chip c-bad">미달</span></div></div>
+      <div class="row"><div class="lbl">바이럴 앞잡이<small>버프 2배</small></div>
+        <div class="track"><div class="goal" style="left:59%"></div><div class="bar" style="left:0;width:35.4%" title="35.4% — 버프 0개면 가치 0인 조건부 크리"></div></div>
+        <div class="val"><b>35.4%</b> <span class="chip c-bad">미달</span></div></div>
+    </div>
+    <div class="axis-note">*힙스터의 B01 저평가는 R22가 의도한 카운터플레이 — 일반·정예전 대조는 크리 발동이 0에 가까워 측정 불가. skilled 정책에서도 동일 순위.</div>
+  </section>
+
+  <section>
+    <h2><span class="no">실험 5</span>승률 커브 — 억지 플레이가 처벌받지 않는다</h2>
+    <p class="sub">정책 3종 × 전체 적 승률. reckless가 일반·정예를 87~97%로 이긴다 — "자주 지는" 수준이 아니다.</p>
+    <div class="tbl-scroll"><table>
+      <tr><th>적</th><th class="num">standard</th><th class="num">skilled</th><th class="num">reckless</th><th></th></tr>
+      <tr><td>E01 (일반)</td><td class="num">97.0%</td><td class="num">97.1%</td><td class="num"><b>97.1%</b></td><td><span class="chip c-bad">처벌 미달</span></td></tr>
+      <tr><td>E02 (정예)</td><td class="num">95.8%</td><td class="num">96.4%</td><td class="num"><b>94.8%</b></td><td><span class="chip c-bad">처벌 미달</span></td></tr>
+      <tr><td>E03 (정예)</td><td class="num">96.9%</td><td class="num">96.9%</td><td class="num"><b>96.0%</b></td><td><span class="chip c-bad">처벌 미달</span></td></tr>
+      <tr><td>E04 (정예)</td><td class="num">91.5%</td><td class="num">96.9%</td><td class="num"><b>87.0%</b></td><td><span class="chip c-warn">유일 4.5%p 격차</span></td></tr>
+      <tr><td>E05 (정예)</td><td class="num">96.3%</td><td class="num">96.8%</td><td class="num"><b>95.8%</b></td><td><span class="chip c-bad">처벌 미달</span></td></tr>
+      <tr><td>B01 (보스, boss1 덱)</td><td class="num">59.0%</td><td class="num">82.0%</td><td class="num">48.7%</td><td><span class="chip c-warn">경계 초과</span></td></tr>
+    </table></div>
+    <div class="callout"><b>원인은 실험 1·2와 같은 뿌리:</b> 정예 의지가 얕아 아무 조합이나 3~4턴이면 뚫리고, 실현 판정이 압착돼 잘함/못함의 차이가 사라진다. 게이지 감소 카드가 1막 덱에 없는 현 구조에서 억지 처벌은 <b>전투 길이(정예 의지 상향)</b>로만 구현 가능하다 (제안 2).</div>
+  </section>
+
+  <section>
+    <h2><span class="no">§7</span>결정 대기 — GDD 변경 제안 7건</h2>
+    <p class="sub">리포트는 정본을 수정하지 않았다. 아래 제안의 채택/기각이 다음 라운드(GDD v1.1)의 입력이 된다.</p>
+    <div class="cards">
+      <div class="card"><span class="pr">제안 1 · 1순위 레버</span><span class="chip c-info" style="float:right">제안 2와 묶음 필수</span>
+        <h3>팩트 적중 게이지 +2 → +3</h3><p>standard 크리 0.48→0.73회로 목표 근접. 단독 채택 시 reckless 초과 악화(0.62회).</p></div>
+      <div class="card"><span class="pr">제안 2</span>
+        <h3>정예 의지 상향 (E02 30 · E03 24 · E04 22 · E05 28)</h3><p>정예를 5~6턴으로 — 크리 이벤트화 + 억지 처벌 + 정예 길이 기준선을 동시에 해결.</p></div>
+      <div class="card"><span class="pr">제안 3 · R11 필요조건</span><span class="chip c-ok" style="float:right">MVP 무영향</span>
+        <h3>B01 페이즈2 트리거 "의지 30" → "50%"</h3><p>48 하향을 실제 완화로 만드는 조건 (46.7→66.6%). 현행 60에선 30=50%라 무변화.</p></div>
+      <div class="card"><span class="pr">제안 4</span>
+        <h3>보스 길이 기준선 재검토</h3><p>(a) 기준선 6~7턴 현실화 — 저비용, 또는 (b) 플레이어 의지 30→36 / 야근 강요 4→3으로 벽을 9턴대로.</p></div>
+      <div class="card"><span class="pr">제안 5</span>
+        <h3>바이럴 크리 바닥 보장</h3><p>버프 0개면 가치 0인 조건부 크리 — "버프 없으면 +3 버프 즉시 부착" 류 하한 검토. 전 정책 최하위.</p></div>
+      <div class="card"><span class="pr">제안 6</span>
+        <h3>불편러 기절의 보스 등가 재설계</h3><p>B01 기믹이 기절 무시 + 경직 내성 — 실질 이득이 공격 1회 회피. "기절 대신 다음 공격 −50%" 등 검토.</p></div>
+      <div class="card"><span class="pr">제안 7 · 전제 조건</span>
+        <h3>교착 안전장치 + 보스 표준 덱 정본화</h3><p>교착 패배 1.7~2.0%가 전 승률에 하방 편향. 보스 도달 기대 덱 정의는 실험 3·5 판정의 전제.</p></div>
+    </div>
+    <h2 style="margin-top:26px"><span class="no">부록</span>GDD 침묵 규칙 6건 — 정본 명시 필요</h2>
+    <p class="sub">시뮬레이터 구현 중 GDD가 답하지 않아 "가정" 주석으로 처리된 규칙들. 코드가 아닌 정본이 답해야 한다.</p>
+    <ol class="silent">
+      <li><b>S07 봉인 무한 락 봉쇄</b> — 봉인 불발 시 경직 내성 부여로 가정 (기절 규칙 준용)</li>
+      <li><b>은신 vs 크리티컬·특수 카드</b> — 크리는 리뷰로 보고 게이트 적용, X02는 특수로 보고 예외 처리</li>
+      <li><b>재반박 대상 제한</b> — 현행 문언상 무제한. 제한 의도라면 명시 필요</li>
+      <li><b>성향 동률 순서 · 불편러 갈취 1회의 범위</b> — 현행 결정적 동작 유지 중</li>
+      <li><b>손패 교착 안전장치</b> — 접두 없는 손패 고착 시 강제 패배(~2%) 허용 여부</li>
+      <li><b>보스전 표준 덱 정의</b> — 시뮬은 boss1 프리셋(시작 덱+P11/P15/S02) 가정</li>
+    </ol>
+  </section>
+
+  <footer>
+    정본: <code>design/balance-report-v1.md</code> (재현 명령 전체 수록) · 도구: <code>packages/sim</code> · 예시:
+    <code>npx tsx packages/sim/src/cli.ts --enemy B01 --policy standard --runs 2500 --seed 42 --deck-preset boss1</code><br>
+    승률은 Wilson 95% CI 기준 ±2%p 이내 · 이 문서는 열람용 요약 — 수치 충돌 시 md 정본 우선
+  </footer>
+</div>
