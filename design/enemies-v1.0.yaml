@@ -134,7 +134,7 @@ enemies:
     name: 오크 중량 전사
     tier: elite
     role: 정예 (둔화·행동 캔슬 학습. 온보딩 2판에서 항복 자연 발견 지점 — §4.4)
-    will: 24
+    will: 30    # v1.1: 24→30 (밸런스 라운드 1 제안 2 — 정예 5~6턴·억지 처벌·크리 이벤트화)
     weakness_tags: [무게]
     null_tags: [이펙트, 개연성]
     equipment:
@@ -166,7 +166,7 @@ enemies:
     name: 엘프 이펙트 마법사
     tier: elite
     role: 정예 (성능 계열 교본, 영창 카운터 학습)
-    will: 18
+    will: 24    # v1.1: 18→24 (제안 2)
     weakness_tags: [이펙트, 연비]
     null_tags: [무게]
     traits:
@@ -203,7 +203,7 @@ enemies:
     name: 야매 배송 도적
     tier: elite
     role: 정예 (배송 계열 교본, 은신 해제 학습)
-    will: 16
+    will: 22    # v1.1: 16→22 (제안 2)
     weakness_tags: [속도]
     null_tags: [감성, 디자인]
     traits:
@@ -242,7 +242,7 @@ enemies:
     name: 나르시시스트 기사
     tier: elite
     role: 정예 (감성 계열 교본, 멘탈 직격 학습)
-    will: 22
+    will: 28    # v1.1: 22→28 (제안 2)
     weakness_tags: [디자인, 감성]
     null_tags: [출력]
     traits:
@@ -284,7 +284,7 @@ bosses:
     name: 던전 지배인 「답글 없는 사장」
     tier: boss
     role: 1막 보스 (MVP 최종 보스. 사장님 답글 기믹 + 보스 리뷰 작성권)
-    will: 60    # MVP(1막 완결 런) = 60 유지. TBD: Layer 1.5에서 1막 배치용 48 하향 — 게이지 재시뮬 통과 조건부(GDD §3.8, R11, §11)
+    will: 60    # MVP(1막 완결 런) = 60 유지. R11 해소(v1.1): 48 하향은 phase2 비례 트리거(50%)와 함께면 완화로 작동 — Layer 1.5 배치 시 적용 가능
     weakness_tags: [응대, 개연성]
     null_tags: []               # 보스는 무효 태그 없음. 대응은 사장님 답글 기믹이 담당
     banned_words: [환불, 응대, 답변, 고객센터, 사장]   # Layer 4 금지어 팩폭용(GDD §3.8, 04 제안1)
@@ -333,7 +333,7 @@ bosses:
             condition: no_rebut_target         # 반박 대상 없을 때만 의지 +5(§3.8 "반박 대상 없으면 의지 +5만")
     pattern: [contract_slash, forced_overtime, owner_reply]
     phase2:
-      trigger: "의지 30 이하"
+      trigger: "의지 50% 이하"   # v1.1: "의지 30 이하" 절대값 → 비례 (제안 3, R11 필요조건. 현행 의지 60에선 30=50%라 무변화)
       name: 리뷰 조작
       text: "자신에게 5성 알바 리뷰 부착: 공격력 +3. 「고객센터가…」(P11) 접두로 이 버프를 저격 가능."
       effects:
@@ -397,7 +397,7 @@ bosses:
             condition: no_rebut_target
     pattern: [contract_slash, contract_slash, owner_reply]   # 야근 강요 자리를 계약 갱신 베기로 대체
     phase2:
-      trigger: "의지 30 이하"
+      trigger: "의지 50% 이하"   # v1.1: "의지 30 이하" 절대값 → 비례 (제안 3, R11 필요조건. 현행 의지 60에선 30=50%라 무변화)
       name: 리뷰 조작
       text: "자신에게 5성 알바 리뷰 부착: 공격력 +3. 「고객센터가…」(P11) 접두로 이 버프를 저격 가능."
       effects:

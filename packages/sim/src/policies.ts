@@ -155,6 +155,20 @@ export function playTurn(battle: Battle, cards: CardIndex, name: PolicyName, rng
         battle.playSpecial(x03.uid);
         continue;
       }
+      // 퇴고 (GDD §3.2 v1.1): 조합 불가 시 필력 1로 손패 1장 교체 — 교착 해소.
+      // 버릴 카드: 접두가 없으면 접미를, 접미가 없으면 접두를, 둘 다 있는데 비용이 안 되면 최고 비용 접미를.
+      if (p.energy >= 1 && p.hand.length > 0 && battle.state.player.deck.length + battle.state.player.discard.length > 0) {
+        const target =
+          prefixes.length === 0
+            ? (suffixes[0] ?? hand[0])
+            : suffixes.length === 0
+              ? prefixes[0]
+              : [...suffixes].sort((a, b) => b.def.cost - a.def.cost)[0];
+        if (target) {
+          battle.revise(target.uid);
+          continue;
+        }
+      }
       break;
     }
 

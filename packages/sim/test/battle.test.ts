@@ -33,7 +33,7 @@ test('§3.3+§2-1: 팩트 ×1.5 내림 (S03 히트당 판정·게이지)', () =>
   const r = b.submitReview(uid(b, 'P01'), uid(b, 'S03'));
   assert.equal(r.judgement, 'fact'); // 마감 ∈ E01 약점
   assert.equal(b.state.enemy.will, 14 - 8); // floor(3×1.5)=4 ×2히트
-  assert.equal(b.state.player.gauge, 4); // 히트당 +2 ×2 (GDD §3.3)
+  assert.equal(b.state.player.gauge, 6); // 히트당 +3 ×2 (GDD §3.3, v1.1 제안 1)
   assert.equal(b.state.stats.judgements.fact, 2);
 });
 
@@ -47,8 +47,8 @@ test('§3.3+§2-1: 헛소리 ×0.5 최소 1 + S11 인라인 게이지 −1', () 
 
 test('§2-2: 게이지 상한 10 초과 소실 / 하한 0', () => {
   const hi = makeBattle('E01', ['P01', 'S01'], { startGauge: 9 });
-  hi.submitReview(uid(hi, 'P01'), uid(hi, 'S01')); // 팩트 +2
-  assert.equal(hi.state.player.gauge, 10); // 9+2 → 10 (초과 소실)
+  hi.submitReview(uid(hi, 'P01'), uid(hi, 'S01')); // 팩트 +3 (v1.1)
+  assert.equal(hi.state.player.gauge, 10); // 9+3=12 → 10 (초과 소실)
 
   const lo = makeBattle('E01', ['P07', 'S01'], { startGauge: 1 });
   lo.submitReview(uid(lo, 'P07'), uid(lo, 'S01')); // 헛소리 −2
@@ -204,12 +204,12 @@ test('E04: 은신 중 배송 계열만 명중, 명중 시 은신 해제 → 기�
   assert.equal(b.state.enemy.stealth, true);
   const miss = b.submitReview(uid(b, 'P01'), uid(b, 'S01')); // 품질 → 빗나감
   assert.equal(miss.missed, true);
-  assert.equal(b.state.enemy.will, 16);
+  assert.equal(b.state.enemy.will, 22); // E04 의지 22 (v1.1)
   assert.equal(b.state.stats.judgements.fact + b.state.stats.judgements.normal + b.state.stats.judgements.fumble, 0);
   const hit = b.submitReview(uid(b, 'P09'), uid(b, 'S01')); // 배송(속도) → 팩트, 은신 해제
   assert.equal(hit.judgement, 'fact');
   assert.equal(b.state.enemy.stealth, false);
-  assert.equal(b.state.enemy.will, 7); // floor(6×1.5)=9
+  assert.equal(b.state.enemy.will, 13); // 22 − floor(6×1.5)=9
   b.endTurn(); // ambush: 은신 해제 상태 → 6
   assert.equal(b.state.player.will, 24);
 });
@@ -217,12 +217,12 @@ test('E04: 은신 중 배송 계열만 명중, 명중 시 은신 해제 → 기�
 test('E05: 감성 계열 의지 데미지 ×2 + 찬양 강요 게이지 −1(하한 0)', () => {
   const b = makeBattle('E05', ['P13', 'S01'], { startGauge: 5 });
   b.submitReview(uid(b, 'P13'), uid(b, 'S01')); // 디자인 팩트 → floor(6×1.5×2)=18
-  assert.equal(b.state.enemy.will, 4);
-  assert.equal(b.state.player.gauge, 7);
+  assert.equal(b.state.enemy.will, 10); // E05 의지 28 (v1.1) − 18
+  assert.equal(b.state.player.gauge, 8); // 5 + 팩트 +3 (v1.1)
   b.state.enemy.patternIndex = 2;
   b.state.enemy.intentId = 'demand_praise';
   b.endTurn();
-  assert.equal(b.state.player.gauge, 6); // −1 (§3.4)
+  assert.equal(b.state.player.gauge, 7); // −1 (§3.4)
   const lo = makeBattle('E05', []);
   lo.state.enemy.patternIndex = 2;
   lo.state.enemy.intentId = 'demand_praise';
@@ -242,7 +242,7 @@ test('B01: 사장님 답글 — 정지 → 같은 계열 팩트로 재반박(부
   const g = b.state.player.gauge;
   b.submitReview(uid(b, 'P11'), uid(b, 'S01')); // 같은 계열(배송) 팩트 → 재반박
   assert.equal(debuff.suspended, false); // 부활
-  assert.equal(b.state.player.gauge, g + 2 + 1); // 팩트 +2, 재반박 성공 +1 (§3.4)
+  assert.equal(b.state.player.gauge, g + 3 + 1); // 팩트 +3(v1.1), 재반박 성공 +1 (§3.4)
   const will = b.state.enemy.will;
   b.state.enemy.patternIndex = 2;
   b.state.enemy.intentId = 'owner_reply';

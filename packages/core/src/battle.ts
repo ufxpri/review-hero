@@ -505,7 +505,7 @@ export class Battle {
     // 판정·게이지는 히트당 (GDD §3.3 — S03). 헛소리 게이지는 온보딩 1판 −1 완화 가능 (§4.4)
     for (let h = 0; h < hits; h++) {
       st.stats.judgements[judgement]++;
-      if (judgement === 'fact') this.gaugeChange(+2);
+      if (judgement === 'fact') this.gaugeChange(+3); // v1.1: +2→+3 (밸런스 라운드 1 제안 1 — 제안 2와 묶음)
       else if (judgement === 'fumble') this.gaugeChange(this.fumbleGaugeDelta);
     }
 
@@ -820,6 +820,21 @@ export class Battle {
     this.checkEnd();
   }
 
+  // ── 퇴고 (GDD §3.2 v1.1 — 손패 교착 안전장치) ──
+
+  /** 필력 1: 손패 1장을 버리고 1장 드로우. 턴 제한 없음(필력이 상한). 접두 없는 손패 고착(~2% 강제 패배) 해소 */
+  revise(uid: number): void {
+    const st = this.state;
+    if (st.result) throw new Error('전투 종료됨');
+    const p = st.player;
+    if (p.energy < 1) throw new Error('필력 부족');
+    if (p.deck.length + p.discard.length === 0) throw new Error('뽑을 카드 없음');
+    p.energy -= 1;
+    this.discardFromHand(uid);
+    this.draw(1);
+    this.log('퇴고 — 손패 1장 교체');
+  }
+
   // ── 크리티컬 리뷰 (GDD §3.5) ──
 
   useCritical(): Disposition {
@@ -872,7 +887,10 @@ export class Battle {
       case '프로 불편러': {
         if (e.staggerImmunityTurns > 0) this.log('경직 내성 — 크리 기절 무효');
         else e.stunTurns = Math.max(e.stunTurns, 1);
-        // 가정(GDD §3.5 문언 해석): "전투당 1회"는 골드 갈취에만 적용, 기절은 크리마다
+        // v1.1(제안 6): 기절과 별개로 다음 행동 위력 −50% — 기절 면역(경직 내성)·기믹 대상에도
+        // 크리 가치가 남도록 피해 등가 보강 (보스전 등가 재설계)
+        e.weakenNextActionPct = Math.min(e.weakenNextActionPct, -50);
+        // GDD §3.5 (v1.1 명문화): "전투당 1회"는 골드 갈취에만 적용, 기절·위력 감소는 크리마다
         if (!p.inconvenienceGoldUsed) {
           const gold = e.def.tier === 'boss' ? 25 : e.def.tier === 'elite' ? 15 : 8;
           p.gold += gold;
@@ -883,6 +901,17 @@ export class Battle {
       case '바이럴 앞잡이': {
         // 현재 버프 효과 2배 — 가산 합산 상한 +12, 크리 간 상한 공유 (GDD §3.5)
         let budget = 12 - p.viralBonusGranted;
+        const hasBuff = p.equipment.some((eq) => eq.attachments.some((a) => a.kind === 'damage_buff'));
+        if (!hasBuff) {
+          // v1.1(제안 5): 바닥 보장 — 버프 0개면 S13 상당(+3) 가산 버프 1개 즉시 부착
+          // (크리 산출물이므로 부착 슬롯 미점유, +12 상한 공유)
+          const add = Math.min(3, budget);
+          if (add > 0 && p.equipment[0]) {
+            p.equipment[0].attachments.push({ kind: 'damage_buff', value: add, usesSlot: false });
+            p.viralBonusGranted += add;
+          }
+          break;
+        }
         for (const eq of p.equipment) {
           for (const a of eq.attachments) {
             if (a.kind !== 'damage_buff' || budget <= 0) continue;
@@ -961,11 +990,19 @@ export class Battle {
       if (e.stunTurns === 0) e.staggerImmunityTurns = 1; // 기상 → 경직 내성 1턴 (GDD §3.2)
     }
     // 보스 페이즈2 (B01 리뷰 조작): 의지 트리거 도달 시 1회 발동 — 가정: 정리 단계에서 체크
-    if (e.def.phase2 && !e.phase2Done && e.will <= e.def.phase2.triggerWill) {
+    // v1.1(제안 3): 비례 트리거("의지 N% 이하") 우선 — 의지 하향이 실제 완화가 되게 함 (R11 해소)
+    if (e.def.phase2 && !e.phase2Done && e.will <= this.phase2Threshold(e)) {
       e.phase2Done = true;
       for (const ef of e.def.phase2.effects) this.applyEnemyEffect(ef, { weaken: 1, reactionApplied: false });
       this.log('페이즈2: 리뷰 조작');
     }
+  }
+
+  /** 페이즈2 발동 문턱 (v1.1): triggerPct는 maxWill 비례(내림), 없으면 절대값 triggerWill */
+  private phase2Threshold(e: EnemyState): number {
+    const p2 = e.def.phase2!;
+    if (p2.triggerPct !== undefined) return Math.floor((e.maxWill * p2.triggerPct) / 100);
+    return p2.triggerWill ?? 0;
   }
 
   private allEquipmentDisabled(): boolean {

@@ -106,8 +106,13 @@ function convertEnemy(e: Raw): EnemyDef {
     // casting_weakness(E03)는 P06 modifier(vs_casting_mult)로 이미 구현됨 — 중복 적용 안 함
   }
   if (e.phase2) {
-    const m = /(\d+)/.exec(e.phase2.trigger as string);
-    def.phase2 = { triggerWill: m ? parseInt(m[1]!, 10) : 0, effects: (e.phase2.effects ?? []) as EnemyEffectDef[] };
+    // v1.1(제안 3): "의지 50% 이하" 비례 트리거 지원 — %가 있으면 triggerPct, 없으면 절대값 triggerWill
+    const trigger = e.phase2.trigger as string;
+    const m = /(\d+)/.exec(trigger);
+    const n = m ? parseInt(m[1]!, 10) : 0;
+    def.phase2 = trigger.includes('%')
+      ? { triggerPct: n, effects: (e.phase2.effects ?? []) as EnemyEffectDef[] }
+      : { triggerWill: n, effects: (e.phase2.effects ?? []) as EnemyEffectDef[] };
   }
   return def;
 }

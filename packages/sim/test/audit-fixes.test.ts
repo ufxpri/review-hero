@@ -47,7 +47,7 @@ test('E04: 은신 중 비배송 크리(팩트 폭격기)는 빗나감 — 게이
   assert.equal(b.state.enemy.stealth, true);
   b.state.player.gauge = 10;
   b.useCritical();
-  assert.equal(b.state.enemy.will, 16); // 고정 20 미적용 (즉사 우회 봉쇄)
+  assert.equal(b.state.enemy.will, 22); // 고정 20 미적용 (즉사 우회 봉쇄) — E04 의지 22 (v1.1)
   assert.equal(b.state.player.gauge, 0); // 자원 소모는 유지 (빗나간 리뷰와 일관)
   assert.equal(b.state.stats.critMisses, 1);
 });
@@ -136,8 +136,8 @@ test('timeout 시 기록 턴은 maxTurns로 클램프 (off-by-one 방지)', () =
 
 test('§2-2 계측: 게이지 10 도달(크리 가능)·초과 소실이 stats에 기록된다', () => {
   const b = makeBattle('E01', ['P01', 'S01'], { startGauge: 9 });
-  b.submitReview(uid(b, 'P01'), uid(b, 'S01')); // 팩트 +2 → 9+2=11 → 10 (1 소실)
+  b.submitReview(uid(b, 'P01'), uid(b, 'S01')); // 팩트 +3(v1.1) → 9+3=12 → 10 (2 소실)
   assert.equal(b.state.player.gauge, 10);
   assert.equal(b.state.stats.gaugeReached10, 1);
-  assert.equal(b.state.stats.gaugeOverflowLost, 1);
+  assert.equal(b.state.stats.gaugeOverflowLost, 2);
 });

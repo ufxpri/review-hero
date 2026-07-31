@@ -154,8 +154,8 @@ export interface EnemyDef {
   suitDamageMult?: Partial<Record<Suit, number>>;
   /** E04 stealth_gate: 은신 중 명중 가능 계열 + 명중 시 은신 해제 */
   stealthGate?: { hittableSuits: Suit[]; breakOnHit: boolean };
-  /** 보스 페이즈2 (B01 리뷰 조작) */
-  phase2?: { triggerWill: number; effects: EnemyEffectDef[] };
+  /** 보스 페이즈2 (B01 리뷰 조작). v1.1: 비례 트리거(triggerPct, "의지 N% 이하") 우선, 절대값(triggerWill)은 하위 호환 */
+  phase2?: { triggerWill?: number; triggerPct?: number; effects: EnemyEffectDef[] };
 }
 
 // ── 플레이어 장비 ─────────────────────────────────────
