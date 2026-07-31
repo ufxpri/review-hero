@@ -1,0 +1,10 @@
+{
+  "name": "@review-hero/core",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "이세계 리뷰용사 — UI 무의존 전투 상태머신 (GDD §1.1). fs/network 접근 금지, 시드 주입 PRNG만 사용.",
+  "exports": {
+    ".": "./src/index.ts"
+  }
+}

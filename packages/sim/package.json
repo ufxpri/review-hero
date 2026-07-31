@@ -1,0 +1,10 @@
+{
+  "name": "@review-hero/sim",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "이세계 리뷰용사 — 전투 시뮬레이터 CLI (YAML 로드 → core 구동 → 통계 출력)",
+  "dependencies": {
+    "js-yaml": "^4.1.0"
+  }
+}

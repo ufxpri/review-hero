@@ -51,6 +51,8 @@ balance(combat): 팩트 판정 게이지 +2 → +3 상향
 
 ## 개발 메모
 
-- 빌드/테스트 명령: (구현 시작 시 여기에 추가)
+- 빌드/테스트 명령: `npm install` → `npm test`(node:test), `npm run typecheck`(tsc --noEmit),
+  시뮬레이터 `npx tsx packages/sim/src/cli.ts --enemy B01 --policy standard --runs 1000 --seed 42 [--json]`
+- 패키지 구조: `packages/core`(UI 무의존 전투 상태머신, fs/network 금지) + `packages/sim`(YAML 로드·정책 AI·통계 CLI)
 - 전투/런 로직은 UI 무의존 TS 상태머신 패키지로 분리 (GDD §1.1) — 서버 리플레이 검증에 재사용되므로 `Date.now()`·`Math.random()` 직접 호출 금지, 시드 주입.
 - 서버: Firebase (Auth 구글 로그인 + Firestore + Cloud Functions/Scheduler). 유의점은 ADR-008.
