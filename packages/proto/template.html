@@ -1,0 +1,77 @@
+<title>만물마켓 — 이세계 리뷰용사 프로토타입</title>
+<style>
+  :root {
+    --bg: #F7F6F3; --panel: #FFFFFF; --ink: #26221E; --ink2: #6E675E; --ink3: #9B948A;
+    --line: #E6E2DB; --accent: #E8482B; --accent-soft: #FDEAE5; --star: #F5A623;
+    --blue: #2E6ED9; --blue-soft: #E8EFFB; --good: #1E8A4F; --good-soft: #E3F2E9;
+    --bad: #C23B2E; --warn-soft: #FBF3DC; --troll: #B7791F;
+  }
+  @media (prefers-color-scheme: dark) { :root {
+    --bg: #17150F; --panel: #201D16; --ink: #EDE9E2; --ink2: #A9A296; --ink3: #7A7468;
+    --line: #353026; --accent: #F06A4F; --accent-soft: #3A231D; --star: #E8B341;
+    --blue: #6E97E8; --blue-soft: #212B40; --good: #4CBF7E; --good-soft: #1E3327;
+    --bad: #E07364; --warn-soft: #38301B; --troll: #D9A24A;
+  } }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-size: 14.5px; line-height: 1.5;
+    font-family: -apple-system, "Apple SD Gothic Neo", Pretendard, "Noto Sans KR", sans-serif; }
+  #app { max-width: 760px; margin: 0 auto; padding-bottom: 140px; }
+  button { font: inherit; cursor: pointer; border: 1px solid var(--line); background: var(--panel); color: var(--ink); border-radius: 8px; }
+  button:disabled { opacity: .4; cursor: default; }
+  .topbar { position: sticky; top: 0; z-index: 5; background: var(--panel); border-bottom: 1px solid var(--line);
+    display: flex; align-items: center; gap: 10px; padding: 10px 16px; }
+  .logo { font-weight: 900; color: var(--accent); font-size: 17px; letter-spacing: -.02em; white-space: nowrap; }
+  .search { flex: 1; background: var(--bg); border: 1px solid var(--line); border-radius: 999px; padding: 5px 14px; color: var(--ink3); font-size: 12.5px;
+    overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  .stat { font-size: 12.5px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .stat b { font-size: 14px; }
+  .card-panel { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; margin: 12px 16px; padding: 16px; }
+  .stars { color: var(--star); letter-spacing: 1px; }
+  .muted { color: var(--ink2); font-size: 12.5px; }
+  .tiny { color: var(--ink3); font-size: 11.5px; }
+  .chip { display: inline-block; border: 1px solid var(--line); border-radius: 999px; padding: 0 8px; font-size: 11.5px; color: var(--ink2); margin: 1px 2px 1px 0; background: var(--bg); }
+  .chip.null { background: var(--warn-soft); color: var(--troll); border-color: transparent; font-weight: 700; }
+  .bar { height: 8px; background: var(--bg); border-radius: 4px; overflow: hidden; border: 1px solid var(--line); }
+  .bar i { display: block; height: 100%; background: var(--good); }
+  .bar.hp i { background: var(--accent); }
+  .intent { background: var(--accent-soft); border-radius: 8px; padding: 8px 12px; font-size: 13px; margin-top: 10px; }
+  .equip { border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; margin-top: 8px; cursor: pointer; }
+  .equip.sel { border-color: var(--blue); box-shadow: 0 0 0 1px var(--blue); }
+  .equip.dead { opacity: .45; cursor: default; }
+  .review-item { border-top: 1px dashed var(--line); padding: 6px 2px; font-size: 12.5px; }
+  .hand { position: fixed; bottom: 0; left: 0; right: 0; background: var(--panel); border-top: 2px solid var(--line); z-index: 6; }
+  .hand-inner { max-width: 760px; margin: 0 auto; padding: 8px 12px 12px; }
+  .cards-row { display: flex; gap: 8px; overflow-x: auto; padding: 4px 2px 6px; }
+  .pcard { flex: 0 0 auto; width: 108px; border: 1.5px solid var(--line); border-radius: 10px; padding: 8px 9px; background: var(--panel); cursor: pointer; font-size: 12px; position: relative; }
+  .pcard b { display: block; font-size: 12.5px; line-height: 1.3; }
+  .pcard .cost { position: absolute; top: -7px; right: -5px; background: var(--blue); color: #fff; border-radius: 999px; font-size: 11px; padding: 0 6px; font-weight: 800; }
+  .pcard.prefix { border-color: color-mix(in oklab, var(--blue) 45%, var(--line)); }
+  .pcard.special { border-color: color-mix(in oklab, var(--troll) 55%, var(--line)); }
+  .pcard.sel { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); }
+  .pcard .foot { color: var(--ink3); font-size: 10.5px; margin-top: 4px; line-height: 1.3; }
+  .composer { display: flex; align-items: center; gap: 10px; padding: 6px 2px; flex-wrap: wrap; }
+  .composer .preview { flex: 1; font-size: 13px; min-width: 180px; }
+  .judge { font-weight: 800; }
+  .judge.fact { color: var(--good); } .judge.fumble { color: var(--bad); } .judge.normal { color: var(--ink2); }
+  .btn-main { background: var(--accent); color: #fff; border: none; font-weight: 800; padding: 9px 18px; border-radius: 9px; }
+  .btn-sub { padding: 8px 12px; font-size: 13px; }
+  .btn-crit { background: var(--star); border: none; color: #4A3000; font-weight: 900; padding: 9px 14px; border-radius: 9px; }
+  .gauge { display: flex; gap: 2px; }
+  .gauge i { width: 14px; height: 14px; font-style: normal; font-size: 12px; color: var(--line); }
+  .gauge i.on { color: var(--star); }
+  .log { max-height: 140px; overflow-y: auto; font-size: 12.5px; }
+  .log div { border-top: 1px dashed var(--line); padding: 4px 2px; color: var(--ink2); }
+  .overlay { position: fixed; inset: 0; background: rgba(0,0,0,.55); display: flex; align-items: center; justify-content: center; z-index: 20; }
+  .overlay .box { background: var(--panel); border-radius: 14px; padding: 28px 30px; max-width: 380px; text-align: center; }
+  .overlay h2 { margin: 4px 0 8px; }
+  .toast { position: fixed; bottom: 150px; left: 50%; transform: translateX(-50%); background: var(--ink); color: var(--bg); border-radius: 999px; padding: 7px 18px; font-size: 13px; z-index: 30; opacity: 0; transition: opacity .2s; pointer-events: none; }
+  .toast.show { opacity: .95; }
+  .shop-item { display: flex; gap: 12px; align-items: center; border: 1px solid var(--line); border-radius: 12px; padding: 14px; margin: 10px 16px; background: var(--panel); cursor: pointer; }
+  .shop-item:hover { border-color: var(--accent); }
+  .shop-item .thumb { font-size: 34px; width: 52px; text-align: center; }
+  .mode-note { background: var(--blue-soft); color: var(--blue); border-radius: 8px; padding: 6px 12px; font-size: 12.5px; margin: 6px 2px; }
+</style>
+<div id="app"></div>
+<script>
+/*__BUNDLE__*/
+</script>

@@ -13,3 +13,7 @@ coverage/
 .env
 .env.*
 *-service-account*.json
+
+# 프로토타입 빌드 산출물 (packages/proto/build.mjs로 생성)
+prototype/
+packages/proto/src/data.json
