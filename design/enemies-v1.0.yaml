@@ -1,0 +1,407 @@
+# ============================================================================
+# 이세계 리뷰용사 — 적 데이터 v1.0 (정본)
+# 근거: GDD-v1.0.md §3.1~3.2(기본 수치·턴 시퀀스), §3.8(적 변경표), §4.4(온보딩), §6.1(작성권)
+# 대체: enemies-v0.1.yaml (v0.1은 이력 보존용으로 유지)
+# ============================================================================
+#
+# ── 스키마 정의 (시뮬레이터 파싱 전제 — 기계용 구조 + 사람용 text 병기) ──
+#
+# enemy:
+#   id: string                  # E01~, B01~. 온보딩 변형판은 원본id + "T"
+#   name: string
+#   tier: normal | elite | boss # 전투 길이 기준선(§3.1): 일반 2~4턴 / 정예 5~6턴 / 보스 8~10턴
+#   tutorial_variant: bool      # true = 온보딩 1판 전용(§4.4). 생략 시 false
+#   variant_of: string          # 변형판일 때 원본 id
+#   role: string                # 사람용 설계 의도 메모
+#   will: int                   # HP. 용어 사전(worldview §6): "의지"
+#   weakness_tags: [tag]        # 팩트 판정 대상 태그(×1.5, 게이지 +2)
+#   null_tags: [tag]            # 무효 태그(×0.5, 게이지 −2). UI 라벨 "평가 불가 항목"으로 전 구간 상시 노출(§3.3)
+#   traits: [ {id, text, ...} ] # 상시 특성. 기계 필드는 특성별 자유 확장, text 필수
+#   equipment: [ equipment ]
+#   actions: [ action ]
+#   pattern: [action_id]        # 인텐트 공개 순서. 끝나면 처음부터 반복. charge_turns 있는 행동은 (준비→발동) 2턴 점유
+#   banned_words: [string]      # Layer 4 금지어 팩폭용(보스만)
+#   phase2: {...}               # 보스 페이즈 전환(보스만)
+#   on_review: {...}            # 보스 리뷰 작성권 규칙(보스만, Layer 3 연동, §6.1)
+#
+# equipment:
+#   name: string
+#   durability: int
+#   tags: [tag]
+#   fixed_review: string        # ★로 시작(worldview §5.3). 약점 태그 힌트 기능
+#
+# action:
+#   id: string                  # 적 내 유일. pattern이 참조
+#   name: string
+#   type: attack | buff | steal | stealth | gimmick
+#     # 기절 규칙(§3.2): 기절한 적은 그 턴 attack/buff/steal/stealth 불가.
+#     # gimmick은 기절을 무시하고 발동. 기절 해제 후 1턴 경직 내성(기절·지연 면역).
+#   text: string                # 사람용 효과 설명(UI 문자열은 용어 사전 준수 — "필력" 등)
+#   effects: [effect]           # 기계용. 위에서 아래로 순차 적용
+#   charge_turns: int           # 준비 턴 수. 준비 턴엔 효과 미발동(생략 시 0)
+#   cancel_on: [condition]      # 준비 중 이 조건 적중 시 발동 캔슬
+#   cooldown: int               # N턴마다 발동(gimmick용. 생략 시 pattern 순서만 따름)
+#
+# effect (op 목록 — 시뮬레이터 구현 대상):
+#   {op: damage, value: int}                    # 플레이어 의지 피해
+#   {op: gold_steal, value: int, floor: 0}      # 골드 갈취. floor 0 = 골드 하한 0(§3.8)
+#   {op: attack_up, value: int, duration: battle|int}
+#   {op: damage_reduction, value: int, duration: next_hit}
+#   {op: reflect, value: int, duration: next_hit}
+#   {op: gauge_down, value: int}                # 플레이어 신뢰도 게이지 감소(하한 0, §2)
+#   {op: gauge_up, value: int}                  # 플레이어 신뢰도 게이지 증가(상한 10, §2 — 재반박 성공 +1이 유일 소스)
+#   {op: energy_down, value: int, when: next_turn}  # UI 표기는 "필력"
+#   {op: stealth_on}                            # 은신 상태 진입
+#   {op: rebut_debuff, ...}                     # 사장님 답글 전용. B01 정의부 참조
+#   {op: heal, value: int, condition: ...}      # 자기 의지 회복
+#   op별 부가 필드 허용(예: damage의 if_stealth_broken — E04 기습). 해당 액션 정의부 주석이 정본.
+#
+# tag (12종 — cards-v1.0.yaml과 명칭 일치 필수):
+#   마감, 내구도, 무게, 출력, 연비, 이펙트, 속도, 구성품, 응대, 디자인, 감성, 개연성
+#
+# 주의: 온보딩 1판의 전역 보정(적 공격 ×0.75, 헛소리 −2→−1 등, §4.4)은
+#       런 레벨 규칙이므로 이 파일에 넣지 않는다. 변형판은 데이터 차이만 기술.
+# ============================================================================
+
+enemies:
+  # ──────────────────────────────────────────────────────────────
+  # E01 — 튜토리얼 (품질 계열 교본)
+  # ──────────────────────────────────────────────────────────────
+  - id: E01
+    name: 고블린 잡상인
+    tier: normal
+    role: 튜토리얼 (품질 계열 교본)
+    will: 14
+    weakness_tags: [마감]
+    null_tags: [연비, 이펙트]   # 기계·마법 아님 → 배터리(연비)/이펙트 접두는 헛소리 판정
+    equipment:
+      - name: 짝퉁 단검
+        durability: 6
+        tags: [마감, 내구도]
+        fixed_review: "★★ 손잡이가 벌써 흔들거려요. 정품 맞나요?"
+    actions:
+      - id: stab
+        name: 찌르기
+        type: attack
+        text: "의지 피해 5"
+        effects:
+          - {op: damage, value: 5}
+      - id: ripoff
+        name: 바가지 씌우기
+        type: steal
+        text: "골드 −3. 골드 하한 0 — 잔액이 3G 미만이면 0G까지만 갈취(음수 골드 없음)."  # §3.8 명기(02 C2)
+        effects:
+          - {op: gold_steal, value: 3, floor: 0}
+    pattern: [stab, stab, ripoff]
+
+  # ──────────────────────────────────────────────────────────────
+  # E01T — 온보딩 1판 첫 전투 전용 변형판 (§3.8, §4.4)
+  # 무효 태그 없음 → 팩트/일반 2종만으로 판정 학습. 헛소리는 이후 전투에서 도입.
+  # ──────────────────────────────────────────────────────────────
+  - id: E01T
+    name: 고블린 잡상인
+    tier: normal
+    tutorial_variant: true
+    variant_of: E01
+    role: 온보딩 1판 첫 전투 (팩트/일반 판정만 학습 — 헛소리 미도입)
+    will: 14
+    weakness_tags: [마감]
+    null_tags: []               # 유일한 차이: 무효 태그 제거(§3.8)
+    equipment:
+      - name: 짝퉁 단검
+        durability: 6
+        tags: [마감, 내구도]
+        fixed_review: "★★ 손잡이가 벌써 흔들거려요. 정품 맞나요?"
+    actions:
+      - id: stab
+        name: 찌르기
+        type: attack
+        text: "의지 피해 5"
+        effects:
+          - {op: damage, value: 5}
+      - id: ripoff
+        name: 바가지 씌우기
+        type: steal
+        text: "골드 −3. 골드 하한 0."
+        effects:
+          - {op: gold_steal, value: 3, floor: 0}
+    pattern: [stab, stab, ripoff]
+
+  # ──────────────────────────────────────────────────────────────
+  # E02 — 정예 (둔화·행동 캔슬 학습)
+  # ──────────────────────────────────────────────────────────────
+  - id: E02
+    name: 오크 중량 전사
+    tier: elite
+    role: 정예 (둔화·행동 캔슬 학습. 온보딩 2판에서 항복 자연 발견 지점 — §4.4)
+    will: 24
+    weakness_tags: [무게]
+    null_tags: [이펙트, 개연성]
+    equipment:
+      - name: 초대형 둔기
+        durability: 12
+        tags: [무게, 내구도]
+        fixed_review: "★★★ 위력은 확실한데 손목 나갑니다. 데드리프트 3년 하고 오세요."
+    actions:
+      - id: smash
+        name: 내려찍기
+        type: attack
+        charge_turns: 1
+        cancel_on: [둔화, 지연]   # 준비 중 둔화(P03 계열)/지연(X01) 적중 시 캔슬
+        text: "1턴 준비 후 의지 피해 9. 준비 중 둔화/지연 적중 시 발동 캔슬."
+        effects:
+          - {op: damage, value: 9}
+      - id: roar
+        name: 포효
+        type: buff
+        text: "공격력 +2 (전투 내 지속)"
+        effects:
+          - {op: attack_up, value: 2, duration: battle}
+    pattern: [roar, smash]      # smash는 준비 1턴 + 발동 1턴 = 2턴 점유
+
+  # ──────────────────────────────────────────────────────────────
+  # E03 — 정예 (성능 계열 교본, 영창 카운터 학습)
+  # ──────────────────────────────────────────────────────────────
+  - id: E03
+    name: 엘프 이펙트 마법사
+    tier: elite
+    role: 정예 (성능 계열 교본, 영창 카운터 학습)
+    will: 18
+    weakness_tags: [이펙트, 연비]
+    null_tags: [무게]
+    traits:
+      - id: casting_weakness
+        text: "영창(준비) 중에는 「이펙트가…」(P06) 접두 효과 ×2 적용 대상."
+        applies_to: [P06]
+        multiplier: 2.0
+        condition: charging
+    equipment:
+      - name: 과장된 지팡이
+        durability: 8
+        tags: [이펙트, 연비]
+        fixed_review: "★★★★ 이펙트는 진짜 예쁨. 근데 마나 순삭임. 관상용."
+    actions:
+      - id: fireball
+        name: 화려한 파이어볼
+        type: attack
+        charge_turns: 1
+        text: "영창 1턴 후 의지 피해 7. 영창 중 이펙트 접두(P06)의 카운터 대상."
+        effects:
+          - {op: damage, value: 7}
+      - id: mana_shield
+        name: 마나 실드
+        type: buff
+        text: "다음 받는 피해 −5"
+        effects:
+          - {op: damage_reduction, value: 5, duration: next_hit}
+    pattern: [fireball, mana_shield]   # fireball은 영창 1턴 + 발동 1턴 = 2턴 점유
+
+  # ──────────────────────────────────────────────────────────────
+  # E04 — 정예 (배송 계열 교본, 은신 해제 학습)
+  # ──────────────────────────────────────────────────────────────
+  - id: E04
+    name: 야매 배송 도적
+    tier: elite
+    role: 정예 (배송 계열 교본, 은신 해제 학습)
+    will: 16
+    weakness_tags: [속도]
+    null_tags: [감성, 디자인]
+    traits:
+      - id: stealth_gate
+        text: "은신 중에는 배송/CS 계열 리뷰만 명중한다 (물건이 안 왔는데 품질 평가 불가). 배송 계열 명중 시 은신 해제."
+        hittable_suits_while_stealth: [배송]
+        break_stealth_on_hit: true
+    equipment:
+      - name: 삐걱거리는 쌍단검
+        durability: 5
+        tags: [속도, 마감]
+        fixed_review: "★ 빠른 건 인정. 근데 소리가 너무 나서 옆집도 알겠어요."
+      - name: 삐걱거리는 쌍단검 (한 짝)
+        durability: 5
+        tags: [속도, 마감]
+        fixed_review: "★ 구성품 누락인 줄. 한 짝씩 배송됨."
+    actions:
+      - id: hide
+        name: 은신
+        type: stealth
+        text: "은신 상태 진입. 다음 턴 기습 예고."
+        effects:
+          - {op: stealth_on}
+      - id: ambush
+        name: 기습
+        type: attack
+        text: "의지 피해 12. 은신이 해제된 상태면 6으로 감소."
+        effects:
+          - {op: damage, value: 12, if_stealth_broken: 6}
+    pattern: [hide, ambush, hide, ambush]
+
+  # ──────────────────────────────────────────────────────────────
+  # E05 — 정예 (감성 계열 교본, 멘탈 직격 학습)
+  # ──────────────────────────────────────────────────────────────
+  - id: E05
+    name: 나르시시스트 기사
+    tier: elite
+    role: 정예 (감성 계열 교본, 멘탈 직격 학습)
+    will: 22
+    weakness_tags: [디자인, 감성]
+    null_tags: [출력]
+    traits:
+      - id: vanity
+        text: "감성 계열 의지 데미지 ×2 (외모 지적에 극도로 취약)."
+        damage_multiplier_from_suit: {감성: 2.0}
+    equipment:
+      - name: 도금 갑옷
+        durability: 10
+        tags: [디자인, 감성]
+        fixed_review: "★★★★★ 광택 미쳤음. 방어력은 모르겠고 일단 사진이 잘 나옴."
+    actions:
+      - id: slash
+        name: 검격
+        type: attack
+        text: "의지 피해 6"
+        effects:
+          - {op: damage, value: 6}
+      - id: pose
+        name: 포즈 잡기
+        type: buff
+        text: "다음 받는 피해 −4, 그 피해의 2 반사"
+        effects:
+          - {op: damage_reduction, value: 4, duration: next_hit}
+          - {op: reflect, value: 2, duration: next_hit}
+      - id: demand_praise
+        name: 찬양 강요
+        type: attack               # [가정] 5종 type에 debuff 없음 → 공격성 행동으로 분류(기절 시 봉인 대상). §3.4 싱크표 "E05 찬양 강요 −1"과 정합
+        text: "플레이어 신뢰도 게이지 −1"
+        effects:
+          - {op: gauge_down, value: 1}
+    pattern: [pose, slash, demand_praise, slash]
+
+bosses:
+  # ──────────────────────────────────────────────────────────────
+  # B01 — 1막 보스 (사장님 답글 기믹 + Layer 3 비동기 보스 리뷰 연동)
+  # ──────────────────────────────────────────────────────────────
+  - id: B01
+    name: 던전 지배인 「답글 없는 사장」
+    tier: boss
+    role: 1막 보스 (MVP 최종 보스. 사장님 답글 기믹 + 보스 리뷰 작성권)
+    will: 60    # MVP(1막 완결 런) = 60 유지. TBD: Layer 1.5에서 1막 배치용 48 하향 — 게이지 재시뮬 통과 조건부(GDD §3.8, R11, §11)
+    weakness_tags: [응대, 개연성]
+    null_tags: []               # 보스는 무효 태그 없음. 대응은 사장님 답글 기믹이 담당
+    banned_words: [환불, 응대, 답변, 고객센터, 사장]   # Layer 4 금지어 팩폭용(GDD §3.8, 04 제안1)
+    equipment:
+      - name: 노예 계약서 낫
+        durability: 15
+        tags: [응대, 개연성]
+        fixed_review: "★ 환불 문의 3주째 답이 없습니다. 낫은 잘 듭니다. 제 월급을 베어갔거든요."
+    actions:
+      - id: contract_slash
+        name: 계약 갱신 베기
+        type: attack
+        text: "의지 피해 8"
+        effects:
+          - {op: damage, value: 8}
+      - id: forced_overtime
+        name: 야근 강요
+        type: attack
+        text: "의지 피해 4, 다음 턴 플레이어 필력 −1"
+        effects:
+          - {op: damage, value: 4}
+          - {op: energy_down, value: 1, when: next_turn}
+      - id: owner_reply
+        name: 사장님 답글
+        type: gimmick              # 기절 무시하고 발동(§3.2, §3.8)
+        cooldown: 3                # 3턴마다 발동(v0.1 승계)
+        text: >
+          활성 디버프 1개를 반박하여 「이번 전투 한정 정지」시킨다(제거 아님 — 반박당한 리뷰는 회색 처리).
+          대상은 출처 무관(전투 중 부착 + 비동기 보스 리뷰 유래) 활성 디버프 중 Tier/위력 최상위,
+          동률이면 공감 높은 것 → 가장 최근 것. 힙스터 평론가 크리(공격력 −50%)는 Tier 3 상당으로 최우선 반박 대상.
+          디버프당 반박은 1회만. 같은 계열 팩트 리뷰를 제출하면 재반박 — 정지된 디버프가 부활하고 신뢰도 게이지 +1.
+          반박할 대상이 없으면 의지 +5. 기절 중에도 발동한다.
+        effects:
+          - op: rebut_debuff
+            action: suspend_this_battle        # "반박·제거" → "이번 전투 한정 정지"(§3.8, 03 제안1, R18)
+            target_pool: all_active_debuffs    # 출처 무관: 전투 내 부착 + 비동기 슬롯 디버프 전부(R22)
+            priority: [tier_desc, power_desc]  # Tier/위력 최상위. 힙스터 크리 = Tier 3 상당(§3.5)
+            tiebreak: [empathy_desc, most_recent]  # 동률 시 공감↑ → 최근
+            once_per_debuff: true              # 디버프당 반박 1회
+            counter_rebut:                     # 재반박(플레이어 측 카운터플레이)
+              condition: fact_review_same_suit # 정지된 디버프와 같은 계열의 팩트 판정 리뷰 제출
+              on_success: [revive_debuff, {op: gauge_up, value: 1}]  # 부활 + 게이지 +1(§3.4 "재반박 성공")
+              limit_per_debuff: 1              # 부활한 디버프는 다시 반박 불가(once_per_debuff 소진)
+          - op: heal
+            value: 5
+            condition: no_rebut_target         # 반박 대상 없을 때만 의지 +5(§3.8 "반박 대상 없으면 의지 +5만")
+    pattern: [contract_slash, forced_overtime, owner_reply]
+    phase2:
+      trigger: "의지 30 이하"
+      name: 리뷰 조작
+      text: "자신에게 5성 알바 리뷰 부착: 공격력 +3. 「고객센터가…」(P11) 접두로 이 버프를 저격 가능."
+      effects:
+        - {op: attack_up, value: 3, duration: battle, attachment: 알바_리뷰, counter_card: P11}
+    on_review:                   # 보스 리뷰 작성권(Layer 3, GDD §6.1). v0.1의 on_player_defeat를 승리 경로까지 확장(§3.8)
+      note: "유저당 보스당 주간 1회. 재작성 시 공감 0 리셋 + 신선도 F=0. 깎은 %는 누적 가한 피해 기준."
+      origins:
+        - origin: defeat         # 패배 시 — 깎은 의지 비율로 3등급 인증(§6.1 확장, R18)
+          condition: "dmg_pct >= 30"
+          tiers:
+            - {tier: 1, dmg_pct: [30, 59], weight: 1.0, label: 구매 인증}
+            - {tier: 2, dmg_pct: [60, 89], weight: 1.5, label: 헤비 유저}
+            - {tier: 3, dmg_pct: [90, 100], weight: 2.0, label: 최후의 증인}
+        - origin: victory        # 승리 시에도 작성권 발생(§3.8, §6.1 — "이길수록 손해" 역인센티브 제거)
+          weight: 0.8            # Tier 1 상당 디버프
+          label: 정복 후기(구매 확정)
+
+  # ──────────────────────────────────────────────────────────────
+  # B01T — 온보딩 1판 전용 보스 약화판 (GDD §4.4)
+  # ──────────────────────────────────────────────────────────────
+  - id: B01T
+    name: 던전 지배인 「답글 없는 사장」
+    tier: boss
+    tutorial_variant: true
+    variant_of: B01
+    role: 온보딩 1판 보스 (의지 45, 야근 강요 미사용 — §4.4)
+    will: 45
+    weakness_tags: [응대, 개연성]
+    null_tags: []
+    banned_words: [환불, 응대, 답변, 고객센터, 사장]
+    equipment:
+      - name: 노예 계약서 낫
+        durability: 15
+        tags: [응대, 개연성]
+        fixed_review: "★ 환불 문의 3주째 답이 없습니다. 낫은 잘 듭니다. 제 월급을 베어갔거든요."
+    actions:
+      - id: contract_slash
+        name: 계약 갱신 베기
+        type: attack
+        text: "의지 피해 8"
+        effects:
+          - {op: damage, value: 8}
+      - id: owner_reply
+        name: 사장님 답글
+        type: gimmick
+        cooldown: 3
+        text: "B01의 사장님 답글과 동일 (규칙 정본은 B01 정의 참조)."
+        effects:
+          - op: rebut_debuff
+            action: suspend_this_battle
+            target_pool: all_active_debuffs
+            priority: [tier_desc, power_desc]
+            tiebreak: [empathy_desc, most_recent]
+            once_per_debuff: true
+            counter_rebut:
+              condition: fact_review_same_suit
+              on_success: [revive_debuff, {op: gauge_up, value: 1}]
+              limit_per_debuff: 1
+          - op: heal
+            value: 5
+            condition: no_rebut_target
+    pattern: [contract_slash, contract_slash, owner_reply]   # 야근 강요 자리를 계약 갱신 베기로 대체
+    phase2:
+      trigger: "의지 30 이하"
+      name: 리뷰 조작
+      text: "자신에게 5성 알바 리뷰 부착: 공격력 +3. 「고객센터가…」(P11) 접두로 이 버프를 저격 가능."
+      effects:
+        - {op: attack_up, value: 3, duration: battle, attachment: 알바_리뷰, counter_card: P11}
+    on_review:
+      note: "온보딩 1판도 작성권 규칙은 B01과 동일(Layer 3 도입 후). 정본은 B01 참조."
+      same_as: B01
