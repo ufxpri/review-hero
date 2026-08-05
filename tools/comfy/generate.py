@@ -59,6 +59,44 @@ NEGATIVE = (
     "gore, blood, dismemberment, lowres, jpeg artifacts, blurry"
 )
 
+# 화풍 — 문서 프롬프트의 첫 문단(스타일 서술)을 통째로 교체한다.
+# design/*.md 는 "무엇을 그릴지"(주제)의 정본이고, "어떻게 그릴지"(화풍)는 여기서 갈아끼운다.
+STYLES = {
+    "illust": (
+        "Hand-painted digital illustration for a stylized fantasy card game.\n"
+        "Bold confident brushwork with visible painterly strokes, clean readable shapes,\n"
+        "slightly exaggerated stylized proportions rather than photorealistic anatomy.\n"
+        "Warm characterful lighting with clear separation of light and shadow, soft bounce in the shadows.\n"
+        "Rich but controlled palette: warm ochre, mossy green, oxblood, ink brown, parchment cream,\n"
+        "with one saturated accent. Visible canvas grain and ink texture.\n"
+        "Isolated on a simple flat dark backdrop with a soft painted vignette, no environment, no floor.\n"
+        "Full figure, centered, with a clear silhouette that reads instantly at small size.\n"
+        "Characterful and expressive — the world is played straight, but the brush has personality.\n"
+        "Vertical 4:5 composition."
+    ),
+}
+# 일러스트 화풍에서는 공용 네거티브의 사진·만화 금지어가 오히려 방해가 된다
+STYLE_NEG_DROP = {
+    "illust": ["anime", "manga", "cel shading", "flat vector", "clip art",
+               "white background", "plain studio backdrop", "product photography", "catalog shot"],
+}
+
+
+def restyle(prompt: str, style: str) -> str:
+    """첫 문단(스타일)만 교체하고 주제 문단은 보존한다."""
+    if style not in STYLES:
+        return prompt
+    parts = prompt.split("\n\n", 1)
+    subject = parts[1] if len(parts) == 2 else prompt
+    return STYLES[style] + "\n\n" + subject
+
+
+def strip_neg(neg: str, style: str) -> str:
+    drop = STYLE_NEG_DROP.get(style, [])
+    return ", ".join(t for t in (x.strip() for x in neg.split(","))
+                     if t and t not in drop)
+
+
 # 체크포인트별 권장 샘플러 설정. Turbo 계열은 스텝·CFG가 완전히 다르다.
 CHECKPOINTS = {
     "juggernaut": dict(
@@ -252,6 +290,7 @@ def main():
     ap.add_argument("--cn-strength", type=float, default=0.75, help="ControlNet 강도")
     ap.add_argument("--cn-end", type=float, default=0.65,
                     help="ControlNet 적용 종료 시점. 낮출수록 후반부를 모델이 자유롭게 그린다")
+    ap.add_argument("--style", choices=sorted(STYLES), help="화풍 교체 (첫 문단만 갈아끼움)")
     ap.add_argument("--neg-extra", default="",
                     help="이 생성에만 덧붙일 네거티브. 카드별 금지어(예: 뒷모습의 face 계열)")
     args = ap.parse_args()
@@ -280,6 +319,8 @@ def main():
         sys.exit(1)
 
     global NEG_EXTRA
+    global NEGATIVE
+    if args.style: NEGATIVE = strip_neg(NEGATIVE, args.style)
     NEG_EXTRA = args.neg_extra.strip()
     key = args.ckpt or ("dreamshaper" if args.wireframe else "juggernaut")
     ckpt = CHECKPOINTS[key]
@@ -304,6 +345,7 @@ def main():
 
     for h_title, body in hits:
         prefix = "review-hero/" + re.sub(r"[^\w가-힣]+", "_", h_title)[:48]
+        body = restyle(body, args.style) if args.style else body
         if wf_name:
             g = workflow_controlnet(ckpt, body, args.seed, w, h, args.batch, prefix,
                                     wf_name, args.cn_strength, args.cn_end)

@@ -100,6 +100,7 @@ def main():
             "null_tags": enemy.get("null_tags", []),
             "equipment": enemy.get("equipment", []),
         },
+        "player": {"will": 62, "maxWill": 80},
         "enemyNames": names,
         "intent": {"name": act["name"], "value": dmg},
         "hand": hand,
