@@ -26,7 +26,25 @@
 - 마지막 슬라이드에서 서명 등록(S05)으로 이어진다. 슬라이드와 서명은 **한 흐름**이다 —
   "당신을 증명할 방법이 서명뿐"이라는 6번 슬라이드의 결론이 곧 다음 화면의 이유가 된다.
 - 톤: worldview §5 "세계는 진지하고, 그 세계의 규칙이 웃기다". **프롤로그는 진지하게 간다.**
-  개그는 5번 슬라이드의 "오배송" 한 방으로 충분하다.
+  개그는 P4 "오배송" 한 방으로 충분하다.
+
+### 문체 규칙 — 설명하지 말고 보여준다
+
+초고가 "AI 티가 난다"는 지적을 받았다. 원인은 네 가지였고, 전부 **소설이 아니라 보고서**의 특징이다.
+
+| 증상 | 초고 | 개정 |
+|---|---|---|
+| 감정을 대신 요약 | "그때마다 아무렇지 않았다" | "그가 세는 건 리뷰 수뿐이었다" — 성격을 행동으로 |
+| 통계 보고체 | "리뷰를 12,847건 썼다. 그중 아홉은…" | "12,847번째 리뷰를 올리고 그는 라면 물을 올렸다" |
+| 균일한 문장 길이 | 세 줄이 모두 같은 무게 | 길게-짧게 흔든다. P3b는 두 줄로 끊는다 |
+| 어미 단조로움 | "~였다/~것이었다" 반복 | 명사 종결·구어·시각 정보를 섞는다 |
+
+**규칙 넷**
+1. 결론을 내려주지 않는다. 장면을 놓고 독자가 느끼게 둔다.
+2. 구체적 사물 하나로 전체를 암시한다 — 라면 물, 삼천 원, 새벽 세 시 십사 분.
+3. 문장 길이를 흔든다. 가장 중요한 줄을 가장 짧게.
+4. 주제문은 아이러니로만 말한다. "그는 자기 리뷰의 피해자가 되어 죽었다"(설명) →
+   "이번에는 그가 평가받을 차례였다"(아이러니).
 
 ---
 
@@ -84,9 +102,9 @@ forest, ruins, stone architecture, adventurer, knight, warrior, painterly fantas
 
 ### P1 — 12,847건
 
-> 그는 리뷰를 12,847건 썼다.
-> 그중 아홉은 환불을 받아내기 위한 것이었다.
-> 별점 하나로 가게가 문을 닫는 걸 여러 번 봤고, 그때마다 아무렇지 않았다.
+> 12,847번째 리뷰를 올리고 그는 라면 물을 올렸다.
+> 별 하나, 사진 세 장, 반품 사유는 '생각과 달랐음'.
+> 문 닫은 가게가 몇 곳인지는 세지 않았다. 그가 세는 건 리뷰 수뿐이었다.
 
 ```
 Contemporary realistic digital illustration, present day, no fantasy elements whatsoever.
@@ -106,9 +124,9 @@ No text, no readable letters, no logos.
 
 ### P2 — 1위
 
-> 어느 날 그는 싸구려 보조배터리 하나를 1위로 올렸다.
-> 경쟁 상품에 별 하나씩을 꽂아 순위를 비운 뒤,
-> 그 자리에 이 물건을 밀어 넣었다. 재미로 한 일이었다.
+> 그날 밤에는 순위표를 정리했다. 1위부터 9위까지 별 하나씩.
+> 사흘이면 자리가 빈다는 걸 그는 알고 있었다.
+> 빈자리에 올려둔 건 삼천 원짜리 보조배터리였다. 이유는 없었다.
 
 ```
 Contemporary realistic digital illustration, present day, no fantasy elements whatsoever.
@@ -128,8 +146,9 @@ No text, no readable letters, no logos, no price tags, no star icons.
 
 ### P3a — 예감
 
-> 석 달 뒤, 그것은 충전 중에 부풀기 시작했다.
-> 그가 산 것이었다. 그가 1위로 올린 것이었다.
+> 석 달 뒤, 머리맡에서 플라스틱이 천천히 갈라지는 소리가 났다.
+> 삼천 원짜리였다. 그가 별 다섯을 주고 1위로 올려둔 바로 그것이었다.
+> 그는 소리를 등지고 돌아누웠다.
 
 ```
 Contemporary realistic digital illustration, present day, no fantasy elements whatsoever.
@@ -149,8 +168,8 @@ No text, no readable letters, no logos.
 
 ### P3b — 폭발
 
-> 그리고 터졌다.
-> 그는 자기 리뷰의 피해자가 되어 죽었다.
+> 새벽 세 시 십사 분, 방이 한 번 밝아졌다.
+> 이번에는 그가 평가받을 차례였다.
 
 ```
 Contemporary realistic digital illustration, present day, no fantasy elements whatsoever.
@@ -176,9 +195,9 @@ No text, no readable letters, no logos.
 
 ### P4 — 오배송
 
-> 물류를 맡은 심사위원 「택배좌」가 그의 사후 데이터를 집어 들었다.
-> 그리고 잘못된 컨베이어에 올렸다.
-> 훗날 그는 그것이 실수가 아니었다는 걸 알게 된다.
+> 물류를 맡은 심사위원은 그날 열두 시간째 근무 중이었다.
+> 손에 든 상자에는 이름이 없었다. 그런 건 가끔 온다.
+> 그는 왼쪽 벨트에 상자를 올렸다. 오른쪽이었어야 했다.
 
 ```
 Hand-painted digital illustration for a stylized fantasy card game.
@@ -197,9 +216,9 @@ No text, no readable letters, no logos.
 
 ### P5 — 덮어쓰기
 
-> 도착지는 ★0으로 꺼져가던 무명 모험가의 몸이었다.
-> 소멸하는 자리에 그의 데이터가 덮어써졌고,
-> 그 소란 중에 리뷰 카드 발급이 실패했다.
+> 도착한 곳에는 이름을 얻지 못한 채 꺼져가던 젊은이가 있었다.
+> 별 영 개. 소멸까지 얼마 남지 않은 몸이었다.
+> 두 기록이 한자리에서 겹쳤고, 그 소란 중에 카드 한 장이 발급되지 않았다.
 
 ```
 Hand-painted digital illustration for a stylized fantasy card game.
@@ -218,9 +237,9 @@ No text, no readable letters, no logos, no writing on the card.
 
 ### P6 — 평가 불가
 
-> 만물대장은 그를 읽지 못했다.
-> 신의 심판도, 축복도, 저주도 그를 비껴갔다.
-> 이 세계에서 그를 증명할 수 있는 것은 이제 그가 직접 남기는 기록뿐이다.
+> 눈을 떴을 때, 대장은 그를 넘어갔다.
+> 심판도 축복도 저주도 그의 이름을 찾지 못하고 지나쳤다.
+> 이 세계에 그의 자리는 없었다. 빈칸 하나가 있을 뿐이었다.
 
 ```
 Hand-painted digital illustration for a stylized fantasy card game.
