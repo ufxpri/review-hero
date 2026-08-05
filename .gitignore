@@ -17,3 +17,6 @@ coverage/
 # 프로토타입 빌드 산출물 (packages/proto/build.mjs로 생성)
 prototype/
 packages/proto/src/data.json
+
+# 와이어프레임은 tools/wireframe.py 로 재생성 가능한 산출물
+assets/wireframe/
