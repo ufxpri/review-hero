@@ -20,3 +20,6 @@ packages/proto/src/data.json
 
 # 와이어프레임은 tools/wireframe.py 로 재생성 가능한 산출물
 assets/wireframe/
+
+# ComfyUI 생성 결과물 (원본은 ~/ComfyUI/output/)
+assets/generated/

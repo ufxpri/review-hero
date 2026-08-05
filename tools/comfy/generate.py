@@ -1,0 +1,298 @@
+#!/usr/bin/env python3
+"""
+ComfyUI 배치 생성 드라이버.
+
+프롬프트 정본은 design/*.md 이고 이 스크립트가 그것을 읽는다 — 프롬프트를 코드에
+복사해두지 않는다. 문서를 고치면 생성 결과가 따라 바뀌는 단일 정본 구조.
+
+두 가지 모드:
+  txt2img   — 캐릭터·아이템 에셋 (image-prompts-ready.md)
+  controlnet — 화면 목업. 와이어프레임으로 배치를 강제 (ui-mockup-prompts.md)
+
+사용:
+    # ComfyUI 서버를 먼저 띄운다
+    ~/ComfyUI/venv/bin/python ~/ComfyUI/main.py
+
+    # 어떤 프롬프트가 있는지
+    python tools/comfy/generate.py --list
+
+    # 화면 목업 — 와이어프레임으로 배치 강제
+    python tools/comfy/generate.py --match "목업 A" --wireframe assets/wireframe/s20a.png
+
+    # 에셋 — 오크 앵커 4장
+    python tools/comfy/generate.py --match "C02 오크" --batch 4
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import re
+import sys
+import time
+import urllib.error
+import urllib.request
+from pathlib import Path
+
+REPO = Path(__file__).resolve().parents[2]
+SERVER = "http://127.0.0.1:8188"
+
+DOCS = [
+    REPO / "design" / "ui-mockup-prompts.md",
+    REPO / "design" / "image-prompts-ready.md",
+]
+
+# 문서 §0/§4의 네거티브를 여기 한 벌로 둔다 (두 문서가 공유하는 값)
+NEGATIVE = (
+    "text, letters, words, korean characters, chinese characters, watermark, signature, logo, "
+    "price tag, label, readable writing, "
+    "anime, manga, cel shading, chibi, cute, comedic expression, goofy grin, wacky pose, caricature, "
+    "flat vector, clip art, low detail, plastic toy look, "
+    "white background, plain studio backdrop, product photography, catalog shot, "
+    "busy background, crowd, extra limbs, deformed hands, "
+    "gore, blood, dismemberment, lowres, jpeg artifacts, blurry"
+)
+
+# 체크포인트별 권장 샘플러 설정. Turbo 계열은 스텝·CFG가 완전히 다르다.
+CHECKPOINTS = {
+    "juggernaut": dict(
+        file="juggernautXL_v9.safetensors",
+        steps=30, cfg=6.0, sampler="dpmpp_2m", scheduler="karras",
+        note="반실사 렌더 — 적 히어로·구성품 에셋용",
+    ),
+    "dreamshaper": dict(
+        file="dreamshaperXL_turbo_v2_1.safetensors",
+        steps=8, cfg=2.0, sampler="dpmpp_sde", scheduler="karras",
+        note="유화풍 Turbo — UI 목업 반복용 (약 4배 빠름)",
+    ),
+}
+
+
+# ── 프롬프트 정본 파싱 ────────────────────────────────────────
+
+def parse_prompts(paths=DOCS) -> list[tuple[str, str, Path]]:
+    """마크다운에서 (제목, 프롬프트, 출처) 목록을 뽑는다.
+
+    직전에 나온 ## / ### 제목을 그 다음 코드 블록의 이름으로 삼는다.
+    네거티브 프롬프트 블록과 저장 규칙 같은 비프롬프트 블록은 제외한다.
+    """
+    out: list[tuple[str, str, Path]] = []
+    for path in paths:
+        if not path.exists():
+            continue
+        heading = ""
+        in_block, buf = False, []
+        for line in path.read_text(encoding="utf-8").splitlines():
+            if line.startswith("```"):
+                if in_block:
+                    body = "\n".join(buf).strip()
+                    if _is_prompt(body):
+                        out.append((heading, body, path))
+                    in_block, buf = False, []
+                else:
+                    in_block = True
+                continue
+            if in_block:
+                buf.append(line)
+            elif line.startswith("#"):
+                heading = line.lstrip("#").strip()
+    return out
+
+
+def _is_prompt(body: str) -> bool:
+    """네거티브 블록·설정 스니펫을 걸러낸다."""
+    if not body or len(body) < 60:
+        return False
+    if body.lstrip().startswith("text, letters"):        # 네거티브 프롬프트
+        return False
+    if body.lstrip().startswith(("assets/", "~/", "npm ", "node ")):
+        return False
+    return True
+
+
+# ── 워크플로 그래프 ──────────────────────────────────────────
+
+def _base(ckpt: dict, positive: str, seed: int, w: int, h: int, batch: int) -> dict:
+    """체크포인트 + 프롬프트 인코딩 + 빈 latent. 두 모드가 공유하는 앞단."""
+    return {
+        "1": {"class_type": "CheckpointLoaderSimple",
+              "inputs": {"ckpt_name": ckpt["file"]}},
+        "2": {"class_type": "CLIPTextEncode",
+              "inputs": {"text": positive, "clip": ["1", 1]}},
+        "3": {"class_type": "CLIPTextEncode",
+              "inputs": {"text": NEGATIVE, "clip": ["1", 1]}},
+        "4": {"class_type": "EmptyLatentImage",
+              "inputs": {"width": w, "height": h, "batch_size": batch}},
+    }
+
+
+def _tail(ckpt: dict, seed: int, pos_node: str, neg_node: str, prefix: str) -> dict:
+    """샘플러 + 디코드 + 저장. 두 모드가 공유하는 뒷단."""
+    return {
+        "10": {"class_type": "KSampler",
+               "inputs": {"seed": seed, "steps": ckpt["steps"], "cfg": ckpt["cfg"],
+                          "sampler_name": ckpt["sampler"], "scheduler": ckpt["scheduler"],
+                          "denoise": 1.0, "model": ["1", 0],
+                          "positive": [pos_node, 0], "negative": [neg_node, 0],
+                          "latent_image": ["4", 0]}},
+        "11": {"class_type": "VAEDecode",
+               "inputs": {"samples": ["10", 0], "vae": ["1", 2]}},
+        "12": {"class_type": "SaveImage",
+               "inputs": {"filename_prefix": prefix, "images": ["11", 0]}},
+    }
+
+
+def workflow_txt2img(ckpt, positive, seed, w, h, batch, prefix) -> dict:
+    g = _base(ckpt, positive, seed, w, h, batch)
+    g.update(_tail(ckpt, seed, "2", "3", prefix))
+    return g
+
+
+def workflow_controlnet(ckpt, positive, seed, w, h, batch, prefix,
+                        wireframe: str, strength: float, end_percent: float) -> dict:
+    """와이어프레임으로 배치를 강제한다. 그림은 모델이 채우되 박스 위치는 고정."""
+    g = _base(ckpt, positive, seed, w, h, batch)
+    g["5"] = {"class_type": "LoadImage", "inputs": {"image": wireframe}}
+    g["6"] = {"class_type": "ControlNetLoader",
+              "inputs": {"control_net_name": "controlnet_scribble_sdxl.safetensors"}}
+    g["7"] = {"class_type": "ControlNetApplyAdvanced",
+              "inputs": {"positive": ["2", 0], "negative": ["3", 0],
+                         "control_net": ["6", 0], "image": ["5", 0],
+                         "strength": strength, "start_percent": 0.0,
+                         "end_percent": end_percent}}
+    g.update(_tail(ckpt, seed, "7", "7", prefix))
+    g["10"]["inputs"]["negative"] = ["7", 1]      # ApplyAdvanced는 pos/neg 둘 다 반환
+    return g
+
+
+# ── 서버 통신 ────────────────────────────────────────────────
+
+def _post(path: str, payload: dict) -> dict:
+    req = urllib.request.Request(
+        SERVER + path, data=json.dumps(payload).encode(),
+        headers={"Content-Type": "application/json"})
+    with urllib.request.urlopen(req, timeout=30) as r:
+        return json.load(r)
+
+
+def _get(path: str) -> dict:
+    with urllib.request.urlopen(SERVER + path, timeout=30) as r:
+        return json.load(r)
+
+
+def server_alive() -> bool:
+    try:
+        _get("/system_stats")
+        return True
+    except Exception:
+        return False
+
+
+def upload_image(path: Path) -> str:
+    """와이어프레임을 ComfyUI input 디렉터리로 올린다. 반환값은 LoadImage용 파일명."""
+    boundary = "----comfyupload"
+    body = b"".join([
+        f"--{boundary}\r\n".encode(),
+        f'Content-Disposition: form-data; name="image"; filename="{path.name}"\r\n'.encode(),
+        b"Content-Type: image/png\r\n\r\n",
+        path.read_bytes(), b"\r\n",
+        f"--{boundary}\r\n".encode(),
+        b'Content-Disposition: form-data; name="overwrite"\r\n\r\ntrue\r\n',
+        f"--{boundary}--\r\n".encode(),
+    ])
+    req = urllib.request.Request(
+        SERVER + "/upload/image", data=body,
+        headers={"Content-Type": f"multipart/form-data; boundary={boundary}"})
+    with urllib.request.urlopen(req, timeout=60) as r:
+        return json.load(r)["name"]
+
+
+def run(graph: dict, label: str) -> list[str]:
+    pid = _post("/prompt", {"prompt": graph})["prompt_id"]
+    t0 = time.time()
+    while True:
+        hist = _get(f"/history/{pid}")
+        if pid in hist:
+            outs = []
+            for node in hist[pid]["outputs"].values():
+                for im in node.get("images", []):
+                    outs.append(im["filename"])
+            print(f"  ✓ {label}  {time.time()-t0:.0f}초  →  {', '.join(outs)}")
+            return outs
+        time.sleep(2)
+        if time.time() - t0 > 1800:
+            print(f"  ✗ {label} 시간 초과")
+            return []
+
+
+# ── CLI ──────────────────────────────────────────────────────
+
+def main():
+    ap = argparse.ArgumentParser(description="ComfyUI 배치 생성")
+    ap.add_argument("--list", action="store_true", help="프롬프트 목록만 출력")
+    ap.add_argument("--match", help="제목 부분 일치로 프롬프트 선택")
+    ap.add_argument("--wireframe", help="ControlNet 입력 PNG (지정 시 배치 강제 모드)")
+    ap.add_argument("--ckpt", choices=sorted(CHECKPOINTS), help="기본: 목업=dreamshaper, 에셋=juggernaut")
+    ap.add_argument("--batch", type=int, default=1, help="한 번에 뽑을 장수")
+    ap.add_argument("--seed", type=int, default=1)
+    ap.add_argument("--size", help="WxH. 기본: 와이어프레임 크기 또는 832x1216")
+    ap.add_argument("--cn-strength", type=float, default=0.75, help="ControlNet 강도")
+    ap.add_argument("--cn-end", type=float, default=0.65,
+                    help="ControlNet 적용 종료 시점. 낮출수록 후반부를 모델이 자유롭게 그린다")
+    args = ap.parse_args()
+
+    prompts = parse_prompts()
+    if args.list or not args.match:
+        print(f"프롬프트 {len(prompts)}개\n")
+        src = None
+        for h, body, path in prompts:
+            if path != src:
+                print(f"\n── {path.name}")
+                src = path
+            print(f"   {h[:66]:68s} {len(body):>4}자")
+        if not args.match:
+            print("\n--match 로 제목 일부를 지정해 생성한다.")
+        return
+
+    hits = [(h, b) for h, b, _ in prompts if args.match in h]
+    if not hits:
+        print(f"'{args.match}' 에 맞는 프롬프트 없음. --list 로 확인.", file=sys.stderr)
+        sys.exit(1)
+
+    if not server_alive():
+        print("ComfyUI 서버에 연결할 수 없다. 먼저 실행:\n"
+              "  ~/ComfyUI/venv/bin/python ~/ComfyUI/main.py", file=sys.stderr)
+        sys.exit(1)
+
+    key = args.ckpt or ("dreamshaper" if args.wireframe else "juggernaut")
+    ckpt = CHECKPOINTS[key]
+
+    if args.size:
+        w, h = (int(v) for v in args.size.lower().split("x"))
+    elif args.wireframe:
+        from PIL import Image
+        w, h = Image.open(args.wireframe).size
+    else:
+        w, h = 832, 1216                                  # SDXL 세로 네이티브
+
+    wf_name = upload_image(Path(args.wireframe)) if args.wireframe else None
+
+    print(f"체크포인트 {ckpt['file']}  ({ckpt['note']})")
+    print(f"설정      {w}x{h}  {ckpt['steps']}스텝  CFG {ckpt['cfg']}  배치 {args.batch}")
+    if wf_name:
+        print(f"레이아웃  {wf_name}  강도 {args.cn_strength}  종료 {args.cn_end}")
+    print()
+
+    for h_title, body in hits:
+        prefix = "review-hero/" + re.sub(r"[^\w가-힣]+", "_", h_title)[:48]
+        if wf_name:
+            g = workflow_controlnet(ckpt, body, args.seed, w, h, args.batch, prefix,
+                                    wf_name, args.cn_strength, args.cn_end)
+        else:
+            g = workflow_txt2img(ckpt, body, args.seed, w, h, args.batch, prefix)
+        run(g, h_title[:52])
+
+    print(f"\n출력: ~/ComfyUI/output/review-hero/")
+
+
+if __name__ == "__main__":
+    main()
