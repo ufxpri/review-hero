@@ -46,6 +46,7 @@ SERVER = "http://127.0.0.1:8188"
 DOCS = [
     REPO / "design" / "ui-mockup-prompts.md",
     REPO / "design" / "image-prompts-ready.md",
+    REPO / "design" / "prologue-v1.md",
 ]
 
 # 문서 §0/§4의 네거티브를 여기 한 벌로 둔다 (두 문서가 공유하는 값)

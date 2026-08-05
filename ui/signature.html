@@ -1,0 +1,190 @@
+<meta charset="utf-8">
+<title>이세계 리뷰용사 — 서명 등록</title>
+<style>
+:root{
+  --bg:#12100e; --panel:rgba(20,18,15,.88); --edge:#6b5636; --edge-hi:#c39a52;
+  --ink:#efe7d8; --dim:#9a8f7d; --gold:#e0a94b; --red:#c2452e;
+  --parch:#e8dcc0; --parch-d:#cbb98f; --inkc:#2b2119;
+  font-family:Pretendard,"Apple SD Gothic Neo","Noto Sans KR",system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);display:flex;flex-direction:column;
+     align-items:center;padding:16px;min-height:100vh;font-size:14px}
+.screen{width:1344px;height:768px;flex:none;position:relative;overflow:hidden;
+        border:1px solid #2a241c;border-radius:6px;
+        background:radial-gradient(120% 100% at 50% 0%,#1e1a14,#0a0806);
+        display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px}
+.grain{position:absolute;inset:0;pointer-events:none;opacity:.05;
+       background-image:repeating-linear-gradient(0deg,#fff 0 1px,transparent 1px 3px),
+                        repeating-linear-gradient(90deg,#fff 0 1px,transparent 1px 4px)}
+.logo{position:absolute;left:20px;top:16px;font-weight:800;color:var(--gold);letter-spacing:-.4px}
+
+h1{font-size:23px;font-weight:800;letter-spacing:-.5px}
+.lead{max-width:620px;text-align:center;color:var(--dim);font-size:13px;line-height:1.75}
+.lead b{color:var(--ink)}
+
+/* 양피지 서명란 */
+.pad{position:relative;width:660px;height:236px;background:var(--parch);
+     border:2px solid var(--inkc);border-radius:10px;box-shadow:6px 6px 0 rgba(0,0,0,.5);
+     background-image:repeating-linear-gradient(92deg,rgba(120,100,60,.05) 0 2px,transparent 2px 5px);
+     cursor:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='30' height='30' viewBox='0 0 30 30'><path d='M26 3C16 6 8 13 5 23l3 3C18 23 25 15 26 3z' fill='%23e8dcc0' stroke='%232b2119'/><path d='M5 26l-3 3' stroke='%232b2119' stroke-width='2'/></svg>") 2 28,crosshair;
+     touch-action:none;overflow:hidden}
+.pad svg{position:absolute;inset:0;width:100%;height:100%}
+.pad path{fill:none;stroke:var(--inkc);stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.rule{position:absolute;left:44px;right:44px;bottom:56px;height:1px;background:var(--parch-d)}
+.rule::after{content:"×";position:absolute;left:-22px;top:-11px;font-size:17px;color:var(--parch-d)}
+.hint{position:absolute;left:0;right:0;bottom:24px;text-align:center;color:#a08f68;
+      font-size:12px;pointer-events:none;transition:opacity .2s}
+.pad.dirty .hint{opacity:0}
+
+.row{display:flex;gap:10px;align-items:center}
+.btn{padding:11px 22px;border-radius:8px;font-weight:700;cursor:pointer;
+     border:1px solid var(--edge);background:rgba(0,0,0,.4);color:var(--ink)}
+.btn:hover{filter:brightness(1.25)}
+.btn.primary{background:linear-gradient(#7a2a1c,#4d1a11);border-color:#a4553c}
+.btn:disabled{opacity:.35;cursor:not-allowed;filter:none}
+
+/* 카드 미리보기 — 실제 카드에 어떻게 얹히는지 그 자리에서 확인 */
+.preview{position:absolute;right:36px;bottom:36px;width:168px;height:214px;
+         background:var(--parch);color:var(--inkc);border:1px solid var(--parch-d);
+         border-radius:9px;padding:9px 10px;display:flex;flex-direction:column;
+         box-shadow:0 10px 26px rgba(0,0,0,.6);
+         background-image:repeating-linear-gradient(92deg,rgba(120,100,60,.05) 0 2px,transparent 2px 5px)}
+.preview .st{font-size:11px;color:#c9a24a}
+.preview .nm{font-weight:800;font-size:13px;margin:3px 0 5px}
+.preview .tx{font-size:10.5px;line-height:1.45;color:#3a3229;flex:1}
+.preview .ft{border-top:1px solid var(--parch-d);padding-top:5px;font-size:10.5px;
+             display:flex;gap:5px}
+.preview .tag{background:#2f2a20;color:#e8d9ae;border-radius:3px;padding:1px 6px;font-size:10px}
+.preview .cost{margin-left:auto;font-weight:800}
+.psig{position:absolute;left:11px;right:11px;bottom:40px;height:38px;pointer-events:none;opacity:0}
+.psig svg{width:100%;height:100%;overflow:visible;display:block}
+.psig path{fill:none;stroke:#2b2119;stroke-width:2.3;stroke-linecap:round;stroke-linejoin:round;
+           stroke-dasharray:100;stroke-dashoffset:100}
+.preview.play .psig{opacity:1}
+.preview.play .psig path{animation:draw .5s cubic-bezier(.5,.05,.55,.95) forwards}
+@keyframes draw{to{stroke-dashoffset:0}}
+.plabel{position:absolute;right:36px;bottom:258px;width:168px;text-align:center;
+        font-size:11px;color:var(--dim)}
+
+.note{width:1344px;max-width:100%;margin:14px auto 0;color:#6f675a;font-size:12px;line-height:1.7}
+.note b{color:#9a8f7d}
+</style>
+
+<div class="screen">
+  <div class="grain"></div>
+  <span class="logo">만물마켓</span>
+
+  <h1>리뷰어 등록 — 서명을 남겨주세요</h1>
+  <p class="lead">
+    당신은 만물대장이 읽지 못하는 존재입니다. 대장에 이름이 오르지 않으니
+    <b>이 서명이 당신을 증명하는 유일한 기록</b>이 됩니다.<br>
+    지금부터 당신이 쓰는 모든 리뷰 하단에 이 서명이 그어집니다.
+  </p>
+
+  <div class="pad" id="pad">
+    <div class="rule"></div>
+    <svg id="ink" viewBox="0 0 660 236" preserveAspectRatio="none"></svg>
+    <div class="hint">여기에 서명을 그리세요 — 획을 여러 번 나눠 그어도 됩니다</div>
+  </div>
+
+  <div class="row">
+    <button class="btn" id="undo" disabled>한 획 지우기</button>
+    <button class="btn" id="clear" disabled>다시 쓰기</button>
+    <button class="btn primary" id="save" disabled>이 서명으로 등록</button>
+  </div>
+
+  <div class="plabel">카드에 얹힌 모습</div>
+  <div class="preview" id="preview">
+    <div class="st">★☆☆☆☆</div>
+    <div class="nm">손목 나감</div>
+    <div class="tx">위력은 확실한데 손목이 나갑니다.<br>데드리프트 삼 년 하고 오세요.</div>
+    <div class="psig"><svg id="psvg" viewBox="0 0 140 38" preserveAspectRatio="none"></svg></div>
+    <div class="ft"><span class="tag">#무게</span><span>의지 피해 7</span><span class="cost">✍1</span></div>
+  </div>
+</div>
+
+<p class="note">
+  <b>서명 등록</b> — 그린 획을 SVG path로 저장한다(localStorage <code>reviewhero.sig</code>).
+  카드에서 <code>stroke-dasharray</code> 애니메이션으로 다시 그어지므로,
+  <b>획순까지 그대로 재생</b>된다. 좌표는 660×236 기준으로 저장하고 카드에서 비율만 맞춘다.
+</p>
+
+<script>
+const KEY = 'reviewhero.sig';
+const pad = document.getElementById('pad'), ink = document.getElementById('ink');
+const psvg = document.getElementById('psvg'), preview = document.getElementById('preview');
+let strokes = [], cur = null, drawing = false;
+
+const pt = e => {
+  const r = pad.getBoundingClientRect();
+  return [ +( (e.clientX - r.left) / r.width  * 660 ).toFixed(1),
+           +( (e.clientY - r.top ) / r.height * 236 ).toFixed(1) ];
+};
+
+// 점 목록 → 부드러운 path. 중점을 지나는 이차 베지어로 손떨림을 눌러준다
+function toPath(pts){
+  if (pts.length < 2) return `M${pts[0][0]},${pts[0][1]} l0.1,0`;
+  let d = `M${pts[0][0]},${pts[0][1]}`;
+  for (let i = 1; i < pts.length - 1; i++){
+    const [x, y] = pts[i], [nx, ny] = pts[i + 1];
+    d += ` Q${x},${y} ${((x + nx) / 2).toFixed(1)},${((y + ny) / 2).toFixed(1)}`;
+  }
+  const last = pts[pts.length - 1];
+  return d + ` L${last[0]},${last[1]}`;
+}
+
+function render(){
+  ink.innerHTML = strokes.map(s => `<path d="${toPath(s)}"/>`).join('');
+  const has = strokes.length > 0;
+  pad.classList.toggle('dirty', has);
+  undo.disabled = clear.disabled = save.disabled = !has;
+  drawPreview();
+}
+
+// 카드 미리보기 — 저장 좌표(660×236)를 카드 서명란(140×38)에 비율로 맞춘다
+function fitPaths(w, h){
+  if (!strokes.length) return [];
+  const xs = strokes.flat().map(p => p[0]), ys = strokes.flat().map(p => p[1]);
+  const x0 = Math.min(...xs), x1 = Math.max(...xs);
+  const y0 = Math.min(...ys), y1 = Math.max(...ys);
+  const sw = Math.max(1, x1 - x0), sh = Math.max(1, y1 - y0);
+  const k = Math.min(w / sw, h / sh) * .94;
+  const ox = (w - sw * k) / 2 - x0 * k, oy = (h - sh * k) / 2 - y0 * k;
+  return strokes.map(s => toPath(s.map(([x, y]) => [+(x * k + ox).toFixed(1), +(y * k + oy).toFixed(1)])));
+}
+
+function drawPreview(){
+  const paths = fitPaths(140, 38);
+  psvg.innerHTML = paths.map(d => `<path pathLength="100" d="${d}"/>`).join('');
+  preview.classList.remove('play');
+  if (paths.length) requestAnimationFrame(() => preview.classList.add('play'));
+}
+
+pad.addEventListener('pointerdown', e => {
+  drawing = true; cur = [pt(e)]; strokes.push(cur);
+  pad.setPointerCapture(e.pointerId); render();
+});
+pad.addEventListener('pointermove', e => {
+  if (!drawing) return;
+  const p = pt(e), last = cur[cur.length - 1];
+  if (Math.hypot(p[0] - last[0], p[1] - last[1]) < 2.5) return;  // 과밀 점 제거
+  cur.push(p); render();
+});
+addEventListener('pointerup', () => { drawing = false; cur = null; });
+
+undo.onclick  = () => { strokes.pop(); render(); };
+clear.onclick = () => { strokes = []; render(); };
+save.onclick  = () => {
+  localStorage.setItem(KEY, JSON.stringify({v: 1, box: [660, 236], strokes}));
+  save.textContent = '등록 완료 — 이 서명으로 리뷰를 씁니다';
+  save.disabled = true;
+};
+
+// 이미 등록된 서명이 있으면 불러온다
+try {
+  const saved = JSON.parse(localStorage.getItem(KEY) || 'null');
+  if (saved?.strokes?.length) { strokes = saved.strokes; }
+} catch {}
+render();
+</script>

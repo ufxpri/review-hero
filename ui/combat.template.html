@@ -265,6 +265,40 @@ body{background:var(--bg);color:var(--ink);display:flex;flex-direction:column;
 @keyframes pop{0%{transform:scale(1)}35%{transform:scale(1.5);
   box-shadow:0 0 14px var(--gold)}100%{transform:scale(1)}}
 
+/* ══ 서명 — 카드를 쓸 때 빈칸에 사인이 그어진다 ═══════════
+   이 게임에서 카드를 낸다는 건 리뷰를 쓴다는 뜻이다. 그 행위를 화면에 보이게 한다.
+   pathLength="100"으로 길이를 정규화해 dasharray를 하드코딩하지 않는다. */
+.card{position:relative}
+.sig{position:absolute;left:11px;right:11px;bottom:40px;height:38px;
+     pointer-events:none;opacity:0}
+.sig svg{width:100%;height:100%;overflow:visible;display:block}
+.sig path{fill:none;stroke:#2b2119;stroke-linecap:round;stroke-linejoin:round;
+          stroke-dasharray:100;stroke-dashoffset:100}
+.sig .ln{stroke-width:2.3}
+.sig .fl{stroke-width:1.4;opacity:.65}
+.sig .nib{position:absolute;left:0;top:0;width:20px;height:20px;margin:-16px 0 0 -2px;
+          offset-path:path("M3,25 C11,6 19,3 23,13 C27,23 21,30 17,24 C13,17 23,7 35,9 C47,11 41,28 35,25 C29,22 37,9 51,11 C65,13 59,30 67,25 C75,20 71,9 83,11 C95,13 89,26 97,23 C105,20 101,11 113,15 C125,19 119,26 133,18");offset-distance:0;opacity:0;
+          offset-rotate:0deg;transform:rotate(-8deg)}
+.sig .blot{position:absolute;right:2px;bottom:9px;width:7px;height:7px;border-radius:50%;
+           background:#2b2119;transform:scale(0);opacity:.85}
+
+.card.signing .sig{opacity:1}
+.card.signing .sig .ln{animation:draw .40s cubic-bezier(.5,.05,.55,.95) forwards}
+.card.signing .sig .fl{animation:draw .17s ease-out .34s forwards}
+.card.signing .sig .nib{animation:nib .40s cubic-bezier(.5,.05,.55,.95) forwards}
+.card.signing .sig .blot{animation:blot .3s ease-out .40s forwards}
+.card.signing{transform:translateY(-42px) scale(1.09) rotate(-1deg);z-index:9;
+              box-shadow:0 22px 46px rgba(0,0,0,.85)}
+/* 날아가는 복제본은 이미 서명이 끝난 상태로 굳혀 둔다 */
+.card.signed .sig{opacity:1}
+.card.signed .sig path{stroke-dashoffset:0}
+.card.signed .sig .nib{display:none}
+.card.signed .sig .blot{transform:scale(1)}
+
+@keyframes draw{to{stroke-dashoffset:0}}
+@keyframes nib{0%{opacity:1;offset-distance:0}88%{opacity:1}100%{opacity:0;offset-distance:100%}}
+@keyframes blot{0%{transform:scale(0)}60%{transform:scale(1.25)}100%{transform:scale(1)}}
+
 .note{width:1344px;max-width:100%;margin:14px auto 0;color:#6f675a;font-size:12px;
       line-height:1.7}
 .note b{color:#9a8f7d}
@@ -429,6 +463,13 @@ $('#cards').innerHTML = DATA.hand.map((c,i)=>`
     <div class="ctext">${(c.text||'').trim().replace(/\n/g,'<br>')}</div>
     ${c.origin?.equipment||c.origin?.enemy
       ? `<div class="origin">원산지 · ${c.origin.equipment || DATA.enemyNames[c.origin.enemy] || c.origin.enemy}</div>` : ''}
+    <div class="sig">
+      <svg viewBox="0 0 140 38" preserveAspectRatio="none">
+        <path class="ln" pathLength="100" d="M3,25 C11,6 19,3 23,13 C27,23 21,30 17,24 C13,17 23,7 35,9 C47,11 41,28 35,25 C29,22 37,9 51,11 C65,13 59,30 67,25 C75,20 71,9 83,11 C95,13 89,26 97,23 C105,20 101,11 113,15 C125,19 119,26 133,18"/>
+        <path class="fl" pathLength="100" d="M7,31 C42,36 92,33 131,27"/>
+      </svg>
+      <span class="nib">🪶</span><span class="blot"></span>
+    </div>
     <div class="cfoot">
       ${c.tag?`<span class="tag">#${c.tag}</span>`:`<span class="tag">무판정</span>`}
       <span class="eff">${c.ui||''}</span>
@@ -500,6 +541,43 @@ document.querySelectorAll('.card').forEach(el => {
   });
 });
 
+// ── 등록된 서명 ───────────────────────────────────
+// ui/signature.html 에서 그린 획을 그대로 쓴다. 없으면 기본 필체로 대체.
+(function applySignature(){
+  let saved = null;
+  try { saved = JSON.parse(localStorage.getItem('reviewhero.sig') || 'null'); } catch {}
+  if (!saved?.strokes?.length) return;
+  const pts = saved.strokes.flat();
+  const xs = pts.map(p => p[0]), ys = pts.map(p => p[1]);
+  const x0 = Math.min(...xs), y0 = Math.min(...ys);
+  const sw = Math.max(1, Math.max(...xs) - x0), sh = Math.max(1, Math.max(...ys) - y0);
+  const k = Math.min(140 / sw, 38 / sh) * 0.94;
+  const ox = (140 - sw * k) / 2 - x0 * k, oy = (38 - sh * k) / 2 - y0 * k;
+  const fit = ([x, y]) => [+(x * k + ox).toFixed(1), +(y * k + oy).toFixed(1)];
+  const toPath = s => {                       // signature.html 과 같은 이차 베지어 평활화
+    const q = s.map(fit);
+    if (q.length < 2) return `M${q[0][0]},${q[0][1]} l0.1,0`;
+    let d = `M${q[0][0]},${q[0][1]}`;
+    for (let i = 1; i < q.length - 1; i++){
+      const [x, y] = q[i], [nx, ny] = q[i + 1];
+      d += ` Q${x},${y} ${((x + nx) / 2).toFixed(1)},${((y + ny) / 2).toFixed(1)}`;
+    }
+    return d + ` L${q.at(-1)[0]},${q.at(-1)[1]}`;
+  };
+  const paths = saved.strokes.map(toPath);
+  document.querySelectorAll('.sig').forEach(sig => {
+    sig.querySelector('svg').innerHTML =
+      paths.map((d,i) => `<path class="ln s${i}" pathLength="100" d="${d}"/>`).join('');
+    // 획순대로 이어 그린다 — 총 0.4초를 획 수로 나눈다
+    const per = 0.4 / paths.length;
+    sig.querySelectorAll('path').forEach((el, i) => {
+      el.style.animationDuration = per + 's';
+      el.style.animationDelay = (per * i) + 's';
+    });
+    sig.querySelector('.nib').style.offsetPath = `path("${paths[0]}")`;
+  });
+})();
+
 // ── 이펙트 ────────────────────────────────────────
 const scr = $('#screen');
 const rel = el => {                       // 화면 좌표계 기준 중심점
@@ -543,13 +621,22 @@ function playCard(cardEl, zone){
     return;
   }
   const target = targetOf(zone), v = judge(card, target);
-  const base = card.effect?.value ?? card.effect?.damage ?? 0;
+  // damage 필드가 따로 있으면 그쪽이 의지 피해다 (value는 stun 턴 수 등 주효과 수치)
+  const base = card.effect?.damage ?? card.effect?.value ?? 0;
   const dmg  = base ? Math.max(1, Math.floor(base * v.mult) + v.flat) : 0;
   const from = rel(cardEl), to = rel(zone);
 
-  // ① 카드가 대상으로 날아간다
+  cardEl.dataset.used = '1';
+  cardEl.classList.remove('ghost');
+  cardEl.classList.add('signing');           // ① 빈칸에 사인이 그어진다
+  $('#verdict').classList.remove('show');
+  setTimeout(() => fling(cardEl, zone, card, target, v, dmg, from, to), 470);
+}
+
+function fling(cardEl, zone, card, target, v, dmg, from, to){
+  // ② 서명이 끝난 카드가 대상으로 날아간다
   const fly = cardEl.cloneNode(true);
-  fly.className = 'card fly';
+  fly.className = 'card fly signed';
   fly.style.left = (from.r.left - from.s.left) + 'px';
   fly.style.top  = (from.r.top  - from.s.top ) + 'px';
   fly.style.width = from.r.width + 'px'; fly.style.height = from.r.height + 'px';
@@ -560,14 +647,13 @@ function playCard(cardEl, zone){
   });
   setTimeout(() => fly.remove(), 340);
 
-  // ② 손패에서 빠지고 필력이 준다
-  cardEl.dataset.used = '1';
+  // ③ 손패에서 빠지고 필력이 준다
   cardEl.style.transition = 'opacity .18s,transform .18s';
   cardEl.style.opacity = '0'; cardEl.style.transform = 'translateY(24px) scale(.9)';
   setTimeout(() => cardEl.remove(), 200);
   st.energy = Math.max(0, st.energy - card.cost);
 
-  // ③ 착탄 — 잉크 · 도장 · 숫자 · 흔들림 · 게이지
+  // ④ 착탄 — 잉크 · 도장 · 숫자 · 흔들림 · 게이지
   setTimeout(() => {
     splat(to.x, to.y);
     stamp(v, to.x, to.y - 54);

@@ -1,0 +1,133 @@
+<meta charset="utf-8">
+<title>이세계 리뷰용사 — 프롤로그</title>
+<style>
+:root{
+  --bg:#12100e; --ink:#efe7d8; --dim:#9a8f7d; --gold:#e0a94b;
+  --parch:#e8dcc0; --inkc:#2b2119;
+  font-family:Pretendard,"Apple SD Gothic Neo","Noto Sans KR",system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);display:flex;flex-direction:column;
+     align-items:center;padding:16px;min-height:100vh;font-size:14px}
+.screen{width:1344px;height:768px;flex:none;position:relative;overflow:hidden;
+        border:1px solid #2a241c;border-radius:6px;background:#070605;cursor:pointer}
+.grain{position:absolute;inset:0;z-index:6;pointer-events:none;opacity:.055;
+       background-image:repeating-linear-gradient(0deg,#fff 0 1px,transparent 1px 3px),
+                        repeating-linear-gradient(90deg,#fff 0 1px,transparent 1px 4px)}
+
+/* 슬라이드 — 이미지는 아주 느리게 밀어 정지화면처럼 보이지 않게 한다 */
+.slide{position:absolute;inset:0;opacity:0;transition:opacity .7s ease}
+.slide.on{opacity:1}
+.slide img{width:100%;height:100%;object-fit:cover;
+           animation:drift 16s ease-out forwards}
+.slide .miss{position:absolute;inset:0;display:grid;place-items:center;
+             background:#15120e;color:#4c453b;font-size:13px}
+@keyframes drift{from{transform:scale(1.06) translate(1%,.6%)}to{transform:scale(1) translate(0,0)}}
+.slide::after{content:"";position:absolute;inset:0;
+       background:linear-gradient(transparent 42%,rgba(6,5,4,.82) 78%)}
+
+/* 본문 */
+.copy{position:absolute;left:0;right:0;bottom:96px;z-index:4;padding:0 96px;
+      opacity:0;transform:translateY(14px);transition:opacity .6s .25s,transform .6s .25s}
+.slide.on ~ .copy.cur{opacity:1;transform:translateY(0)}
+.copy .no{font-size:12px;color:var(--gold);letter-spacing:2px;margin-bottom:10px}
+.copy p{font-size:20px;line-height:1.85;max-width:900px;
+        text-shadow:0 2px 10px rgba(0,0,0,.9)}
+.copy p b{color:#fff}
+
+/* 진행 표시 */
+.dots{position:absolute;left:96px;bottom:56px;z-index:5;display:flex;gap:7px}
+.dots i{width:26px;height:3px;border-radius:2px;background:rgba(239,231,216,.22);
+        transition:background .3s}
+.dots i.on{background:var(--gold)}
+.skip{position:absolute;right:24px;top:20px;z-index:7;padding:7px 15px;font-size:12px;
+      color:var(--dim);border:1px solid #4a4238;border-radius:5px;background:rgba(0,0,0,.45)}
+.skip:hover{color:var(--ink);border-color:var(--gold)}
+.next{position:absolute;right:96px;bottom:52px;z-index:5;font-size:13px;color:var(--dim);
+      display:flex;align-items:center;gap:8px}
+.next b{color:var(--ink);font-weight:600}
+.next .k{border:1px solid #4a4238;border-radius:4px;padding:2px 8px;font-size:11px}
+
+/* 마지막 — 서명 등록으로 */
+.gate{position:absolute;inset:0;z-index:8;display:none;place-items:center;
+      background:radial-gradient(70% 70% at 50% 45%,rgba(10,8,6,.72),rgba(6,5,4,.95))}
+.gate.on{display:grid}
+.gate .box{text-align:center;display:flex;flex-direction:column;align-items:center;gap:18px}
+.gate h2{font-size:25px;font-weight:800;letter-spacing:-.5px}
+.gate p{color:var(--dim);font-size:14px;line-height:1.8;max-width:560px}
+.gate a{padding:13px 30px;border-radius:9px;font-weight:800;text-decoration:none;
+        background:linear-gradient(#7a2a1c,#4d1a11);border:1px solid #a4553c;color:var(--ink)}
+.gate a:hover{filter:brightness(1.2)}
+
+.note{width:1344px;max-width:100%;margin:14px auto 0;color:#6f675a;font-size:12px;line-height:1.7}
+.note b{color:#9a8f7d}
+</style>
+
+<div class="screen" id="screen">
+  <div id="slides"></div>
+  <div class="grain"></div>
+  <div class="dots" id="dots"></div>
+  <div class="next"><b>클릭</b> 또는 <span class="k">Space</span> 로 계속</div>
+  <div class="skip" id="skip">건너뛰기</div>
+
+  <div class="gate" id="gate">
+    <div class="box">
+      <h2>이 세계에서 당신을 증명할 방법은 하나뿐입니다</h2>
+      <p>만물대장은 당신을 읽지 못합니다.<br>
+         이름이 오르지 않으니, 당신이 직접 남기는 기록만이 남습니다.</p>
+      <a href="signature.html">서명 남기러 가기 →</a>
+    </div>
+  </div>
+</div>
+
+<p class="note">
+  <b>프롤로그</b> — 본문과 이미지 프롬프트의 정본은 <code>design/prologue-v1.md</code> §3이고,
+  빌드가 그것을 읽어 이 화면을 만든다. 슬라이드 6장 → 서명 등록(S05) → 온보딩 1판(GDD §4.4).
+</p>
+
+<script>
+const SLIDES = /*{{SLIDES}}*/[];
+const wrap = document.getElementById('slides'), dots = document.getElementById('dots');
+
+wrap.innerHTML = SLIDES.map((s, i) => `
+  <div class="slide" data-i="${i}">
+    ${s.img ? `<img src="${s.img}" alt="">` : `<div class="miss">${s.title} — 이미지 생성 대기</div>`}
+  </div>`).join('') + SLIDES.map((s, i) => `
+  <div class="copy" data-i="${i}">
+    <div class="no">${String(i + 1).padStart(2, '0')} · ${s.title}</div>
+    ${s.lines.map(l => `<p>${l}</p>`).join('')}
+  </div>`).join('');
+dots.innerHTML = SLIDES.map(() => '<i></i>').join('');
+
+let n = -1;
+function show(i){
+  if (i >= SLIDES.length) { document.getElementById('gate').classList.add('on'); return; }
+  n = i;
+  document.querySelectorAll('.slide').forEach(el => el.classList.toggle('on', +el.dataset.i === i));
+  document.querySelectorAll('.copy').forEach(el => {
+    const on = +el.dataset.i === i;
+    el.classList.toggle('cur', on);
+    el.style.opacity = on ? '1' : '0';
+    el.style.transform = on ? 'translateY(0)' : 'translateY(14px)';
+  });
+  document.querySelectorAll('.dots i').forEach((el, j) => el.classList.toggle('on', j <= i));
+  // 이미지가 매번 처음부터 밀리도록 애니메이션을 재시작한다
+  const img = document.querySelector(`.slide[data-i="${i}"] img`);
+  if (img) { img.style.animation = 'none'; img.offsetHeight; img.style.animation = ''; }
+}
+const advance = () => show(n + 1);
+
+document.getElementById('screen').addEventListener('click', e => {
+  if (e.target.closest('.skip') || e.target.closest('.gate')) return;
+  advance();
+});
+document.getElementById('skip').addEventListener('click', e => {
+  e.stopPropagation();
+  show(SLIDES.length);
+});
+addEventListener('keydown', e => {
+  if (e.code === 'Space' || e.code === 'Enter' || e.code === 'ArrowRight'){ e.preventDefault(); advance(); }
+  if (e.code === 'ArrowLeft' && n > 0) show(n - 1);
+});
+show(0);
+</script>
