@@ -109,14 +109,21 @@ def _is_prompt(body: str) -> bool:
     """네거티브 블록·설정 스니펫을 걸러낸다."""
     if not body or len(body) < 60:
         return False
-    if body.lstrip().startswith("text, letters"):        # 네거티브 프롬프트
+    if body.lstrip().startswith("text, letters"):        # 공용 네거티브 프롬프트
         return False
     if body.lstrip().startswith(("assets/", "~/", "npm ", "node ")):
+        return False
+    # 카드 전용 추가 네거티브는 문장이 아니라 쉼표 키워드 나열이다.
+    # 마침표 없이 쉼표가 8개를 넘으면 프롬프트가 아니라 금지어 목록으로 본다.
+    if "." not in body and body.count(",") > 8:
         return False
     return True
 
 
 # ── 워크플로 그래프 ──────────────────────────────────────────
+
+NEG_EXTRA = ""   # --neg-extra 로 주입. 카드별 금지어를 공용 NEGATIVE 뒤에 덧붙인다
+
 
 def _base(ckpt: dict, positive: str, seed: int, w: int, h: int, batch: int) -> dict:
     """체크포인트 + 프롬프트 인코딩 + 빈 latent. 두 모드가 공유하는 앞단."""
@@ -126,7 +133,7 @@ def _base(ckpt: dict, positive: str, seed: int, w: int, h: int, batch: int) -> d
         "2": {"class_type": "CLIPTextEncode",
               "inputs": {"text": positive, "clip": ["1", 1]}},
         "3": {"class_type": "CLIPTextEncode",
-              "inputs": {"text": NEGATIVE, "clip": ["1", 1]}},
+              "inputs": {"text": (NEGATIVE + ", " + NEG_EXTRA).strip(", "), "clip": ["1", 1]}},
         "4": {"class_type": "EmptyLatentImage",
               "inputs": {"width": w, "height": h, "batch_size": batch}},
     }
@@ -245,6 +252,8 @@ def main():
     ap.add_argument("--cn-strength", type=float, default=0.75, help="ControlNet 강도")
     ap.add_argument("--cn-end", type=float, default=0.65,
                     help="ControlNet 적용 종료 시점. 낮출수록 후반부를 모델이 자유롭게 그린다")
+    ap.add_argument("--neg-extra", default="",
+                    help="이 생성에만 덧붙일 네거티브. 카드별 금지어(예: 뒷모습의 face 계열)")
     args = ap.parse_args()
 
     prompts = parse_prompts()
@@ -270,6 +279,8 @@ def main():
               "  ~/ComfyUI/venv/bin/python ~/ComfyUI/main.py", file=sys.stderr)
         sys.exit(1)
 
+    global NEG_EXTRA
+    NEG_EXTRA = args.neg_extra.strip()
     key = args.ckpt or ("dreamshaper" if args.wireframe else "juggernaut")
     ckpt = CHECKPOINTS[key]
 

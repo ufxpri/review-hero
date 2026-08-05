@@ -37,7 +37,8 @@ DEMO_HAND = [
 # 생성 에셋 → UI 경로. 파일이 없으면 화면에 자리표시가 뜬다.
 ART = {
     "enemy":  ("_C02_오크", "enemy-orc.png"),
-    "player": ("C07_플레이어", "player.png"),
+    "hero":   ("C09_플레이어_뒷모습", "hero-back.png"),   # 포켓몬 구도 — 좌하단 뒷모습
+    "player": ("C07_플레이어_아바타", "player.png"),      # 시네마틱용 (뒷모습 없을 때 대체)
     "scene":  ("B05_맵_배경", "scene.png"),
 }
 

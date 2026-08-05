@@ -283,6 +283,43 @@ pixel-grid fringe at its boundary.
 Everything else about him is rendered in full detail. Ordinary, unremarkable, and unreadable.
 ```
 
+### C09 플레이어 뒷모습 — 전투 화면 좌하단 (포켓몬 구도)
+
+전투 화면의 주인공은 **뒤에서 본다.** 얼굴이 보이지 않으므로 '평가 불가'를 억지 연출 없이
+그대로 성립시킨다(C07의 "얼굴이 로딩 실패한 공백"을 대체). 깃털펜과 양피지를 들려
+**리뷰어의 유쾌한 필력**을 실루엣만으로 드러낸다.
+
+> **1차 생성 실패 기록**: "VIEWED STRICTLY FROM BEHIND"만으로는 모델이 무시하고 얼굴이 보이는
+> 3/4 측면을 그린다. 뒷모습은 확산 모델이 가장 잘 어기는 지시라 **첫 문장부터 반복해서 못 박고**,
+> 네거티브에 `face, facial features, eyes, nose, mouth, looking at camera, front view, profile view`를
+> 반드시 추가한다. 아래는 그 반영본.
+
+```
+Rear view from directly behind. Back of the head only. The face is not visible at all.
+High-quality dark fantasy character art for a video game.
+Detailed painterly 3D render with rich physical materials.
+The subject stands with his back fully turned to the camera, facing away into the scene.
+We see the back of his skull, the back of his neck, and his shoulder blades. No face. No profile.
+Cool key light from the front-right beyond him, so he is rim-lit along the shoulders and the
+side facing us falls into deep shadow — a foreground silhouette.
+Moody desaturated palette: iron grey, mossy olive, oxblood, damp stone, with one warm amber accent.
+Isolated on a plain flat dark backdrop, no environment, no floor, no scenery.
+Cropped at the waist, close foreground framing, subject fills the frame.
+Vertical 4:5 composition.
+
+A lean man in a worn modern hooded jacket, hood down, short dark hair, shoulders loose and
+relaxed, seen entirely from behind. His right hand is raised out to the side holding a long pale
+quill pen, poised just about to write. Under his left arm he carries a thick roll of parchment,
+its edge unfurling. He stands casually with his weight on one leg, entirely unbothered — the
+back of someone who has done this many times and is already composing the opening line.
+```
+
+**이 카드 전용 추가 네거티브** (기존 네거티브에 이어 붙인다):
+```
+face, facial features, eyes, nose, mouth, beard, looking at camera, looking back over shoulder,
+front view, three-quarter view, profile view, turned head, visible skin on face
+```
+
 ---
 
 # 3. 구성품(장비) 아트 — S20 구성품 · S31 진열대
