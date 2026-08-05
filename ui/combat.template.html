@@ -8,9 +8,11 @@
   font-family:Pretendard,"Apple SD Gothic Neo","Noto Sans KR",system-ui,sans-serif;
 }
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:var(--bg);color:var(--ink);display:flex;justify-content:center;
-     padding:16px;min-height:100vh;font-size:14px}
-.screen{width:1344px;max-width:100%;aspect-ratio:1344/768;position:relative;
+/* 세로 스택 — .note 가 화면 옆에 붙지 않도록 flex 방향을 명시한다 */
+body{background:var(--bg);color:var(--ink);display:flex;flex-direction:column;
+     align-items:center;padding:16px;min-height:100vh;font-size:14px}
+/* 1344x768 고정 좌표계. 내부 배치가 전부 절대 px이므로 축소 스케일을 넣지 않는다 */
+.screen{width:1344px;height:768px;flex:none;position:relative;
         border:1px solid #2a241c;border-radius:6px;overflow:hidden;
         background:#0d0b09 var(--scene-bg) center/cover no-repeat}
 .screen::after{content:"";position:absolute;inset:0;pointer-events:none;
@@ -27,22 +29,23 @@ body{background:var(--bg);color:var(--ink);display:flex;justify-content:center;
 .chip{border:1px solid var(--edge);border-radius:4px;padding:3px 9px;
       background:rgba(0,0,0,.35);font-size:12px;color:var(--dim)}
 
-/* ── 무대 ─────────────────────────────────────────── */
-.stage{position:absolute;inset:46px 0 218px 0}
-.actor{position:absolute;bottom:0;display:flex;flex-direction:column;align-items:center}
+/* ── 무대 ─────────────────────────────────────────────
+   768px 세로 예산: 46 상단바 / 118 인텐트 / 118~470 인물 / 470~560 정보 / 560~768 손패 */
+.stage{position:absolute;inset:46px 0 208px 0}
+.actor{position:absolute;display:flex;flex-direction:column;align-items:center}
 .actor img{display:block;border:2px solid var(--edge);border-radius:4px;
            box-shadow:0 12px 40px rgba(0,0,0,.7)}
-.actor.player{left:120px;width:190px}
-.actor.player img{width:190px;height:270px;object-fit:cover;object-position:top center}
-.actor.enemy{right:150px;width:300px}
-.actor.enemy img{width:300px;height:390px;object-fit:cover;object-position:top center}
+.actor.player{left:96px;top:92px;width:180px}
+.actor.player img{width:180px;height:242px;object-fit:cover;object-position:top center}
+.actor.enemy{right:96px;top:18px;width:272px}
+.actor.enemy img{width:272px;height:326px;object-fit:cover;object-position:top center}
 .noimg{display:grid;place-items:center;background:#1a1714;color:#4c453b;font-size:12px;
        border:2px dashed #3a332a}
 
 /* 발송 예정 = 적 인텐트 */
-.intent{position:absolute;top:8px;right:150px;width:300px;
+.intent{position:absolute;top:-36px;left:0;width:272px;
         background:var(--panel);border:1px solid var(--edge-hi);border-radius:5px;
-        padding:7px 11px;display:flex;align-items:center;gap:9px}
+        padding:6px 10px;display:flex;align-items:center;gap:9px}
 .intent .ico{font-size:16px}
 .intent .lab{font-size:11px;color:var(--dim);letter-spacing:.3px}
 .intent .val{font-weight:700;color:var(--ink)}
@@ -50,8 +53,7 @@ body{background:var(--bg);color:var(--ink);display:flex;justify-content:center;
              font-variant-numeric:tabular-nums}
 
 /* 적 정보 = 상품 스펙 */
-.enemyinfo{position:absolute;right:150px;bottom:-142px;width:300px;
-           display:flex;flex-direction:column;gap:6px}
+.enemyinfo{width:272px;margin-top:8px;display:flex;flex-direction:column;gap:5px}
 .rating{display:flex;align-items:center;gap:7px;font-size:12px}
 .rating .st{color:var(--gold);letter-spacing:1px}
 .rating .n{color:var(--dim);font-variant-numeric:tabular-nums}
@@ -68,8 +70,7 @@ body{background:var(--bg);color:var(--ink);display:flex;justify-content:center;
 .gear .dur{margin-left:auto;font-variant-numeric:tabular-nums}
 
 /* 주인공 정보 */
-.pinfo{position:absolute;left:120px;bottom:-92px;width:190px;
-       display:flex;flex-direction:column;gap:6px}
+.pinfo{width:180px;margin-top:8px;display:flex;flex-direction:column;gap:5px}
 .trust{display:flex;gap:3px}
 .trust i{flex:1;height:9px;border:1px solid var(--edge);border-radius:2px;
          background:rgba(0,0,0,.5)}
@@ -77,11 +78,12 @@ body{background:var(--bg);color:var(--ink);display:flex;justify-content:center;
 .cap{font-size:11px;color:var(--dim)}
 
 /* ── 하단 조작 밴드 ───────────────────────────────── */
-.hand{position:absolute;left:0;right:0;bottom:0;height:218px;
-      background:linear-gradient(transparent,rgba(6,5,4,.9) 38%)}
-.cards{position:absolute;left:50%;bottom:-26px;transform:translateX(-50%);
+.hand{position:absolute;left:0;right:0;bottom:0;height:208px;
+      background:linear-gradient(transparent,rgba(6,5,4,.92) 34%)}
+/* 카드가 화면 밖으로 잘리지 않도록 하단 여백을 확보한다 */
+.cards{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);
        display:flex;align-items:flex-end}
-.card{width:172px;height:236px;margin:0 -14px;background:#efe6d2;color:#241f18;
+.card{width:162px;height:206px;margin:0 -10px;background:#efe6d2;color:#241f18;
       border:1px solid #b9a173;border-radius:9px;padding:9px 10px;cursor:pointer;
       display:flex;flex-direction:column;transition:transform .13s,box-shadow .13s;
       box-shadow:0 8px 22px rgba(0,0,0,.6)}
@@ -90,19 +92,20 @@ body{background:var(--bg);color:var(--ink);display:flex;justify-content:center;
 .card.sel{outline:2px solid var(--gold)}
 .chead{display:flex;align-items:center;gap:5px;font-size:11px;color:#7b6a4d}
 .cname{font-weight:800;font-size:13px;color:#1c1812;margin:3px 0 5px;line-height:1.25}
-.ctext{font-size:11px;line-height:1.5;color:#3a3229;flex:1;overflow:hidden}
-.cfoot{display:flex;align-items:center;gap:5px;margin-top:6px;
-       border-top:1px solid #cbb98f;padding-top:5px;font-size:11px}
+.ctext{font-size:10.5px;line-height:1.45;color:#3a3229;flex:1;overflow:hidden}
+.cfoot{display:flex;align-items:center;gap:5px;margin-top:5px;white-space:nowrap;
+       border-top:1px solid #cbb98f;padding-top:5px;font-size:10.5px;overflow:hidden}
+.cfoot .eff{overflow:hidden;text-overflow:ellipsis}
 .tag{background:#2f2a20;color:#e8d9ae;border-radius:3px;padding:1px 6px;font-size:10px}
 .cost{margin-left:auto;font-weight:800}
 .origin{font-size:9px;color:#8a6f3f;margin-top:3px}
 
-.orb{position:absolute;left:56px;bottom:74px;width:88px;height:88px;border-radius:50%;
+.orb{position:absolute;left:52px;bottom:60px;width:88px;height:88px;border-radius:50%;
      border:2px solid var(--edge-hi);background:radial-gradient(#3a2f1c,#141009);
      display:grid;place-items:center;box-shadow:0 0 26px rgba(224,169,75,.25)}
 .orb b{font-size:26px;font-weight:800;color:var(--gold);line-height:1}
 .orb em{font-style:normal;font-size:10px;color:var(--dim)}
-.endturn{position:absolute;right:44px;bottom:88px;padding:15px 26px;
+.endturn{position:absolute;right:52px;bottom:76px;padding:15px 26px;
          background:linear-gradient(#7a2a1c,#4d1a11);border:1px solid #a4553c;
          border-radius:8px;font-weight:800;cursor:pointer;letter-spacing:.5px}
 .endturn:hover{filter:brightness(1.18)}
@@ -111,7 +114,7 @@ body{background:var(--bg);color:var(--ink);display:flex;justify-content:center;
 .pile.l{left:20px} .pile.r{right:20px}
 
 /* 판정 미리보기 */
-.verdict{position:absolute;left:50%;bottom:206px;transform:translateX(-50%);
+.verdict{position:absolute;left:50%;bottom:240px;transform:translateX(-50%);
          display:none;gap:10px;align-items:center;padding:9px 16px;
          background:var(--panel);border:1px solid var(--edge-hi);border-radius:6px;
          white-space:nowrap}
@@ -148,13 +151,12 @@ body{background:var(--bg);color:var(--ink);display:flex;justify-content:center;
       </div>
     </div>
 
-    <div class="intent">
-      <span class="ico">📦</span>
-      <span><span class="lab">발송 예정</span><br><span class="val" id="intentName">–</span></span>
-      <span class="num" id="intentVal"></span>
-    </div>
-
     <div class="actor enemy">
+      <div class="intent">
+        <span class="ico">📦</span>
+        <span><span class="lab">발송 예정</span><br><span class="val" id="intentName">–</span></span>
+        <span class="num" id="intentVal"></span>
+      </div>
       <img id="imgEnemy" alt="">
       <div class="enemyinfo">
         <div class="rating">
@@ -251,7 +253,7 @@ $('#cards').innerHTML = DATA.hand.map((c,i)=>`
       ? `<div class="origin">원산지 · ${c.origin.equipment || DATA.enemyNames[c.origin.enemy] || c.origin.enemy}</div>` : ''}
     <div class="cfoot">
       ${c.tag?`<span class="tag">#${c.tag}</span>`:`<span class="tag">무판정</span>`}
-      <span>${c.ui||''}</span>
+      <span class="eff">${c.ui||''}</span>
       <span class="cost">✍${c.cost}</span>
     </div>
   </div>`).join('');
