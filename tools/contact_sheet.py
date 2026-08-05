@@ -88,7 +88,11 @@ def main():
     groups = []
     for spec in args.groups:
         label, _, pattern = spec.partition(":")
-        paths = sorted(Path(p) for p in glob.glob(os.path.expanduser(pattern)))
+        # 공백으로 구분된 여러 글롭을 받는다 (슬라이드처럼 접두가 제각각인 경우)
+        paths = []
+        for pat in pattern.split():
+            paths += [Path(x) for x in glob.glob(os.path.expanduser(pat))]
+        paths = sorted(set(paths))
         if not paths:
             print(f"  건너뜀 — 일치 없음: {pattern}")
             continue

@@ -49,6 +49,17 @@
 또한 P3 폭발은 한 컷으로 감당이 안 돼 **두 컷으로 쪼갠다** — 부풀어 오르는 예감(P3a)과
 터지는 순간(P3b). 이 장면이 게임 주제의 핵심이라 시간을 쓸 값어치가 있다.
 
+### 2차 생성 교훈 — 핵심 사물을 첫 문장으로
+
+2차에서 7장 중 4장이 또 실패했다(P2 빈 선반 / P3a 멀쩡한 신품 / P3b 폭발 없는 방 / P6 대장 없는 인물).
+공통점은 하나였다 — **실패한 4장 전부 그 컷의 핵심 사물이 문장 뒤에 있었다.**
+
+확산 모델은 앞쪽 토큰에 가중치를 준다. "A dark modern bedroom at night. On the bedside table,
+the power bank has erupted…"라고 쓰면 모델은 **방**을 그리고 폭발을 잊는다.
+
+**규칙: 각 프롬프트의 첫 문장은 그 컷의 주어(사물 또는 사건)로 시작한다.**
+배경·조명·분위기는 그 뒤에 붙인다. 슬라이드는 한 장에 하나만 말하므로 이 규칙이 특히 강하게 적용된다.
+
 ### `[REAL]` — 현실 화풍 접두 (P1~P3b)
 
 ```
@@ -106,10 +117,11 @@ Cold retail fluorescent lighting from directly above.
 Palette: dull beige, cold blue, plastic white, dirty grey.
 Cinematic wide 16:9 composition.
 
-A cheap white plastic USB power bank standing alone at the center of an empty modern retail
-shelf, lit harshly from above by a fluorescent strip, absurdly isolated as if it were precious.
-On the shelves to either side and on the floor below, other boxed consumer electronics lie
-knocked over and shoved aside in shadow, their packaging creased.
+A single cheap white plastic USB power bank, close to camera and filling the center of the frame,
+sitting alone on a bare retail shelf under a hard fluorescent strip. It is the only product left
+standing. Behind and below it, other boxed consumer electronics lie toppled, shoved aside and
+half fallen off the shelves into shadow, packaging creased and torn.
+The power bank is spotlit and absurdly glorified; everything else is discarded.
 Played completely straight — the joke is that this is a plastic brick on a shop shelf.
 No text, no readable letters, no logos, no price tags, no star icons.
 ```
@@ -126,10 +138,12 @@ Only light is a small orange charging indicator and dim streetlight through a wi
 Palette: near-black, dull plastic white, one small orange point.
 Cinematic wide 16:9 composition.
 
-Extreme close-up of a cheap white plastic power bank lying on a dark bedside table at night,
-plugged into a charging cable. Its plastic casing is visibly swollen and bulging outward along
-the seam, the panel lifted and warped, a hairline split beginning. A tiny orange charging LED
-glows. Everything else is dark. Utterly still, utterly ordinary, and wrong.
+A grotesquely swollen and deformed plastic power bank, its casing bulging outward like an
+overinflated balloon, the seam split open along one edge, the top panel lifted and warped
+away from the body, plastic stressed and whitened at the crease.
+Extreme close-up, filling the frame, lying on a dark bedside table at night with a charging
+cable still plugged in and a tiny orange LED glowing. Everything around it is black.
+Utterly still, utterly ordinary, and wrong.
 No text, no readable letters, no logos.
 ```
 
@@ -144,10 +158,12 @@ Painterly brushwork with violent value contrast, documentary framing.
 Palette: near-black room, searing orange-white at the center, hard cast shadows.
 Cinematic wide 16:9 composition.
 
-A dark modern bedroom at night. On the bedside table, the swollen plastic power bank has
-split open and erupted — a violent bloom of white-orange flame and sparks bursting from the
-seam, throwing hard shadows up the wall and across a rumpled bed. Melted plastic, a whipping
-charging cable, scattered sparks. No person visible, only the light of it filling the room.
+A violent explosion of searing white-orange fire bursting out of a small plastic power bank,
+flame and sparks erupting from the split seam in a hard bright bloom that blows out the center
+of the frame. Molten plastic spraying, a charging cable whipping away, debris in the air.
+It sits on a bedside table in an otherwise pitch-dark modern bedroom, the blast throwing
+hard shadows up the wall and across a rumpled bed. No person visible.
+The fire is the subject and the brightest thing in the image by far.
 Sudden, ugly, and small — the scale of a domestic accident, not a spectacle.
 No text, no readable letters, no logos.
 ```
@@ -212,11 +228,13 @@ Bold confident brushwork with visible painterly strokes, overwhelming vertical s
 Palette: sepia, bone white, aged bronze, deep shadow, one warm amber accent.
 Visible canvas grain and paper fiber texture. Cinematic wide 16:9 composition.
 
-A single small figure in a modern grey hoodie, seen from behind at the very bottom of the frame,
-standing before an ENORMOUS open ledger book that fills the entire image and rises beyond the
-top edge into darkness. Its vast ruled pages are covered edge to edge in dense uniform rows of
-tiny entry marks, receding upward into haze. Directly at the figure's eye level, one single row
-is completely blank and empty, faintly glowing — a gap in the record.
+A colossal open ledger book, so vast it fills the entire frame and rises far beyond the top edge
+into darkness, its two ruled pages towering like cliff faces. The pages are covered edge to edge
+in dense uniform rows of tiny abstract entry marks receding upward into golden haze.
+At the very bottom of the frame, dwarfed to almost nothing, a tiny lone figure in a modern grey
+hoodie stands with his back to us, looking up at it. Directly at his eye level one single ruled
+row is completely blank and empty, faintly glowing — a gap in the record.
+The book is the subject; the person is a speck.
 Overwhelming scale, absolute silence, one small absence.
 No text, no readable letters, no logos, no legible writing — abstract entry marks only.
 ```
