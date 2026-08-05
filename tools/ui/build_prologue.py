@@ -33,7 +33,7 @@ def parse_slides() -> list[dict]:
     """### P숫자 — 제목  +  뒤따르는 인용문(>) 을 슬라이드로 뽑는다."""
     slides, cur = [], None
     for line in DOC.read_text(encoding="utf-8").splitlines():
-        m = re.match(r"^###\s+(P\d+)\s*—\s*(.+?)\s*$", line)
+        m = re.match(r"^###\s+(P\d+[a-z]?)\s*—\s*(.+?)\s*$", line)
         if m:
             cur = {"key": m.group(1), "title": m.group(2), "lines": []}
             slides.append(cur)

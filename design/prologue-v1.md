@@ -30,7 +30,46 @@
 
 ---
 
-## 3. 슬라이드 6장
+## 3. 두 개의 화풍 — 단절이 곧 전이다
+
+**1차 생성 실패 기록**: 6장 전부에 판타지 일러스트 접두를 붙였더니 P1~P3이 중세 로브·갑옷 기사·
+벽돌 더미로 나왔다. 현대 원룸도, 노트북도, 보조배터리도 모델이 전부 판타지로 치환해 버린다.
+
+원인은 프롬프트가 아니라 설계였다. **프롤로그 1~3은 판타지가 아니라 현실이다.**
+주인공은 현대에서 죽는다(worldview §2.1). 그러니 화풍도 둘로 갈라야 한다.
+
+| | 슬라이드 | 화풍 | 근거 |
+|---|---|---|---|
+| **현실** | P1 · P2 · P3a · P3b | 판타지 요소 0. 차갑고 평범하고 조금 추한 현대 일러스트 | 죽기 전의 그는 그냥 사람이다 |
+| **이세계** | P4 · P5 · P6 | 따뜻한 판타지 일러스트, 장엄한 스케일 | 만물대장의 세계 |
+
+**P3b → P4에서 화풍이 끊기는 것이 전이 연출 그 자체다.** 자막 없이 "여기서 세계가 바뀌었다"가
+읽힌다. 폭발(P3b)을 마지막 현실 컷으로 두고 바로 물류 창고(P4)로 넘긴다.
+
+또한 P3 폭발은 한 컷으로 감당이 안 돼 **두 컷으로 쪼갠다** — 부풀어 오르는 예감(P3a)과
+터지는 순간(P3b). 이 장면이 게임 주제의 핵심이라 시간을 쓸 값어치가 있다.
+
+### `[REAL]` — 현실 화풍 접두 (P1~P3b)
+
+```
+Contemporary realistic digital illustration, present day, no fantasy elements whatsoever.
+Painterly but restrained brushwork, muted naturalistic color, documentary framing.
+Cold ordinary interior lighting — fluorescent, monitor glow, streetlight through blinds.
+Palette: grey-green, dull beige, cold blue screen light, dirty white.
+Modern everyday objects only: laptops, phones, plastic packaging, cheap furniture, cables.
+Nothing is heroic. Nothing is magical. Slightly ugly and completely mundane.
+Cinematic wide 16:9 composition.
+```
+
+**현실 슬라이드 전용 네거티브** (공용 네거티브에 이어 붙인다):
+```
+fantasy, medieval, armor, robe, cloak, hood, sword, castle, dungeon, torch, magic, glowing runes,
+forest, ruins, stone architecture, adventurer, knight, warrior, painterly fantasy, epic lighting
+```
+
+---
+
+## 3.1 슬라이드 — 현실 (P1 · P2 · P3a · P3b)
 
 ### P1 — 12,847건
 
@@ -39,16 +78,17 @@
 > 별점 하나로 가게가 문을 닫는 걸 여러 번 봤고, 그때마다 아무렇지 않았다.
 
 ```
-Hand-painted digital illustration for a stylized fantasy card game.
-Bold confident brushwork with visible painterly strokes, clean readable shapes.
-Warm characterful lighting with clear separation of light and shadow.
-Rich but controlled palette: warm ochre, mossy green, oxblood, ink brown, parchment cream.
-Visible canvas grain and ink texture. Cinematic wide 16:9 composition.
+Contemporary realistic digital illustration, present day, no fantasy elements whatsoever.
+Painterly but restrained brushwork, muted naturalistic color, documentary framing.
+Cold monitor glow as the only light source in a dark room.
+Palette: grey-green, dull beige, cold blue screen light, dirty white.
+Cinematic wide 16:9 composition.
 
-A cramped dark one-room apartment at night, seen from behind a lean man slumped in a desk chair.
-The only light is the cold glare of a monitor filling his silhouette. The screen is packed with
-an endless scrolling wall of single-star review entries, each one a small angry mark.
-Takeout containers and a dead plant crowd the desk edges. Nobody else is there.
+A cramped modern studio apartment at night, shot from behind a man in a plain grey hoodie
+slumped in a cheap office chair at a particleboard desk. A laptop screen fills his silhouette
+with cold blue light, showing an endless scrolling column of short review entries.
+Instant noodle cups, a phone face down, tangled charging cables and a dead potted plant
+crowd the desk. Unmade bed and a closed door behind him. No other light in the room.
 Quiet, ordinary, and faintly monstrous.
 No text, no readable letters, no logos.
 ```
@@ -60,39 +100,63 @@ No text, no readable letters, no logos.
 > 그 자리에 이 물건을 밀어 넣었다. 재미로 한 일이었다.
 
 ```
-Hand-painted digital illustration for a stylized fantasy card game.
-Bold confident brushwork with visible painterly strokes, clean readable shapes.
-Warm characterful lighting with clear separation of light and shadow.
-Rich but controlled palette: warm ochre, oxblood, ink brown, parchment cream, cold screen blue.
-Visible canvas grain and ink texture. Cinematic wide 16:9 composition.
+Contemporary realistic digital illustration, present day, no fantasy elements whatsoever.
+Painterly but restrained brushwork, muted naturalistic color, product-shelf framing.
+Cold retail fluorescent lighting from directly above.
+Palette: dull beige, cold blue, plastic white, dirty grey.
+Cinematic wide 16:9 composition.
 
-A cheap plastic USB power bank sitting alone on a pedestal of stacked cardboard boxes,
-lit from below like a trophy, absurdly glorified for such a mundane object.
-Around and beneath it, a tumbled heap of other products knocked off their stands and
-lying broken in shadow. A faint crown of light above the power bank.
-Played completely straight — the joke is that this is a plastic brick.
-No text, no readable letters, no logos, no star icons.
+A cheap white plastic USB power bank standing alone at the center of an empty modern retail
+shelf, lit harshly from above by a fluorescent strip, absurdly isolated as if it were precious.
+On the shelves to either side and on the floor below, other boxed consumer electronics lie
+knocked over and shoved aside in shadow, their packaging creased.
+Played completely straight — the joke is that this is a plastic brick on a shop shelf.
+No text, no readable letters, no logos, no price tags, no star icons.
 ```
 
-### P3 — 폭발
+### P3a — 예감
 
-> 석 달 뒤, 그 보조배터리는 충전 중에 부풀어 터졌다.
+> 석 달 뒤, 그것은 충전 중에 부풀기 시작했다.
 > 그가 산 것이었다. 그가 1위로 올린 것이었다.
+
+```
+Contemporary realistic digital illustration, present day, no fantasy elements whatsoever.
+Painterly but restrained brushwork, muted naturalistic color, tight macro framing.
+Only light is a small orange charging indicator and dim streetlight through a window.
+Palette: near-black, dull plastic white, one small orange point.
+Cinematic wide 16:9 composition.
+
+Extreme close-up of a cheap white plastic power bank lying on a dark bedside table at night,
+plugged into a charging cable. Its plastic casing is visibly swollen and bulging outward along
+the seam, the panel lifted and warped, a hairline split beginning. A tiny orange charging LED
+glows. Everything else is dark. Utterly still, utterly ordinary, and wrong.
+No text, no readable letters, no logos.
+```
+
+### P3b — 폭발
+
+> 그리고 터졌다.
 > 그는 자기 리뷰의 피해자가 되어 죽었다.
 
 ```
-Hand-painted digital illustration for a stylized fantasy card game.
-Bold confident brushwork with visible painterly strokes, dramatic value contrast.
-Palette: deep charcoal, oxblood, searing orange-white at the center, ink brown.
-Visible canvas grain. Cinematic wide 16:9 composition.
+Contemporary realistic digital illustration, present day, no fantasy elements whatsoever.
+Painterly brushwork with violent value contrast, documentary framing.
+Palette: near-black room, searing orange-white at the center, hard cast shadows.
+Cinematic wide 16:9 composition.
 
-A dark bedside table at night, seen close. A swollen split plastic power bank on a charging
-cable, its casing bulging and cracked open, a violent bloom of white-orange light and sparks
-erupting from the seam, throwing hard shadows across the wall behind.
-No person visible, only the light of it filling the room.
+A dark modern bedroom at night. On the bedside table, the swollen plastic power bank has
+split open and erupted — a violent bloom of white-orange flame and sparks bursting from the
+seam, throwing hard shadows up the wall and across a rumpled bed. Melted plastic, a whipping
+charging cable, scattered sparks. No person visible, only the light of it filling the room.
 Sudden, ugly, and small — the scale of a domestic accident, not a spectacle.
 No text, no readable letters, no logos.
 ```
+
+---
+
+## 3.2 슬라이드 — 이세계 (P4 · P5 · P6)
+
+여기서 화풍이 바뀐다. 따뜻해지고, 커지고, 장엄해진다.
 
 ### P4 — 오배송
 
@@ -102,15 +166,16 @@ No text, no readable letters, no logos.
 
 ```
 Hand-painted digital illustration for a stylized fantasy card game.
-Bold confident brushwork with visible painterly strokes, clean readable shapes.
+Bold confident brushwork with visible painterly strokes, monumental scale.
 Palette: aged bronze, parchment cream, cold slate, one warm amber accent.
 Visible canvas grain and ink texture. Cinematic wide 16:9 composition.
 
 The interior of a cathedral-scaled celestial sorting warehouse, impossibly tall, ranks of
 conveyor belts running off into golden haze in every direction, stacked with parcels and
-sealed ledgers. A robed archivist figure stands at a junction, face left blank and unmarked,
-holding one small ordinary parcel above two diverging belts — about to set it on the wrong one.
-Monumental architecture, bureaucratic calm, a single deliberate small gesture.
+sealed ledgers. In the foreground close to camera, a robed archivist with a blank unmarked
+face holds one small plain parcel in both hands, arm extended, deliberately lowering it onto
+the left-hand belt while the right-hand belt runs beside it. The gesture is the focus of the frame.
+Monumental architecture, bureaucratic calm, one small deliberate wrong choice.
 No text, no readable letters, no logos.
 ```
 
@@ -126,11 +191,11 @@ Bold confident brushwork with visible painterly strokes, ethereal light handling
 Palette: cold slate blue, dissolving pale gold, oxblood, ink brown.
 Visible canvas grain. Cinematic wide 16:9 composition.
 
-A young adventurer collapsed on cracked stone in an empty hall, body already half dissolving
-into drifting motes of pale light from the feet upward. Above and through the dissolving form,
-a second faint translucent silhouette of a man in modern clothing is settling into the same
-space, the two figures overlapping and misaligned for one moment.
-Beside them a small blank card lies face up on the stone, entirely empty.
+A young adventurer in worn leather collapsed on cracked stone in an empty hall, the body
+already dissolving from the feet upward into drifting motes of pale light. Overlapping the
+same space and slightly misaligned from it, a second translucent silhouette of a man in a
+modern grey hoodie is settling in — the two figures ghosting through each other for one moment,
+edges doubled. Beside them a small blank card lies face up on the stone, entirely empty.
 Quiet, cold, and unceremonious.
 No text, no readable letters, no logos, no writing on the card.
 ```
@@ -143,16 +208,17 @@ No text, no readable letters, no logos, no writing on the card.
 
 ```
 Hand-painted digital illustration for a stylized fantasy card game.
-Bold confident brushwork with visible painterly strokes, awe of scale.
+Bold confident brushwork with visible painterly strokes, overwhelming vertical scale.
 Palette: sepia, bone white, aged bronze, deep shadow, one warm amber accent.
 Visible canvas grain and paper fiber texture. Cinematic wide 16:9 composition.
 
-A lone figure in modern streetwear seen small from behind, standing before an immense vertical
-ledger that rises beyond sight into darkness, its ruled columns filled with dense uniform entry
-marks stretching in every direction. Directly in front of him, at eye level, one single row
-of the ledger is completely blank — an empty slot where an entry should be, faintly glowing.
+A single small figure in a modern grey hoodie, seen from behind at the very bottom of the frame,
+standing before an ENORMOUS open ledger book that fills the entire image and rises beyond the
+top edge into darkness. Its vast ruled pages are covered edge to edge in dense uniform rows of
+tiny entry marks, receding upward into haze. Directly at the figure's eye level, one single row
+is completely blank and empty, faintly glowing — a gap in the record.
 Overwhelming scale, absolute silence, one small absence.
-No text, no readable letters, no logos, no writing in the ledger rows — entry marks only.
+No text, no readable letters, no logos, no legible writing — abstract entry marks only.
 ```
 
 ---
