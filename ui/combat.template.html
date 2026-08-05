@@ -198,6 +198,73 @@ body{background:var(--bg);color:var(--ink);display:flex;flex-direction:column;
   100%{opacity:0;transform:translate(-50%,-50%) scale(1.35)}
 }
 
+/* ══ 이펙트 — 판타지 폭발이 아니라 문방구 어휘로 ═══════════
+   잉크 · 도장 · 종이 · 별점 · 빨간펜. ADR-010의 "UI에 판타지 이펙트 금지"를 지킨다 */
+
+/* 카드 투척 — 손패에서 대상으로 날아간다 */
+.fly{position:absolute;z-index:28;pointer-events:none;margin:0;
+     transition:transform .3s cubic-bezier(.4,.9,.3,1),opacity .3s ease-in}
+
+/* 판정 도장 — 쾅 찍히고 살짝 기운다 */
+.stamp{position:absolute;z-index:31;pointer-events:none;
+       transform:translate(-50%,-50%) rotate(-14deg) scale(2.6);opacity:0;
+       font-weight:900;font-size:34px;letter-spacing:-1px;
+       padding:6px 18px;border:4px double currentColor;border-radius:8px;
+       text-shadow:0 2px 0 rgba(0,0,0,.25)}
+.stamp.go{animation:stamp .85s cubic-bezier(.2,1.5,.4,1) forwards}
+@keyframes stamp{
+  0%{opacity:0;transform:translate(-50%,-50%) rotate(-24deg) scale(2.6)}
+  22%{opacity:1;transform:translate(-50%,-50%) rotate(-11deg) scale(.94)}
+  32%{transform:translate(-50%,-50%) rotate(-13deg) scale(1.04)}
+  70%{opacity:1;transform:translate(-50%,-50%) rotate(-13deg) scale(1)}
+  100%{opacity:0;transform:translate(-50%,-50%) rotate(-13deg) scale(1.06)}
+}
+.st-origin{color:#e0a94b} .st-fact{color:#5fbf72}
+.st-normal{color:#b4a894} .st-fumble{color:#d4553c}
+
+/* 피해 숫자 — 빨간펜으로 그어놓은 듯 튀어오른다 */
+.dmg{position:absolute;z-index:31;pointer-events:none;font-weight:900;font-size:30px;
+     color:#e8532f;text-shadow:0 2px 0 #2b2119,0 0 14px rgba(232,83,47,.5);
+     transform:translate(-50%,-50%);opacity:0}
+.dmg.go{animation:dmg .95s ease-out forwards}
+.dmg.heal{color:#5fbf72;text-shadow:0 2px 0 #14210f,0 0 14px rgba(95,191,114,.5)}
+@keyframes dmg{
+  0%{opacity:0;transform:translate(-50%,-50%) scale(.5)}
+  18%{opacity:1;transform:translate(-50%,-90%) scale(1.18)}
+  32%{transform:translate(-50%,-84%) scale(1)}
+  100%{opacity:0;transform:translate(-50%,-160%) scale(.94)}
+}
+
+/* 화면 흔들림 — 팩트·원산지가 꽂혔을 때만 */
+.shake{animation:shake .3s ease-in-out}
+@keyframes shake{
+  0%,100%{transform:translate(0,0)}
+  20%{transform:translate(-5px,3px)} 40%{transform:translate(5px,-3px)}
+  60%{transform:translate(-3px,-2px)} 80%{transform:translate(3px,2px)}
+}
+
+/* 별점 하락 — 별 하나가 떨어져 나간다 */
+.starfall{position:absolute;z-index:31;pointer-events:none;color:var(--gold);
+          font-size:22px;transform:translate(-50%,-50%);opacity:0}
+.starfall.go{animation:starfall 1s cubic-bezier(.4,0,.8,1) forwards}
+@keyframes starfall{
+  0%{opacity:1;transform:translate(-50%,-50%) rotate(0) scale(1.2)}
+  100%{opacity:0;transform:translate(-50%,120px) rotate(180deg) scale(.6)}
+}
+
+/* 헛소리 — 화면이 잠깐 바래고 김이 샌다 */
+.dud{animation:dud .5s ease-out}
+@keyframes dud{0%,100%{filter:none} 40%{filter:grayscale(.55) brightness(.82)}}
+
+/* 게이지가 줄 때 흰 잔상이 남는다 */
+.gauge i,.pbar i{transition:width .45s cubic-bezier(.2,.8,.3,1)}
+.ghostbar{position:absolute;top:0;height:100%;background:rgba(255,255,255,.42);
+          transition:width .75s ease-out .18s}
+/* 신뢰도 칸이 채워질 때 반짝 */
+.trust i.pop{animation:pop .5s ease-out}
+@keyframes pop{0%{transform:scale(1)}35%{transform:scale(1.5);
+  box-shadow:0 0 14px var(--gold)}100%{transform:scale(1)}}
+
 .note{width:1344px;max-width:100%;margin:14px auto 0;color:#6f675a;font-size:12px;
       line-height:1.7}
 .note b{color:#9a8f7d}
@@ -228,7 +295,7 @@ body{background:var(--bg);color:var(--ink);display:flex;flex-direction:column;
         <span class="n" id="eScore">3.2</span>
         <span class="n">· 리뷰 <span id="eReviews">1,210</span>건</span>
       </div>
-      <div class="gauge"><i id="eBar"></i><span id="eWill"></span></div>
+      <div class="gauge"><span class="ghostbar" id="eGhost"></span><i id="eBar"></i><span id="eWill"></span></div>
       <div class="nulls" id="eNulls"></div>
     </div>
 
@@ -370,7 +437,7 @@ $('#cards').innerHTML = DATA.hand.map((c,i)=>`
   </div>`).join('');
 
 // ── 끌어다 놓기 ───────────────────────────────────
-let held = null;
+let held = null, heldEl = null;
 const targetOf = el => el.dataset.target === 'gear'
   ? {kind:'gear', gear: enemy.equipment[+el.dataset.gi]}
   : {kind: el.dataset.target};
@@ -413,14 +480,14 @@ function splat(x, y){
 
 document.querySelectorAll('.card').forEach(el => {
   el.addEventListener('dragstart', e => {
-    held = DATA.hand[+el.dataset.i];
+    held = DATA.hand[+el.dataset.i]; heldEl = el;
     el.classList.add('ghost');
     $('#screen').classList.add('dragging');
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/plain', el.dataset.i);
   });
   el.addEventListener('dragend', () => {
-    held = null;
+    held = null; heldEl = null;
     el.classList.remove('ghost');
     $('#screen').classList.remove('dragging');
     document.querySelectorAll('.drop').forEach(d => d.classList.remove('hot'));
@@ -433,6 +500,102 @@ document.querySelectorAll('.card').forEach(el => {
   });
 });
 
+// ── 이펙트 ────────────────────────────────────────
+const scr = $('#screen');
+const rel = el => {                       // 화면 좌표계 기준 중심점
+  const s = scr.getBoundingClientRect(), r = el.getBoundingClientRect();
+  return {x: r.left - s.left + r.width / 2, y: r.top - s.top + r.height / 2, r, s};
+};
+function spawn(cls, html, x, y, life){
+  const el = document.createElement('div');
+  el.className = cls; el.innerHTML = html;
+  el.style.left = x + 'px'; el.style.top = y + 'px';
+  scr.appendChild(el);
+  requestAnimationFrame(() => el.classList.add('go'));
+  setTimeout(() => el.remove(), life);
+  return el;
+}
+const stamp   = (v, x, y) => spawn('stamp st-' + v.k, v.label, x, y, 900);
+const dmgNum  = (n, x, y, heal) => spawn('dmg' + (heal ? ' heal' : ''), (heal?'+':'') + n, x, y, 1000);
+const starOff = (x, y) => spawn('starfall', '★', x, y, 1050);
+
+// ── 상태 (표현 전용 — v2 엔진 붙기 전까지의 임시 모델) ──
+let st = {will: enemy.will, energy: 3, trust: DATA.trust, dead: []};
+
+function paint(){
+  const pct = Math.max(0, st.will) / enemy.maxWill * 100;
+  $('#eBar').style.width = pct + '%';
+  $('#eWill').textContent = `의지 ${Math.max(0, st.will)} / ${enemy.maxWill}`;
+  $('#energy').textContent = st.energy;
+  document.querySelectorAll('#trust i').forEach((el, i) => {
+    const on = i < st.trust;
+    if (on && !el.classList.contains('on')) { el.classList.add('pop');
+      setTimeout(() => el.classList.remove('pop'), 500); }
+    el.classList.toggle('on', on);
+  });
+}
+
+function playCard(cardEl, zone){
+  const card = DATA.hand[+cardEl.dataset.i];
+  if (cardEl.dataset.used || st.energy < card.cost) {
+    cardEl.animate([{transform:'translateX(0)'},{transform:'translateX(-8px)'},
+                    {transform:'translateX(8px)'},{transform:'translateX(0)'}], 240);
+    return;
+  }
+  const target = targetOf(zone), v = judge(card, target);
+  const base = card.effect?.value ?? card.effect?.damage ?? 0;
+  const dmg  = base ? Math.max(1, Math.floor(base * v.mult) + v.flat) : 0;
+  const from = rel(cardEl), to = rel(zone);
+
+  // ① 카드가 대상으로 날아간다
+  const fly = cardEl.cloneNode(true);
+  fly.className = 'card fly';
+  fly.style.left = (from.r.left - from.s.left) + 'px';
+  fly.style.top  = (from.r.top  - from.s.top ) + 'px';
+  fly.style.width = from.r.width + 'px'; fly.style.height = from.r.height + 'px';
+  scr.appendChild(fly);
+  requestAnimationFrame(() => {
+    fly.style.transform = `translate(${to.x - from.x}px,${to.y - from.y}px) scale(.34) rotate(9deg)`;
+    fly.style.opacity = '0';
+  });
+  setTimeout(() => fly.remove(), 340);
+
+  // ② 손패에서 빠지고 필력이 준다
+  cardEl.dataset.used = '1';
+  cardEl.style.transition = 'opacity .18s,transform .18s';
+  cardEl.style.opacity = '0'; cardEl.style.transform = 'translateY(24px) scale(.9)';
+  setTimeout(() => cardEl.remove(), 200);
+  st.energy = Math.max(0, st.energy - card.cost);
+
+  // ③ 착탄 — 잉크 · 도장 · 숫자 · 흔들림 · 게이지
+  setTimeout(() => {
+    splat(to.x, to.y);
+    stamp(v, to.x, to.y - 54);
+    if (v.k === 'origin' || v.k === 'fact') scr.classList.add('shake');
+    if (v.k === 'fumble') scr.classList.add('dud');
+    setTimeout(() => scr.classList.remove('shake','dud'), 520);
+
+    if (target.kind === 'me'){
+      dmgNum(card.effect?.value ?? 0, to.x, to.y - 20, true);
+    } else if (dmg){
+      dmgNum(dmg, to.x, to.y - 20);
+      const before = Math.max(0, st.will);
+      st.will = Math.max(0, st.will - dmg);
+      const g = $('#eGhost');                       // 흰 잔상: 깎이기 전 폭에서 서서히 따라온다
+      g.style.transition = 'none'; g.style.width = before / enemy.maxWill * 100 + '%';
+      requestAnimationFrame(() => { g.style.transition = ''; 
+        g.style.width = st.will / enemy.maxWill * 100 + '%'; });
+      // 별점 하락 — 의지 20%마다 별 하나가 떨어진다
+      if (Math.floor(before / enemy.maxWill * 5) > Math.floor(st.will / enemy.maxWill * 5)){
+        const p = rel($('#eStars'));
+        starOff(p.x + 26, p.y);
+      }
+    }
+    st.trust = Math.max(0, Math.min(10, st.trust + v.gauge));
+    paint();
+  }, 300);
+}
+
 document.querySelectorAll('.drop').forEach(z => {
   z.addEventListener('dragenter', e => {
     e.preventDefault();
@@ -444,9 +607,9 @@ document.querySelectorAll('.drop').forEach(z => {
   z.addEventListener('dragleave', () => z.classList.remove('hot'));
   z.addEventListener('drop', e => {
     e.preventDefault();
-    const s = $('#screen').getBoundingClientRect();
-    splat(e.clientX - s.left, e.clientY - s.top);
     z.classList.remove('hot');
+    if (heldEl) playCard(heldEl, z);
   });
 });
+paint();
 </script>

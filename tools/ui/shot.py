@@ -29,6 +29,8 @@ def main():
     ap.add_argument("--width", type=int, default=1400)
     ap.add_argument("--height", type=int, default=900)
     ap.add_argument("--click", help="렌더 후 클릭할 CSS 선택자 (상호작용 상태 촬영)")
+    ap.add_argument("--js", help="렌더 후 실행할 JS. 애니메이션 도중을 잡을 때 쓴다")
+    ap.add_argument("--after", type=int, default=0, help="--js 실행 뒤 대기 ms (프레임 선택)")
     ap.add_argument("--full", action="store_true", help="전체 페이지 촬영")
     args = ap.parse_args()
 
@@ -56,6 +58,9 @@ def main():
         if args.click:
             pg.click(args.click)
             pg.wait_for_timeout(350)
+        if args.js:
+            pg.evaluate(args.js)
+            pg.wait_for_timeout(args.after or 300)
         pg.screenshot(path=str(out), full_page=args.full)
         browser.close()
 
