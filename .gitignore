@@ -23,3 +23,5 @@ assets/wireframe/
 
 # ComfyUI 생성 결과물 (원본은 ~/ComfyUI/output/)
 assets/generated/
+ui/assets/
+ui/combat.html

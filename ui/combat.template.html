@@ -1,0 +1,275 @@
+<meta charset="utf-8">
+<title>이세계 리뷰용사 — 전투 화면</title>
+<style>
+:root{
+  --bg:#12100e; --panel:rgba(22,20,18,.82); --edge:#6b5636; --edge-hi:#a98a4e;
+  --ink:#efe7d8; --dim:#9a8f7d; --gold:#e0a94b; --red:#c2452e; --green:#4f9a5e;
+  --slab:rgba(10,9,8,.72);
+  font-family:Pretendard,"Apple SD Gothic Neo","Noto Sans KR",system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);display:flex;justify-content:center;
+     padding:16px;min-height:100vh;font-size:14px}
+.screen{width:1344px;max-width:100%;aspect-ratio:1344/768;position:relative;
+        border:1px solid #2a241c;border-radius:6px;overflow:hidden;
+        background:#0d0b09 var(--scene-bg) center/cover no-repeat}
+.screen::after{content:"";position:absolute;inset:0;pointer-events:none;
+        background:radial-gradient(120% 90% at 50% 40%,transparent 40%,rgba(0,0,0,.72))}
+.screen>*{position:relative;z-index:1}
+
+/* ── 상단 계정 상태바 ─────────────────────────────── */
+.topbar{display:flex;align-items:center;gap:22px;height:46px;padding:0 16px;
+        background:var(--slab);border-bottom:1px solid var(--edge)}
+.logo{font-weight:800;letter-spacing:-.4px;color:var(--gold)}
+.stat{display:flex;align-items:center;gap:6px;font-variant-numeric:tabular-nums}
+.stat b{font-weight:700}
+.topbar .right{margin-left:auto;display:flex;gap:8px}
+.chip{border:1px solid var(--edge);border-radius:4px;padding:3px 9px;
+      background:rgba(0,0,0,.35);font-size:12px;color:var(--dim)}
+
+/* ── 무대 ─────────────────────────────────────────── */
+.stage{position:absolute;inset:46px 0 218px 0}
+.actor{position:absolute;bottom:0;display:flex;flex-direction:column;align-items:center}
+.actor img{display:block;border:2px solid var(--edge);border-radius:4px;
+           box-shadow:0 12px 40px rgba(0,0,0,.7)}
+.actor.player{left:120px;width:190px}
+.actor.player img{width:190px;height:270px;object-fit:cover;object-position:top center}
+.actor.enemy{right:150px;width:300px}
+.actor.enemy img{width:300px;height:390px;object-fit:cover;object-position:top center}
+.noimg{display:grid;place-items:center;background:#1a1714;color:#4c453b;font-size:12px;
+       border:2px dashed #3a332a}
+
+/* 발송 예정 = 적 인텐트 */
+.intent{position:absolute;top:8px;right:150px;width:300px;
+        background:var(--panel);border:1px solid var(--edge-hi);border-radius:5px;
+        padding:7px 11px;display:flex;align-items:center;gap:9px}
+.intent .ico{font-size:16px}
+.intent .lab{font-size:11px;color:var(--dim);letter-spacing:.3px}
+.intent .val{font-weight:700;color:var(--ink)}
+.intent .num{margin-left:auto;font-weight:800;color:var(--red);
+             font-variant-numeric:tabular-nums}
+
+/* 적 정보 = 상품 스펙 */
+.enemyinfo{position:absolute;right:150px;bottom:-142px;width:300px;
+           display:flex;flex-direction:column;gap:6px}
+.rating{display:flex;align-items:center;gap:7px;font-size:12px}
+.rating .st{color:var(--gold);letter-spacing:1px}
+.rating .n{color:var(--dim);font-variant-numeric:tabular-nums}
+.gauge{height:16px;border:1px solid var(--edge);border-radius:3px;overflow:hidden;
+       background:rgba(0,0,0,.55);position:relative}
+.gauge i{display:block;height:100%;background:linear-gradient(#c2452e,#8e2f1f)}
+.gauge span{position:absolute;inset:0;display:grid;place-items:center;font-size:11px;
+            font-weight:700;font-variant-numeric:tabular-nums;text-shadow:0 1px 2px #000}
+.nulls{display:flex;gap:5px;flex-wrap:wrap}
+.null{font-size:11px;border:1px solid #7a3a2c;color:#e08b72;border-radius:3px;
+      padding:2px 7px;background:rgba(122,58,44,.18)}
+.gear{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--dim);
+      border:1px solid var(--edge);border-radius:4px;padding:5px 8px;background:var(--slab)}
+.gear .dur{margin-left:auto;font-variant-numeric:tabular-nums}
+
+/* 주인공 정보 */
+.pinfo{position:absolute;left:120px;bottom:-92px;width:190px;
+       display:flex;flex-direction:column;gap:6px}
+.trust{display:flex;gap:3px}
+.trust i{flex:1;height:9px;border:1px solid var(--edge);border-radius:2px;
+         background:rgba(0,0,0,.5)}
+.trust i.on{background:var(--gold);border-color:var(--gold)}
+.cap{font-size:11px;color:var(--dim)}
+
+/* ── 하단 조작 밴드 ───────────────────────────────── */
+.hand{position:absolute;left:0;right:0;bottom:0;height:218px;
+      background:linear-gradient(transparent,rgba(6,5,4,.9) 38%)}
+.cards{position:absolute;left:50%;bottom:-26px;transform:translateX(-50%);
+       display:flex;align-items:flex-end}
+.card{width:172px;height:236px;margin:0 -14px;background:#efe6d2;color:#241f18;
+      border:1px solid #b9a173;border-radius:9px;padding:9px 10px;cursor:pointer;
+      display:flex;flex-direction:column;transition:transform .13s,box-shadow .13s;
+      box-shadow:0 8px 22px rgba(0,0,0,.6)}
+.card:hover,.card.sel{transform:translateY(-30px) scale(1.05);z-index:5;
+      box-shadow:0 18px 40px rgba(0,0,0,.8)}
+.card.sel{outline:2px solid var(--gold)}
+.chead{display:flex;align-items:center;gap:5px;font-size:11px;color:#7b6a4d}
+.cname{font-weight:800;font-size:13px;color:#1c1812;margin:3px 0 5px;line-height:1.25}
+.ctext{font-size:11px;line-height:1.5;color:#3a3229;flex:1;overflow:hidden}
+.cfoot{display:flex;align-items:center;gap:5px;margin-top:6px;
+       border-top:1px solid #cbb98f;padding-top:5px;font-size:11px}
+.tag{background:#2f2a20;color:#e8d9ae;border-radius:3px;padding:1px 6px;font-size:10px}
+.cost{margin-left:auto;font-weight:800}
+.origin{font-size:9px;color:#8a6f3f;margin-top:3px}
+
+.orb{position:absolute;left:56px;bottom:74px;width:88px;height:88px;border-radius:50%;
+     border:2px solid var(--edge-hi);background:radial-gradient(#3a2f1c,#141009);
+     display:grid;place-items:center;box-shadow:0 0 26px rgba(224,169,75,.25)}
+.orb b{font-size:26px;font-weight:800;color:var(--gold);line-height:1}
+.orb em{font-style:normal;font-size:10px;color:var(--dim)}
+.endturn{position:absolute;right:44px;bottom:88px;padding:15px 26px;
+         background:linear-gradient(#7a2a1c,#4d1a11);border:1px solid #a4553c;
+         border-radius:8px;font-weight:800;cursor:pointer;letter-spacing:.5px}
+.endturn:hover{filter:brightness(1.18)}
+.pile{position:absolute;bottom:14px;font-size:11px;color:var(--dim);
+      border:1px solid var(--edge);border-radius:4px;padding:4px 9px;background:var(--slab)}
+.pile.l{left:20px} .pile.r{right:20px}
+
+/* 판정 미리보기 */
+.verdict{position:absolute;left:50%;bottom:206px;transform:translateX(-50%);
+         display:none;gap:10px;align-items:center;padding:9px 16px;
+         background:var(--panel);border:1px solid var(--edge-hi);border-radius:6px;
+         white-space:nowrap}
+.verdict.show{display:flex}
+.vb{font-weight:800;padding:3px 10px;border-radius:4px;font-size:13px}
+.v-origin{background:var(--gold);color:#241c08}
+.v-fact{background:var(--green);color:#08150b}
+.v-normal{background:#4a4238;color:var(--ink)}
+.v-fumble{background:var(--red);color:#fff}
+.vnote{font-size:12px;color:var(--dim)}
+.vnum{font-weight:800;font-variant-numeric:tabular-nums}
+
+.note{width:1344px;max-width:100%;margin:14px auto 0;color:#6f675a;font-size:12px;
+      line-height:1.7}
+.note b{color:#9a8f7d}
+</style>
+
+<div class="screen" id="screen">
+  <div class="topbar">
+    <span class="logo">만물마켓</span>
+    <span class="stat">🧠 <b id="pWill">–</b></span>
+    <span class="stat">🪙 <b>145</b></span>
+    <span class="stat">📋 <b id="deckN">–</b>장</span>
+    <span class="right"><span class="chip">지도</span><span class="chip">설정</span></span>
+  </div>
+
+  <div class="stage">
+    <div class="actor player">
+      <img id="imgPlayer" alt="">
+      <div class="pinfo">
+        <div class="gauge"><i style="width:78%"></i><span>의지 62 / 80</span></div>
+        <div class="trust" id="trust"></div>
+        <div class="cap">신뢰도 — 10칸을 채우면 베스트 리뷰</div>
+      </div>
+    </div>
+
+    <div class="intent">
+      <span class="ico">📦</span>
+      <span><span class="lab">발송 예정</span><br><span class="val" id="intentName">–</span></span>
+      <span class="num" id="intentVal"></span>
+    </div>
+
+    <div class="actor enemy">
+      <img id="imgEnemy" alt="">
+      <div class="enemyinfo">
+        <div class="rating">
+          <span class="st" id="eStars">★★★☆☆</span>
+          <span class="n" id="eScore">3.2</span>
+          <span class="n">· 리뷰 <span id="eReviews">1,210</span>건</span>
+        </div>
+        <div class="gauge"><i id="eBar"></i><span id="eWill"></span></div>
+        <div class="nulls" id="eNulls"></div>
+        <div class="gear">🛠 <span id="gearName">–</span><span class="dur" id="gearDur"></span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="verdict" id="verdict">
+    <span class="vb" id="vBadge"></span>
+    <span class="vnote" id="vNote"></span>
+    <span class="vnum" id="vNum"></span>
+  </div>
+
+  <div class="hand">
+    <div class="orb"><div><b id="energy">3</b><br><em>✍ 필력</em></div></div>
+    <div class="cards" id="cards"></div>
+    <div class="endturn">영업 마감</div>
+    <span class="pile l">뽑을 카드 <b id="drawN">–</b></span>
+    <span class="pile r">버린 카드 <b>0</b></span>
+  </div>
+</div>
+
+<p class="note">
+  <b>레이아웃 A</b> — UI는 코드, 그림만 생성 에셋. 카드 데이터는 <code>design/cards-v2.0.yaml</code>에서 빌드 시 주입.
+  카드를 누르면 <b>판정 4단계</b>(원산지 / 팩트 / 일반 / 헛소리)를 현재 상대 기준으로 계산해 보여준다.
+  <br>전투 로직은 아직 v2 엔진 미구현 — 판정 계산만 실제 규칙대로 동작하는 정적 화면이다.
+</p>
+
+<script>
+const DATA = /*{{DATA}}*/{};
+
+const $ = s => document.querySelector(s);
+const enemy = DATA.enemy, gear = enemy.equipment?.[0];
+
+// ── 적 = 상품 스펙 ────────────────────────────────
+const willPct = Math.round(enemy.will / enemy.maxWill * 100);
+$('#eBar').style.width = willPct + '%';
+$('#eWill').textContent = `의지 ${enemy.will} / ${enemy.maxWill}`;
+$('#eNulls').innerHTML = (enemy.null_tags || [])
+  .map(t => `<span class="null">평가 불가: ${t}</span>`).join('');
+$('#gearName').textContent = gear ? gear.name : '구성품 없음';
+$('#gearDur').textContent = gear ? `내구도 ${gear.durability}` : '';
+$('#intentName').textContent = DATA.intent.name;
+$('#intentVal').textContent = DATA.intent.value ? `의지 ${DATA.intent.value}` : '';
+$('#pWill').textContent = '62 / 80';
+$('#deckN').textContent = DATA.deckSize;
+$('#drawN').textContent = DATA.drawCount;
+$('#trust').innerHTML = Array.from({length:10},(_,i)=>
+  `<i class="${i<DATA.trust?'on':''}"></i>`).join('');
+
+// 생성 에셋 (없으면 자리표시)
+function setImg(sel, src, label){
+  const el = $(sel);
+  if (src) { el.src = src; return; }
+  el.replaceWith(Object.assign(document.createElement('div'), {
+    className: 'noimg', style: `width:${el.style.width||(sel.includes('Enemy')?'300px':'190px')};
+      height:${sel.includes('Enemy')?'390px':'270px'}`, textContent: label }));
+}
+setImg('#imgEnemy', DATA.art.enemy, '적 히어로 아트 생성 대기');
+setImg('#imgPlayer', DATA.art.player, '주인공 아트 생성 대기');
+
+// ── 판정 4단계 (card-system-v2.md §2) ─────────────
+function judge(card){
+  const o = card.origin || {};
+  if (o.enemy && o.enemy === enemy.id)
+    return {k:'origin', label:'원산지', mult:1.5, flat:1, gauge:4,
+            why:'직접 산 사람의 증언 — 평가 불가 항목도 통한다'};
+  if (card.no_judgement)
+    return {k:'normal', label:'무판정', mult:1, flat:0, gauge:0,
+            why:'진상 화법 — 팩트 원칙 바깥의 언어'};
+  if ((enemy.null_tags||[]).includes(card.tag))
+    return {k:'fumble', label:'헛소리…', mult:.5, flat:0, gauge:-2,
+            why:`이 대상엔 [${card.tag}] 항목이 없습니다`};
+  if ((enemy.weakness_tags||[]).includes(card.tag))
+    return {k:'fact', label:'팩트!', mult:1.5, flat:0, gauge:3,
+            why:`[${card.tag}]가 이 상품의 약점이다`};
+  return {k:'normal', label:'일반', mult:1, flat:0, gauge:0, why:'틀린 말은 아니다'};
+}
+
+// ── 손패 ──────────────────────────────────────────
+$('#cards').innerHTML = DATA.hand.map((c,i)=>`
+  <div class="card" data-i="${i}">
+    <div class="chead"><span style="color:#c9a24a">${'★'.repeat(c.stars)}${'☆'.repeat(5-c.stars)}</span></div>
+    <div class="cname">${c.name}</div>
+    <div class="ctext">${(c.text||'').trim().replace(/\n/g,'<br>')}</div>
+    ${c.origin?.equipment||c.origin?.enemy
+      ? `<div class="origin">원산지 · ${c.origin.equipment || DATA.enemyNames[c.origin.enemy] || c.origin.enemy}</div>` : ''}
+    <div class="cfoot">
+      ${c.tag?`<span class="tag">#${c.tag}</span>`:`<span class="tag">무판정</span>`}
+      <span>${c.ui||''}</span>
+      <span class="cost">✍${c.cost}</span>
+    </div>
+  </div>`).join('');
+
+document.querySelectorAll('.card').forEach(el=>{
+  el.onclick = () => {
+    document.querySelectorAll('.card').forEach(x=>x.classList.remove('sel'));
+    el.classList.add('sel');
+    const c = DATA.hand[+el.dataset.i], v = judge(c);
+    const base = c.effect?.value ?? c.effect?.damage ?? 0;
+    const dmg = base ? Math.max(1, Math.floor(base * v.mult) + v.flat) : 0;
+    $('#vBadge').className = 'vb v-' + v.k;
+    $('#vBadge').textContent = v.label;
+    $('#vNote').textContent = v.why;
+    $('#vNum').textContent = dmg
+      ? `의지 피해 ${dmg}` + (v.gauge ? ` · 신뢰도 ${v.gauge>0?'+':''}${v.gauge}` : '')
+      : (v.gauge ? `신뢰도 ${v.gauge>0?'+':''}${v.gauge}` : '');
+    $('#verdict').classList.add('show');
+  };
+});
+</script>
