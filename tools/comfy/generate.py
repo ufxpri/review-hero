@@ -21,6 +21,13 @@ ComfyUI 배치 생성 드라이버.
 
     # 에셋 — 오크 앵커 4장
     python tools/comfy/generate.py --match "C02 오크" --batch 4
+
+MEMO — M1 Pro 16GB 실측 (2026-08-05)
+    1344x768 배치2 + ControlNet : 295초/장. 로그에 "Unloaded partially" 반복 = 메모리 스래싱
+    1152x640 배치1 + ControlNet : 137초/장. 구도·화질 차이 없음
+  통합 메모리 16GB에서 SDXL UNet(~5GB) + ControlNet(~2.3GB)을 동시에 물면 배치를 키우거나
+  해상도를 올리는 순간 스왑이 걸린다. 배치를 늘리지 말고 여러 번 호출하는 편이 빠르다.
+  최종 에셋은 낮은 해상도로 구도를 확정한 뒤 업스케일하는 것이 총 시간에서 유리하다.
 """
 from __future__ import annotations
 
@@ -266,11 +273,13 @@ def main():
     key = args.ckpt or ("dreamshaper" if args.wireframe else "juggernaut")
     ckpt = CHECKPOINTS[key]
 
+    # 해상도 기본값은 M1 Pro 16GB 실측 기준(아래 MEMO 참조)이지 화질 상한이 아니다.
     if args.size:
         w, h = (int(v) for v in args.size.lower().split("x"))
     elif args.wireframe:
         from PIL import Image
-        w, h = Image.open(args.wireframe).size
+        ww, hh = Image.open(args.wireframe).size
+        w, h = (1152, 640) if ww > hh else (640, 1152)     # 와이어프레임 비율만 따르고 크기는 낮춘다
     else:
         w, h = 832, 1216                                  # SDXL 세로 네이티브
 
