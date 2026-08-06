@@ -77,8 +77,9 @@ h1{font-size:23px;font-weight:800;letter-spacing:-.5px}
 
   <h1>리뷰어 등록 — 서명을 남겨주세요</h1>
   <p class="lead">
-    당신은 만물대장이 읽지 못하는 존재입니다. 대장에 이름이 오르지 않으니
-    <b>이 서명이 당신을 증명하는 유일한 기록</b>이 됩니다.<br>
+    작성자명 <b id="pen">……</b> 으로 등록되었습니다.
+    대장은 이 이름을 새기지만 <b>그게 누구인지는 끝내 찾지 못합니다</b> — 여기 없는 이름이니까요.<br>
+    그래서 서명이 필요합니다. 대장이 아니라 읽는 사람들이 알아볼 표시입니다.
     지금부터 당신이 쓰는 모든 리뷰 하단에 이 서명이 그어집니다.
   </p>
 
@@ -100,7 +101,7 @@ h1{font-size:23px;font-weight:800;letter-spacing:-.5px}
     <div class="nm">손목 나감</div>
     <div class="tx">위력은 확실한데 손목이 나갑니다.<br>데드리프트 삼 년 하고 오세요.</div>
     <div class="psig"><svg id="psvg" viewBox="0 0 140 38" preserveAspectRatio="none"></svg></div>
-    <div class="ft"><span class="tag">#무게</span><span>의지 피해 7</span><span class="cost">✍1</span></div>
+    <div class="ft"><span class="tag">#무게</span><span>👍 7</span><span class="cost">✍1</span></div>
   </div>
 </div>
 
@@ -112,6 +113,9 @@ h1{font-size:23px;font-weight:800;letter-spacing:-.5px}
 
 <script>
 const KEY = 'reviewhero.sig';
+// 프롤로그 P12에서 등록한 필명 (worldview §2.1)
+document.getElementById('pen').textContent =
+  localStorage.getItem('reviewhero.penname') || '(미등록)';
 const pad = document.getElementById('pad'), ink = document.getElementById('ink');
 const psvg = document.getElementById('psvg'), preview = document.getElementById('preview');
 let strokes = [], cur = null, drawing = false;

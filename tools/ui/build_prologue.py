@@ -69,8 +69,9 @@ def parse_slides() -> list[dict]:
             flush()
             title = m.group(2)
             impact = title.endswith("⚡")          # 전환 순간에 섬광·흔들림
-            cur = {"key": m.group(1), "title": title.rstrip(" ⚡"),
-                   "beats": [], "impact": impact}
+            wants_input = title.endswith("⌨")      # 플레이어 입력 비트를 포함한다
+            cur = {"key": m.group(1), "title": title.rstrip(" ⚡⌨"),
+                   "beats": [], "impact": impact, "input": wants_input}
             slides.append(cur)
             continue
         if line.startswith("## "):          # 절이 바뀌면 수집 중단
@@ -126,7 +127,8 @@ def main():
     pick_art(slides)
 
     payload = [{"title": s["title"], "beats": s["beats"], "img": s["img"],
-                "impact": s.get("impact", False)} for s in slides]
+                "impact": s.get("impact", False), "input": s.get("input", False)}
+               for s in slides]
     html = (UI / "prologue.template.html").read_text(encoding="utf-8")
     html = html.replace("/*{{SLIDES}}*/[]", json.dumps(payload, ensure_ascii=False, indent=1))
 
