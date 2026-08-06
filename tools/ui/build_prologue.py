@@ -31,34 +31,60 @@ ART_SRC = Path.home() / "ComfyUI" / "output" / "review-hero"
 # 채택본 — 변형을 여러 장 뽑은 뒤 눈으로 고른 결과를 여기 고정한다.
 # 비워두면 해당 슬라이드는 가장 최근 파일을 쓴다.
 PICK = {
-    "P1":  "P1_12_847건_00002_.png",     # 현대 원룸·후드티·모니터. 판타지 요소 0
-    "P2":  "P2_1위_00003_.png",          # 조명 받는 진열대 (00004는 배경 글자 깨짐)
-    "P3a": "P3a_예감_00003_.png",         # 달아오른 채 부푼 쪽
-    "P3b": "P3b_폭발_00002_.png",         # 협탁 위 폭발 — 카피의 "침대 옆"과 정합
-    "P4":  "P4_오배송_00002_.png",        # 물류 창고
-    "P5":  "P5_덮어쓰기_00002_.png",       # 이세계 돌바닥에 떨어진 현대인
-    "P6":  "P6_평가_불가_00003_.png",      # 거대한 장부 앞의 작은 사람 (00004는 협곡으로 빗나감)
+    # 기존 컷 재활용 — 새 서사에서도 그림이 맞는 것들
+    "P01": "P1_12_847건_00002_.png",      # 커튼 친 방, 모니터 앞 뒷모습
+    "P07": "P3b_폭발_00002_.png",          # 협탁 위 폭발
+    "P10": "P4_오배송_00002_.png",         # 물류 창고
+    "P11": "P5_덮어쓰기_00002_.png",        # 겹쳐지는 두 형체
+    "P12": "P6_평가_불가_00003_.png",       # 거대한 장부 앞의 작은 사람
+    # 아래는 신규 촬영 대상 — 비면 자리표시로 렌더된다
+    # P02 쇼핑 / P03 필력 / P04 네임드 / P05 메일 / P06 그 물건
+    # P08 만물대장 / P09 심사위원 / P13 자유이자 저주 / P14 선언
 }
 
 
 def parse_slides() -> list[dict]:
-    """### P숫자 — 제목  +  뒤따르는 인용문(>) 을 슬라이드로 뽑는다."""
-    slides, cur = [], None
+    """### / #### P키 — 제목  +  뒤따르는 인용문을 비트 단위로 뽑는다.
+
+    인용문 안의 빈 `>` 줄이 비트 구분이다. 비주얼 노벨처럼 한 슬라이드 안에서
+    텍스트가 여러 번 넘어가고, 이미지는 슬라이드 단위로 유지된다.
+    """
+    slides, cur, beat = [], None, []
+
+    def flush():
+        if cur is not None and beat:
+            cur["beats"].append(list(beat))
+        beat.clear()
+
     for line in DOC.read_text(encoding="utf-8").splitlines():
-        m = re.match(r"^###\s+(P\d+[a-z]?)\s*—\s*(.+?)\s*$", line)
+        m = re.match(r"^#{3,4}\s+(P\d+[a-z]?)\s*—\s*(.+?)\s*$", line)
         if m:
-            cur = {"key": m.group(1), "title": m.group(2), "lines": []}
+            flush()
+            cur = {"key": m.group(1), "title": m.group(2), "beats": []}
             slides.append(cur)
             continue
-        # 절이 바뀌면 수집을 멈춘다 — §4의 인용문이 마지막 슬라이드에 딸려 들어가던 버그
-        if line.startswith("## "):
-            cur = None
+        if line.startswith("## "):          # 절이 바뀌면 수집 중단
+            flush(); cur = None
             continue
-        if cur is not None and line.startswith(">"):
-            txt = line.lstrip("> ").strip()
+        if cur is None:
+            continue
+        if line.startswith(">"):
+            txt = line.lstrip(">").strip()
             if txt:
-                cur["lines"].append(txt)
-    return slides
+                beat.append(md(txt))
+            else:
+                flush()
+        elif line.strip() == "":
+            continue
+        else:                                # 인용문이 끝나면 그 슬라이드 수집 종료
+            flush()
+    flush()
+    return [s for s in slides if s["beats"]]
+
+
+def md(t: str) -> str:
+    """최소 마크다운 — **강조**만 변환한다."""
+    return re.sub(r"\*\*(.+?)\*\*", r"<b>\1</b>", t)
 
 
 def pick_art(slides: list[dict]) -> None:
@@ -89,14 +115,15 @@ def main():
     print(f"슬라이드 {len(slides)}장")
     pick_art(slides)
 
-    payload = [{"title": s["title"], "lines": s["lines"], "img": s["img"]} for s in slides]
+    payload = [{"title": s["title"], "beats": s["beats"], "img": s["img"]} for s in slides]
     html = (UI / "prologue.template.html").read_text(encoding="utf-8")
     html = html.replace("/*{{SLIDES}}*/[]", json.dumps(payload, ensure_ascii=False, indent=1))
 
     out = UI / "prologue.html"
     out.write_text(html, encoding="utf-8")
-    total = sum(len(s["lines"]) for s in slides)
-    print(f"\n→ {out.relative_to(REPO)}  ({len(html):,}바이트)  본문 {total}줄")
+    beats = sum(len(s["beats"]) for s in slides)
+    lines = sum(len(b) for s in slides for b in s["beats"])
+    print(f"\n→ {out.relative_to(REPO)}  ({len(html):,}바이트)  비트 {beats}개 · 본문 {lines}줄")
 
 
 if __name__ == "__main__":

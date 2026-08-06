@@ -157,215 +157,218 @@ v3의 주제는 다르다 — **실력으로 얻은 명성을 돈에 팔았고, 
 
 ---
 
-## 3. 두 개의 화풍 — 단절이 곧 전이다
+## 4. 본문 14장 (확정)
 
-**1차 생성 실패 기록**: 6장 전부에 판타지 일러스트 접두를 붙였더니 P1~P3이 중세 로브·갑옷 기사·
-벽돌 더미로 나왔다. 현대 원룸도, 노트북도, 보조배터리도 모델이 전부 판타지로 치환해 버린다.
-
-원인은 프롬프트가 아니라 설계였다. **프롤로그 1~3은 판타지가 아니라 현실이다.**
-주인공은 현대에서 죽는다(worldview §2.1). 그러니 화풍도 둘로 갈라야 한다.
-
-| | 슬라이드 | 화풍 | 근거 |
-|---|---|---|---|
-| **현실** | P1 · P2 · P3a · P3b | 판타지 요소 0. 차갑고 평범하고 조금 추한 현대 일러스트 | 죽기 전의 그는 그냥 사람이다 |
-| **이세계** | P4 · P5 · P6 | 따뜻한 판타지 일러스트, 장엄한 스케일 | 만물대장의 세계 |
-
-**P3b → P4에서 화풍이 끊기는 것이 전이 연출 그 자체다.** 자막 없이 "여기서 세계가 바뀌었다"가
-읽힌다. 폭발(P3b)을 마지막 현실 컷으로 두고 바로 물류 창고(P4)로 넘긴다.
-
-또한 P3 폭발은 한 컷으로 감당이 안 돼 **두 컷으로 쪼갠다** — 부풀어 오르는 예감(P3a)과
-터지는 순간(P3b). 이 장면이 게임 주제의 핵심이라 시간을 쓸 값어치가 있다.
-
-### 2차 생성 교훈 — 핵심 사물을 첫 문장으로
-
-2차에서 7장 중 4장이 또 실패했다(P2 빈 선반 / P3a 멀쩡한 신품 / P3b 폭발 없는 방 / P6 대장 없는 인물).
-공통점은 하나였다 — **실패한 4장 전부 그 컷의 핵심 사물이 문장 뒤에 있었다.**
-
-확산 모델은 앞쪽 토큰에 가중치를 준다. "A dark modern bedroom at night. On the bedside table,
-the power bank has erupted…"라고 쓰면 모델은 **방**을 그리고 폭발을 잊는다.
-
-**규칙: 각 프롬프트의 첫 문장은 그 컷의 주어(사물 또는 사건)로 시작한다.**
-배경·조명·분위기는 그 뒤에 붙인다. 슬라이드는 한 장에 하나만 말하므로 이 규칙이 특히 강하게 적용된다.
-
-### `[REAL]` — 현실 화풍 접두 (P1~P3b)
-
-```
-Contemporary realistic digital illustration, present day, no fantasy elements whatsoever.
-Painterly but restrained brushwork, muted naturalistic color, documentary framing.
-Cold ordinary interior lighting — fluorescent, monitor glow, streetlight through blinds.
-Palette: grey-green, dull beige, cold blue screen light, dirty white.
-Modern everyday objects only: laptops, phones, plastic packaging, cheap furniture, cables.
-Nothing is heroic. Nothing is magical. Slightly ugly and completely mundane.
-Cinematic wide 16:9 composition.
-```
-
-**현실 슬라이드 전용 네거티브** (공용 네거티브에 이어 붙인다):
-```
-fantasy, medieval, armor, robe, cloak, hood, sword, castle, dungeon, torch, magic, glowing runes,
-forest, ruins, stone architecture, adventurer, knight, warrior, painterly fantasy, epic lighting
-```
+**형식**: 인용문 안에서 빈 `>` 줄이 **비트 구분**이다. 한 슬라이드 안에서 클릭할 때마다
+텍스트가 비트 단위로 넘어가고, 마지막 비트에서 다시 클릭하면 다음 슬라이드로 간다.
+이미지는 슬라이드 단위로 유지된다 — 비주얼 노벨의 기본 문법.
 
 ---
 
-## 3.1 슬라이드 — 현실 (P1 · P2 · P3a · P3b)
+### 1막 · 현실
 
-### P1 — 12,847건
+#### P01 — 폐인, 그리고 우연한 돈
 
-> 12,847번째 리뷰를 올리고 그는 라면 물을 올렸다.
-> 별 하나, 사진 세 장, 반품 사유는 '생각과 달랐음'.
-> 문 닫은 가게가 몇 곳인지는 세지 않았다. 그가 세는 건 리뷰 수뿐이었다.
+> 커튼을 마지막으로 연 게 언제인지 기억나지 않는다.
+> 낮인지 밤인지는 모니터가 알려준다. 빨간색이면 낮이고, 파란색이어도 낮이다.
+>
+> 삼 년 전, 그는 우연히 돈을 벌었다.
+> 종목 하나가 미친 듯이 올랐는데 팔 타이밍을 몰라서 그냥 들고 있었다. 그게 결과적으로 옳았다.
+>
+> 실력이 아니라는 건 그도 안다.
+> 아는 것과 인정하는 것은 다른 문제지만.
+>
+> 어쨌든 그는, 더 이상 밖에 나갈 이유가 없어졌다.
 
-```
-Contemporary realistic digital illustration, present day, no fantasy elements whatsoever.
-Painterly but restrained brushwork, muted naturalistic color, documentary framing.
-Cold monitor glow as the only light source in a dark room.
-Palette: grey-green, dull beige, cold blue screen light, dirty white.
-Cinematic wide 16:9 composition.
+#### P02 — 쇼핑
 
-A cramped modern studio apartment at night, shot from behind a man in a plain grey hoodie
-slumped in a cheap office chair at a particleboard desk. A laptop screen fills his silhouette
-with cold blue light, showing an endless scrolling column of short review entries.
-Instant noodle cups, a phone face down, tangled charging cables and a dead potted plant
-crowd the desk. Unmade bed and a closed door behind him. No other light in the room.
-Quiet, ordinary, and faintly monstrous.
-No text, no readable letters, no logos.
-```
+> 돈을 쓸 데가 없다는 건 생각보다 견디기 어려운 일이었다.
+>
+> 그래서 그는 사기 시작했다.
+> 필요해서가 아니라, 뭔가가 도착하기를 기다리는 그 며칠이 좋아서.
+>
+> 초인종이 울리고, 테이프를 가르고, 완충재를 걷어내는 삼 초.
+> 딱 그 삼 초를 위해서였다.
+>
+> 뜯지도 않은 상자가 벽을 따라 쌓였다.
+> 그는 그것들을 치우지 않았다. 치우고 나면 방이 조용해지니까.
 
-### P2 — 1위
+#### P03 — 필력
 
-> 그날 밤에는 순위표를 정리했다. 1위부터 9위까지 별 하나씩.
-> 사흘이면 자리가 빈다는 걸 그는 알고 있었다.
-> 빈자리에 올려둔 건 삼천 원짜리 보조배터리였다. 이유는 없었다.
+> 어느 날은 정말로 할 게 없어서, 도착한 물건에 대해 뭔가를 썼다.
+>
+> 학교 다닐 때 글 좀 쓴다는 소리를 들었었다.
+> 문예부였고, 교지에 실린 적도 있고, 그걸로 뭐가 되지는 않았다.
+> 십수 년 만에 손이 먼저 기억을 해냈다.
+>
+> 그는 그 이어폰을 세 문단 만에 해부했다.
+> 음질이 아니라 그것을 팔면서 쓴 문장들을 걸고넘어졌다.
+>
+> 한 문장도 거짓말은 아니었다.
+> 아마 그게 제일 아팠을 것이다.
 
-```
-Contemporary realistic digital illustration, present day, no fantasy elements whatsoever.
-Painterly but restrained brushwork, muted naturalistic color, product-shelf framing.
-Cold retail fluorescent lighting from directly above.
-Palette: dull beige, cold blue, plastic white, dirty grey.
-Cinematic wide 16:9 composition.
+#### P04 — 네임드
 
-A single cheap white plastic USB power bank, close to camera and filling the center of the frame,
-sitting alone on a bare retail shelf under a hard fluorescent strip. It is the only product left
-standing. Behind and below it, other boxed consumer electronics lie toppled, shoved aside and
-half fallen off the shelves into shadow, packaging creased and torn.
-The power bank is spotlit and absurdly glorified; everything else is discarded.
-Played completely straight — the joke is that this is a plastic brick on a shop shelf.
-No text, no readable letters, no logos, no price tags, no star icons.
-```
+> 처음엔 댓글이 두어 개 달렸다.
+> 다음 달엔 그의 리뷰를 캡처해서 옮기는 사람들이 생겼다.
+>
+> 반년쯤 지나자, 사람들은 상품이 아니라 그의 이름을 검색하기 시작했다.
+>
+> 그가 별 하나를 주면 그 물건은 팔리지 않았다.
+> 그가 별 넷을 주면 그날 밤에 품절이 났다.
+>
+> 그는 아무것도 조작하지 않았다.
+> 그저 정확하게 썼을 뿐인데, 사람들이 그 정확함 위에 권력을 얹어주었다.
+>
+> 처음엔 그 무게가 어색했다.
+> 그리고 곧, 익숙해졌다.
 
-### P3a — 예감
+#### P05 — 메일
 
-> 석 달 뒤, 머리맡에서 플라스틱이 천천히 갈라지는 소리가 났다.
-> 삼천 원짜리였다. 그가 별 다섯을 주고 1위로 올려둔 바로 그것이었다.
-> 그는 소리를 등지고 돌아누웠다.
+> 메일은 정중했다.
+>
+> 제목에는 [광고 협업 제안]이라고 적혀 있었고,
+> 본문은 그의 문체를 칭찬하는 데에만 세 문단을 썼다.
+> 얼마나 신뢰받는 리뷰어인지, 자기네가 얼마나 오래 지켜봐 왔는지.
+>
+> 금액은 맨 아래에 있었다.
+> 그가 한 달에 쓰는 돈보다 컸다.
+>
+> 그는 그 줄을 오래 봤다.
+> 커서가 몇 번 깜빡이는지 세다가, 답장을 썼다.
 
-```
-Contemporary realistic digital illustration, present day, no fantasy elements whatsoever.
-Painterly but restrained brushwork, muted naturalistic color, tight macro framing.
-Only light is a small orange charging indicator and dim streetlight through a window.
-Palette: near-black, dull plastic white, one small orange point.
-Cinematic wide 16:9 composition.
+#### P06 — 그 물건
 
-A grotesquely swollen and deformed plastic power bank, its casing bulging outward like an
-overinflated balloon, the seam split open along one edge, the top panel lifted and warped
-away from the body, plastic stressed and whitened at the crease.
-Extreme close-up, filling the frame, lying on a dark bedside table at night with a charging
-cable still plugged in and a tiny orange LED glowing. Everything around it is black.
-Utterly still, utterly ordinary, and wrong.
-No text, no readable letters, no logos.
-```
+> 물건은 사흘 뒤에 왔다.
+>
+> 상자를 뜯는 순간부터 알았다.
+> 인증 마크가 없었다. 접착이 삐뚤었고, 설명서 인쇄가 번져 있었고, 무게중심이 한쪽으로 쏠렸다.
+>
+> 삼 년을 봤으니까. 이런 건 손으로 안다.
+>
+> 그는 상자를 도로 덮었다.
+>
+> 그리고 다시 열었다.
 
-### P3b — 폭발
+#### P07 — 마지막 문장
 
-> 새벽 세 시 십사 분, 방이 한 번 밝아졌다.
-> 이번에는 그가 평가받을 차례였다.
-
-```
-Contemporary realistic digital illustration, present day, no fantasy elements whatsoever.
-Painterly brushwork with violent value contrast, documentary framing.
-Palette: near-black room, searing orange-white at the center, hard cast shadows.
-Cinematic wide 16:9 composition.
-
-A violent explosion of searing white-orange fire bursting out of a small plastic power bank,
-flame and sparks erupting from the split seam in a hard bright bloom that blows out the center
-of the frame. Molten plastic spraying, a charging cable whipping away, debris in the air.
-It sits on a bedside table in an otherwise pitch-dark modern bedroom, the blast throwing
-hard shadows up the wall and across a rumpled bed. No person visible.
-The fire is the subject and the brightest thing in the image by far.
-Sudden, ugly, and small — the scale of a domestic accident, not a spectacle.
-No text, no readable letters, no logos.
-```
+> 충전기에 꽂아두고, 그는 노트북을 열었다.
+>
+> 이런 건 쓰면서 정리하는 편이 낫다.
+> 머리보다 손이 먼저 판단할 때가 있으니까.
+>
+> 커서를 놓고, 첫 문장을 적었다.
+>
+> **「이 제품은」**
+>
+> 그때 뭔가 부푸는 소리가 났다.
+> 플라스틱이 아주 천천히, 안쪽에서부터 벌어지는 소리였다.
+>
+> 새벽 세 시 십사 분.
+> 그의 12,848번째 리뷰는 끝내 완성되지 못했다.
 
 ---
 
-## 3.2 슬라이드 — 이세계 (P4 · P5 · P6)
+### 2막 · 이세계
 
-여기서 화풍이 바뀐다. 따뜻해지고, 커지고, 장엄해진다.
+#### P08 — 만물대장
 
-### P4 — 오배송
+> 이 세계에도 신이 있었다. 지금은 없다.
+>
+> 창조신들은 세계를 만들었지만 유지보수는 하지 않았다.
+> 무너지는 다리, 마르는 강, 이유 없이 죽는 가축.
+>
+> 원성이 하늘에 닿았을 때, 그들이 한 일은 세계를 고치는 것이 아니었다.
+> 그들은 원성을 시스템으로 흡수했다.
+>
+> **─ 그렇게 불만이면, 너희가 평가해라.**
+>
+> 그날부터 모든 존재에는 평점 판이 하나씩 붙었다.
+> 별이 높으면 강해지고, 낮으면 약해지고, 없으면 사라진다.
+>
+> 축복과 저주는 폐지되었다.
+> 그 자리에 별점이 남았다.
+
+#### P09 — 심사위원
+
+> 창조신들은 곧 은퇴했다. 공지 한 줄을 남기고.
+>
+> 남은 것은 계정 백 개였다.
+> 사람들은 그것을 심사위원이라 부른다. 신이라고 부르기도 한다. 둘 다 맞는 말이다.
+>
+> 심사위원의 신성은 권능에서 오지 않는다.
+> 그들이 쓴 리뷰 한 건이 필멸자 만 건과 같은 무게로 기록될 뿐이다.
+>
+> 신이란, 이 세계에서는 가중치의 다른 이름이다.
+
+#### P10 — 오배송
 
 > 물류를 맡은 심사위원은 그날 열두 시간째 근무 중이었다.
-> 손에 든 상자에는 이름이 없었다. 그런 건 가끔 온다.
-> 그는 왼쪽 벨트에 상자를 올렸다. 오른쪽이었어야 했다.
+>
+> 손에 든 상자에는 이름이 없었다.
+> 그런 건 가끔 온다. 어느 세계에서 흘러들었는지 알 수 없는 데이터.
+> 규정대로라면 미분류 벨트로 보내야 한다.
+>
+> 그는 왼쪽 벨트에 올렸다.
+>
+> 오른쪽이었어야 했다.
 
-```
-Hand-painted digital illustration for a stylized fantasy card game.
-Bold confident brushwork with visible painterly strokes, monumental scale.
-Palette: aged bronze, parchment cream, cold slate, one warm amber accent.
-Visible canvas grain and ink texture. Cinematic wide 16:9 composition.
+#### P11 — 덮어쓰기
 
-The interior of a cathedral-scaled celestial sorting warehouse, impossibly tall, ranks of
-conveyor belts running off into golden haze in every direction, stacked with parcels and
-sealed ledgers. In the foreground close to camera, a robed archivist with a blank unmarked
-face holds one small plain parcel in both hands, arm extended, deliberately lowering it onto
-the left-hand belt while the right-hand belt runs beside it. The gesture is the focus of the frame.
-Monumental architecture, bureaucratic calm, one small deliberate wrong choice.
-No text, no readable letters, no logos.
-```
+> 왼쪽 벨트의 끝에는 소멸 처리장이 있었다.
+>
+> 그곳에 이름을 얻지 못한 젊은이가 하나 누워 있었다.
+> 모험가가 되고 싶었던 사람. 별 영 개.
+> 아무도 그를 평가한 적이 없어서, 아무도 그를 기억하지 않았다.
+>
+> 상자가 열렸고, 두 기록이 한자리에서 겹쳤다.
+>
+> 그 소란 중에, 발급되었어야 할 카드 한 장이 발급되지 않았다.
 
-### P5 — 덮어쓰기
+---
 
-> 도착한 곳에는 이름을 얻지 못한 채 꺼져가던 젊은이가 있었다.
-> 별 영 개. 소멸까지 얼마 남지 않은 몸이었다.
-> 두 기록이 한자리에서 겹쳤고, 그 소란 중에 카드 한 장이 발급되지 않았다.
+### 3막 · 각성
 
-```
-Hand-painted digital illustration for a stylized fantasy card game.
-Bold confident brushwork with visible painterly strokes, ethereal light handling.
-Palette: cold slate blue, dissolving pale gold, oxblood, ink brown.
-Visible canvas grain. Cinematic wide 16:9 composition.
+#### P12 — 평가 불가
 
-A young adventurer in worn leather collapsed on cracked stone in an empty hall, the body
-already dissolving from the feet upward into drifting motes of pale light. Overlapping the
-same space and slightly misaligned from it, a second translucent silhouette of a man in a
-modern grey hoodie is settling in — the two figures ghosting through each other for one moment,
-edges doubled. Beside them a small blank card lies face up on the stone, entirely empty.
-Quiet, cold, and unceremonious.
-No text, no readable letters, no logos, no writing on the card.
-```
+> 눈을 떴을 때 그는 만물대장 앞에 서 있었다.
+>
+> 대장은 모든 것을 읽는다.
+> 돌 하나, 벌레 한 마리, 죽은 자의 이름까지.
+>
+> 대장이 그를 읽었다.
+>
+> 그리고 넘어갔다.
+>
+> 그가 있어야 할 줄에는 아무것도 없었다.
+> 지워진 것이 아니라, 처음부터 쓰이지 않은 빈칸이었다.
 
-### P6 — 평가 불가
+#### P13 — 자유이자 저주
 
-> 눈을 떴을 때, 대장은 그를 넘어갔다.
-> 심판도 축복도 저주도 그의 이름을 찾지 못하고 지나쳤다.
-> 이 세계에 그의 자리는 없었다. 빈칸 하나가 있을 뿐이었다.
+> 그것이 무슨 뜻인지 알아내는 데에는 며칠이 걸렸다.
+>
+> 신의 심판이 그를 비껴간다. 축복도, 저주도 마찬가지다.
+> 이 세계의 어떤 규칙도 그에게는 명중하지 않는다.
+>
+> 그리고 그가 무엇을 하든, 대장에는 남지 않는다.
+> 누구를 구해도, 무엇을 부숴도, 기록되지 않는다.
+>
+> 평생을 이름으로 살았던 사람이
+> 이름이 존재하지 않는 곳에 도착했다.
 
-```
-Hand-painted digital illustration for a stylized fantasy card game.
-Bold confident brushwork with visible painterly strokes, overwhelming vertical scale.
-Palette: sepia, bone white, aged bronze, deep shadow, one warm amber accent.
-Visible canvas grain and paper fiber texture. Cinematic wide 16:9 composition.
+#### P14 — 선언
 
-A colossal open ledger book, so vast it fills the entire frame and rises far beyond the top edge
-into darkness, its two ruled pages towering like cliff faces. The pages are covered edge to edge
-in dense uniform rows of tiny abstract entry marks receding upward into golden haze.
-At the very bottom of the frame, dwarfed to almost nothing, a tiny lone figure in a modern grey
-hoodie stands with his back to us, looking up at it. Directly at his eye level one single ruled
-row is completely blank and empty, faintly glowing — a gap in the record.
-The book is the subject; the person is a speck.
-Overwhelming scale, absolute silence, one small absence.
-No text, no readable letters, no logos, no legible writing — abstract entry marks only.
-```
+> 그는 한참을 앉아 있었다.
+>
+> 대장에 남을 수 없다면, 남길 방법은 하나뿐이다.
+> 사람들의 입에 남는 것. 읽히는 것. 인용되는 것.
+>
+> 그가 아는 방법은 그것뿐이었고,
+> 다행히 그는 그것을 아주 잘했다.
+>
+> 그는 손을 뻗어 펜을 집었다.
+>
+> **─ 그럼, 내가 쓰지.**
 
 ---
 

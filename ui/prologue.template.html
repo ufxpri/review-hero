@@ -31,9 +31,16 @@ body{background:var(--bg);color:var(--ink);display:flex;flex-direction:column;
       opacity:0;transform:translateY(14px);transition:opacity .6s .25s,transform .6s .25s}
 .slide.on ~ .copy.cur{opacity:1;transform:translateY(0)}
 .copy .no{font-size:12px;color:var(--gold);letter-spacing:2px;margin-bottom:10px}
-.copy p{font-size:20px;line-height:1.85;max-width:900px;
+.copy p{font-size:20px;line-height:1.85;max-width:920px;
         text-shadow:0 2px 10px rgba(0,0,0,.9)}
-.copy p b{color:#fff}
+.copy p b{color:#fff;font-weight:700}
+/* 비트가 넘어갈 때 문장이 아래에서 올라온다 */
+.beat{animation:beatin .34s ease both}
+@keyframes beatin{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:none}}
+/* 비트 진행 표시 — 슬라이드 점 아래 작은 눈금 */
+.beats{position:absolute;left:96px;bottom:44px;z-index:5;display:flex;gap:4px}
+.beats i{width:9px;height:2px;border-radius:1px;background:rgba(239,231,216,.2)}
+.beats i.on{background:rgba(224,169,75,.85)}
 
 /* 진행 표시 */
 .dots{position:absolute;left:96px;bottom:56px;z-index:5;display:flex;gap:7px}
@@ -67,6 +74,7 @@ body{background:var(--bg);color:var(--ink);display:flex;flex-direction:column;
   <div id="slides"></div>
   <div class="grain"></div>
   <div class="dots" id="dots"></div>
+  <div class="beats" id="beats"></div>
   <div class="next"><b>클릭</b> 또는 <span class="k">Space</span> 로 계속</div>
   <div class="skip" id="skip">건너뛰기</div>
 
@@ -82,40 +90,53 @@ body{background:var(--bg);color:var(--ink);display:flex;flex-direction:column;
 
 <p class="note">
   <b>프롤로그</b> — 본문과 이미지 프롬프트의 정본은 <code>design/prologue-v1.md</code> §3이고,
-  빌드가 그것을 읽어 이 화면을 만든다. 슬라이드 7장 → 서명 등록(S05) → 온보딩 1판(GDD §4.4).
+  빌드가 그것을 읽어 이 화면을 만든다. 슬라이드 14장(비트 64) → 서명 등록(S05) → 온보딩 1판(GDD §4.4).
 </p>
 
 <script>
 const SLIDES = /*{{SLIDES}}*/[];
 const wrap = document.getElementById('slides'), dots = document.getElementById('dots');
+const beatsEl = document.getElementById('beats');
 
 wrap.innerHTML = SLIDES.map((s, i) => `
   <div class="slide" data-i="${i}">
     ${s.img ? `<img src="${s.img}" alt="">` : `<div class="miss">${s.title} — 이미지 생성 대기</div>`}
-  </div>`).join('') + SLIDES.map((s, i) => `
-  <div class="copy" data-i="${i}">
-    <div class="no">${String(i + 1).padStart(2, '0')} · ${s.title}</div>
-    ${s.lines.map(l => `<p>${l}</p>`).join('')}
-  </div>`).join('');
+  </div>`).join('') + `<div class="copy cur" id="copy"></div>`;
 dots.innerHTML = SLIDES.map(() => '<i></i>').join('');
 
-let n = -1;
-function show(i){
+let n = -1, b = 0;
+
+function show(i, beat = 0){
   if (i >= SLIDES.length) { document.getElementById('gate').classList.add('on'); return; }
-  n = i;
-  document.querySelectorAll('.slide').forEach(el => el.classList.toggle('on', +el.dataset.i === i));
-  document.querySelectorAll('.copy').forEach(el => {
-    const on = +el.dataset.i === i;
-    el.classList.toggle('cur', on);
-    el.style.opacity = on ? '1' : '0';
-    el.style.transform = on ? 'translateY(0)' : 'translateY(14px)';
-  });
-  document.querySelectorAll('.dots i').forEach((el, j) => el.classList.toggle('on', j <= i));
-  // 이미지가 매번 처음부터 밀리도록 애니메이션을 재시작한다
-  const img = document.querySelector(`.slide[data-i="${i}"] img`);
-  if (img) { img.style.animation = 'none'; img.offsetHeight; img.style.animation = ''; }
+  const slideChanged = i !== n;
+  n = i; b = beat;
+  const s = SLIDES[i];
+
+  if (slideChanged){
+    document.querySelectorAll('.slide').forEach(el => el.classList.toggle('on', +el.dataset.i === i));
+    const img = document.querySelector(`.slide[data-i="${i}"] img`);
+    if (img) { img.style.animation = 'none'; img.offsetHeight; img.style.animation = ''; }
+    document.querySelectorAll('.dots i').forEach((el, j) => el.classList.toggle('on', j <= i));
+  }
+
+  // 현재 비트만 보여준다 — 비주얼 노벨 문법
+  document.getElementById('copy').innerHTML =
+    `<div class="no">${String(i + 1).padStart(2, '0')} · ${s.title}</div>` +
+    `<div class="beat">${s.beats[beat].map(l => `<p>${l}</p>`).join('')}</div>`;
+
+  beatsEl.innerHTML = s.beats.map((_, j) =>
+    `<i class="${j <= beat ? 'on' : ''}"></i>`).join('');
 }
-const advance = () => show(n + 1);
+
+function advance(){
+  const s = SLIDES[n];
+  if (s && b + 1 < s.beats.length) show(n, b + 1);
+  else show(n + 1, 0);
+}
+function back(){
+  if (b > 0) show(n, b - 1);
+  else if (n > 0) show(n - 1, SLIDES[n - 1].beats.length - 1);
+}
 
 document.getElementById('screen').addEventListener('click', e => {
   if (e.target.closest('.skip') || e.target.closest('.gate')) return;
@@ -127,7 +148,7 @@ document.getElementById('skip').addEventListener('click', e => {
 });
 addEventListener('keydown', e => {
   if (e.code === 'Space' || e.code === 'Enter' || e.code === 'ArrowRight'){ e.preventDefault(); advance(); }
-  if (e.code === 'ArrowLeft' && n > 0) show(n - 1);
+  if (e.code === 'ArrowLeft'){ e.preventDefault(); back(); }
 });
-show(0);
+show(0, 0);
 </script>
