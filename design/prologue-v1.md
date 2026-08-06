@@ -472,10 +472,10 @@ No text, no readable letters — carved star shapes only.
 >
 > **소환사** ─ 베스트 리뷰어.
 >
-> **소환사** 원래는 그 주에 제일 잘 쓴 사람한테 주는 상이었습니다.
-> 매주 다시 뽑았어요.
+> **소환사** 그 주에 제일 잘 쓴 사람을 매주 다시 앉히던 자리입니다.
+> 한 주 지나면 내려와야 하고요.
 >
-> **소환사** 그자가 마지막으로 뽑힌 게 삼 년 전입니다.
+> **소환사** 그자가 그 자리에 앉은 게 삼 년 전입니다.
 
 ```
 Hand-painted digital illustration for a stylized fantasy card game.
