@@ -34,6 +34,11 @@ body{background:var(--bg);color:var(--ink);display:flex;flex-direction:column;
 .copy p{font-size:20px;line-height:1.85;max-width:920px;
         text-shadow:0 2px 10px rgba(0,0,0,.9)}
 .copy p b{color:#fff;font-weight:700}
+/* 대사 — **이름** 으로 시작하는 줄. 화자를 금색으로 떼어내고 본문과 들여쓰기를 분리한다 */
+.copy p.say{padding-left:22px;border-left:2px solid rgba(224,169,75,.45);margin-top:4px}
+.copy p.say b{color:var(--gold);font-weight:800;margin-right:10px;font-size:16px;
+              letter-spacing:-.2px}
+.copy p.say + p.say{border-top:0;margin-top:2px}
 /* 비트가 넘어갈 때 문장이 아래에서 올라온다 */
 .beat{animation:beatin .34s ease both}
 @keyframes beatin{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:none}}
@@ -122,7 +127,8 @@ function show(i, beat = 0){
   // 현재 비트만 보여준다 — 비주얼 노벨 문법
   document.getElementById('copy').innerHTML =
     `<div class="no">${String(i + 1).padStart(2, '0')} · ${s.title}</div>` +
-    `<div class="beat">${s.beats[beat].map(l => `<p>${l}</p>`).join('')}</div>`;
+    `<div class="beat">${s.beats[beat].map(l =>
+        `<p class="${l.startsWith('<b>') ? 'say' : ''}">${l}</p>`).join('')}</div>`;
 
   beatsEl.innerHTML = s.beats.map((_, j) =>
     `<i class="${j <= beat ? 'on' : ''}"></i>`).join('');
