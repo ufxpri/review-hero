@@ -59,20 +59,24 @@ body{background:var(--bg);color:var(--ink);display:flex;flex-direction:column;
 .reg.done input{border-bottom-color:rgba(224,169,75,.28);color:var(--gold)}
 .reg.warn{animation:regshake .34s}
 
-/* 서명란 — 이름 바로 아래, 같은 등록부 안 */
-.reg .sigrow{display:flex;align-items:flex-end;gap:14px;margin-top:16px}
-.reg .sigwrap{flex:1;position:relative;height:88px;border-bottom:1px solid rgba(224,169,75,.5);
-     cursor:crosshair;touch-action:none}
-.reg .sigwrap svg{position:absolute;inset:0;width:100%;height:100%;display:block}
-.reg .sigwrap svg path{fill:none;stroke:#f2e6cf;stroke-width:3.4;
-     stroke-linecap:round;stroke-linejoin:round}
-.reg .sigph{position:absolute;left:2px;bottom:8px;font-size:14px;
-     color:rgba(242,230,207,.24);pointer-events:none}
-.reg .sigwrap.dirty .sigph{display:none}
-.reg .sigcap{position:absolute;left:2px;top:0;font-size:10px;letter-spacing:2px;
-     color:var(--gold);opacity:.6}
-.reg .undo{flex:0 0 auto;background:none;border:1px solid rgba(224,169,75,.3);color:var(--dim);
-     font:inherit;font-size:11px;padding:5px 11px;border-radius:5px;cursor:pointer;margin-bottom:6px}
+/* 서명란 — 이름 바로 아래, 같은 등록부 안. 양피지 패드(ui/signature.html 과 동일한 물성) */
+.reg .pad{position:relative;width:100%;max-width:560px;aspect-ratio:660/200;margin-top:16px;
+     background:#e8dcc0;border:2px solid #2b2119;border-radius:10px;
+     box-shadow:5px 5px 0 rgba(0,0,0,.45);
+     background-image:repeating-linear-gradient(92deg,rgba(120,100,60,.05) 0 2px,transparent 2px 5px);
+     cursor:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='30' height='30' viewBox='0 0 30 30'><path d='M26 3C16 6 8 13 5 23l3 3C18 23 25 15 26 3z' fill='%23e8dcc0' stroke='%232b2119'/><path d='M5 26l-3 3' stroke='%232b2119' stroke-width='2'/></svg>") 2 28,crosshair;
+     touch-action:none;overflow:hidden}
+.reg .pad svg{position:absolute;inset:0;width:100%;height:100%;display:block}
+.reg .pad path{fill:none;stroke:#2b2119;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.reg .rule{position:absolute;left:44px;right:44px;bottom:46px;height:1px;background:#c9b territory}
+.reg .rule{position:absolute;left:44px;right:44px;bottom:46px;height:1px;background:#c2ae86}
+.reg .rule::after{content:"×";position:absolute;left:-22px;top:-11px;font-size:17px;color:#c2ae86}
+.reg .sigph{position:absolute;left:0;right:0;bottom:18px;text-align:center;color:#a08f68;
+     font-size:12px;pointer-events:none;transition:opacity .2s}
+.reg .pad.dirty .sigph{opacity:0}
+.reg .sigbtns{display:flex;gap:8px;margin-top:10px}
+.reg .undo{background:none;border:1px solid rgba(224,169,75,.3);color:var(--dim);
+     font:inherit;font-size:11px;padding:6px 13px;border-radius:5px;cursor:pointer}
 .reg .undo:hover{border-color:rgba(224,169,75,.6);color:#f2e6cf}
 @keyframes regshake{25%{transform:translateX(-6px)}50%{transform:translateX(5px)}
                     75%{transform:translateX(-3px)}}
@@ -135,7 +139,7 @@ body{background:var(--bg);color:var(--ink);display:flex;flex-direction:column;
 
 <p class="note">
   <b>프롤로그</b> — 본문과 이미지 프롬프트의 정본은 <code>design/prologue-v1.md</code> §3이고,
-  빌드가 그것을 읽어 이 화면을 만든다. P12에서 이름과 서명을 한 장에 받아 <code>reviewhero.penname</code>·<code>reviewhero.sig</code>로 저장하고, 온보딩 1판(GDD §4.4)으로 넘어간다.
+  빌드가 그것을 읽어 이 화면을 만든다. 마지막 슬라이드 P15에서 이름과 서명을 한 장에 받아 <code>reviewhero.penname</code>·<code>reviewhero.sig</code>로 저장하고, 온보딩 1판(GDD §4.4)으로 넘어간다.
 </p>
 
 <script>
@@ -180,13 +184,14 @@ function show(i, beat = 0){
             return `<div class="reg"><div class="lbl">만물대장 · 리뷰어 등록</div>` +
               `<input id="penname" maxlength="12" autocomplete="off" spellcheck="false"` +
               ` placeholder="저쪽 세계에서 쓰던 이름" value="${PEN.replace(/"/g,'&quot;')}">` +
-              `<div class="sigrow">` +
-                `<div class="sigwrap" id="sigpad">` +
-                  `<span class="sigcap">서 명</span>` +
-                  `<svg id="sigink" viewBox="0 0 660 236" preserveAspectRatio="none"></svg>` +
-                  `<span class="sigph">여기에 서명 — 획을 나눠 그어도 됩니다</span>` +
-                `</div>` +
+              `<div class="pad" id="sigpad">` +
+                `<svg id="sigink" viewBox="0 0 660 200" preserveAspectRatio="none"></svg>` +
+                `<div class="rule"></div>` +
+                `<div class="sigph">여기에 서명하세요 — 획을 여러 번 나눠 그어도 됩니다</div>` +
+              `</div>` +
+              `<div class="sigbtns">` +
                 `<button class="undo" id="sigundo" type="button">한 획 지우기</button>` +
+                `<button class="undo" id="sigclear" type="button">다시 쓰기</button>` +
               `</div>` +
               `<div class="hint">사람들은 <b>이름</b>으로 당신을 구분한다. <b>서명</b>은 대장이 대조한다 — 앞으로 서명하지 않은 글은 올라가지 않는다.</div></div>`;
           }
@@ -242,7 +247,7 @@ function bindSig(){
   let cur = null, drawing = false;
   const pt = e => { const r = pad.getBoundingClientRect();
     return [ +((e.clientX - r.left) / r.width  * 660).toFixed(1),
-             +((e.clientY - r.top ) / r.height * 236).toFixed(1) ]; };
+             +((e.clientY - r.top ) / r.height * 200).toFixed(1) ]; };
   const draw = () => {
     ink.innerHTML = SIG.map(st => `<path d="${sigPath(st)}"/>`).join('');
     pad.classList.toggle('dirty', SIG.length > 0);
@@ -259,7 +264,8 @@ function bindSig(){
     cur.push(q); draw();
   });
   addEventListener('pointerup', () => { drawing = false; cur = null; });
-  document.getElementById('sigundo').onclick = e => { e.stopPropagation(); SIG.pop(); draw(); };
+  document.getElementById('sigundo').onclick  = e => { e.stopPropagation(); SIG.pop(); draw(); };
+  document.getElementById('sigclear').onclick = e => { e.stopPropagation(); SIG.length = 0; draw(); };
   draw();
 }
 
@@ -275,7 +281,7 @@ function advance(){
       return;
     }
     localStorage.setItem('reviewhero.penname', PEN);
-    localStorage.setItem('reviewhero.sig', JSON.stringify({v:1, box:[660,236], strokes:SIG}));
+    localStorage.setItem('reviewhero.sig', JSON.stringify({v:1, box:[660,200], strokes:SIG}));
     pen.closest('.reg').classList.add('done');
   }
   const s = SLIDES[n];
