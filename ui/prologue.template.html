@@ -91,6 +91,28 @@ body{background:var(--bg);color:var(--ink);display:flex;flex-direction:column;
        font-weight:800;font-size:13px;letter-spacing:2px;padding:11px 26px}
 #sheet .ok:hover{filter:brightness(1.15)}
 #sheet .paper.warn{animation:regshake .34s}
+
+/* 카드 미리보기 — 서명이 획순 그대로 다시 그어진다 (구 signature.html 이식) */
+#sheet .preview{position:absolute;right:-186px;bottom:28px;width:168px;height:214px;
+       background:#efe4c8;color:#2b2119;border:2px solid #2b2119;border-radius:9px;
+       padding:9px 10px;display:flex;flex-direction:column;
+       box-shadow:8px 8px 0 rgba(0,0,0,.5);transform:rotate(2deg)}
+#sheet .preview .st{font-size:11px;color:#c9a24a}
+#sheet .preview .nm{font-weight:800;font-size:13px;margin:3px 0 5px}
+#sheet .preview .tx{font-size:10.5px;line-height:1.45;color:#3a3229;flex:1}
+#sheet .preview .ft{border-top:1px solid #c8b48c;padding-top:5px;font-size:10.5px;display:flex;gap:5px}
+#sheet .preview .tag{background:#2f2a20;color:#e8d9ae;border-radius:3px;padding:1px 6px;font-size:10px}
+#sheet .preview .cost{margin-left:auto;font-weight:800}
+#sheet .plabel{position:absolute;right:-186px;bottom:252px;width:168px;text-align:center;
+       font-size:10px;letter-spacing:2px;color:var(--dim)}
+#sheet .psig{position:absolute;left:11px;right:11px;bottom:40px;height:38px;pointer-events:none;opacity:0}
+#sheet .psig svg{width:100%;height:100%;overflow:visible;display:block}
+#sheet .psig path{fill:none;stroke:#2b2119;stroke-width:2.3;stroke-linecap:round;stroke-linejoin:round;
+       stroke-dasharray:100;stroke-dashoffset:100}
+#sheet .preview.play .psig{opacity:1}
+#sheet .preview.play .psig path{animation:sigdraw .5s cubic-bezier(.5,.05,.55,.95) forwards}
+@keyframes sigdraw{to{stroke-dashoffset:0}}
+@media (max-width:1500px){#sheet .preview,#sheet .plabel{display:none}}
 @keyframes regshake{25%{transform:translateX(-6px)}50%{transform:translateX(5px)}
                     75%{transform:translateX(-3px)}}
 @keyframes beatin{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:none}}
@@ -142,10 +164,10 @@ body{background:var(--bg);color:var(--ink);display:flex;flex-direction:column;
 
   <div class="gate" id="gate">
     <div class="box">
-      <h2>이 세계에서 당신을 증명할 방법은 하나뿐입니다</h2>
-      <p>만물대장은 당신을 읽지 못합니다.<br>
-         이름이 오르지 않으니, 당신이 직접 남기는 기록만이 남습니다.</p>
-      <a href="signature.html">서명 남기러 가기 →</a>
+      <h2 id="gatename">리뷰어 등록 완료</h2>
+      <p>만물대장이 이름을 새겼습니다. 조회해도 아무것도 나오지 않는 이름입니다.<br>
+         지금부터 서명하는 모든 리뷰가 그대로 올라갑니다.</p>
+      <a href="combat.html">첫 리뷰 쓰러 가기 →</a>
     </div>
   </div>
 </div>
@@ -169,7 +191,11 @@ dots.innerHTML = SLIDES.map(() => '<i></i>').join('');
 let n = -1, b = 0;
 
 function show(i, beat = 0){
-  if (i >= SLIDES.length) { document.getElementById('gate').classList.add('on'); return; }
+  if (i >= SLIDES.length) {
+    const g = document.getElementById('gate');
+    if (PEN) document.getElementById('gatename').textContent = `「${PEN}」 — 리뷰어 등록 완료`;
+    g.classList.add('on'); return;
+  }
   const slideChanged = i !== n;
   n = i; b = beat;
   const s = SLIDES[i];
@@ -250,7 +276,7 @@ function SHEET_HTML(){
       <div class="fld">
         <div class="cap">작 성 자 명</div>
         <input id="penname" maxlength="12" autocomplete="off" spellcheck="false"
-               placeholder="저쪽 세계에서 쓰던 이름" value="\${PEN.replace(/"/g,'&quot;')}">
+               placeholder="저쪽 세계에서 쓰던 이름" value="${PEN.replace(/"/g,'&quot;')}">
       </div>
       <div class="fld">
         <div class="cap">서 명</div>
@@ -265,6 +291,14 @@ function SHEET_HTML(){
         <div class="note2">이름과 서명은 되돌릴 수 없다.</div>
         <button class="ok" id="regok" type="button">등 록</button>
       </div>
+    </div>
+    <div class="plabel">카드에 얹힌 모습</div>
+    <div class="preview" id="preview">
+      <div class="st">★☆☆☆☆</div>
+      <div class="nm">손목 나감</div>
+      <div class="tx">위력은 확실한데 손목이 나갑니다.<br>데드리프트 삼 년 하고 오세요.</div>
+      <div class="psig"><svg id="psvg" viewBox="0 0 140 38" preserveAspectRatio="none"></svg></div>
+      <div class="ft"><span class="tag">#무게</span><span>👍 7</span><span class="cost">✍1</span></div>
     </div>
   </div>`;
 }
@@ -283,6 +317,24 @@ function sigPath(pts){                      // 중점 이차 베지어로 손떨
   return d + ` L${l[0]},${l[1]}`;
 }
 
+function sigFit(w, h){
+  if (!SIG.length) return [];
+  const xs = SIG.flat().map(q => q[0]), ys = SIG.flat().map(q => q[1]);
+  const x0 = Math.min(...xs), x1 = Math.max(...xs);
+  const y0 = Math.min(...ys), y1 = Math.max(...ys);
+  const sw = Math.max(1, x1 - x0), sh = Math.max(1, y1 - y0);
+  const k = Math.min(w / sw, h / sh) * .94;
+  const ox = (w - sw * k) / 2 - x0 * k, oy = (h - sh * k) / 2 - y0 * k;
+  return SIG.map(st => sigPath(st.map(([x, y]) => [+(x * k + ox).toFixed(1), +(y * k + oy).toFixed(1)])));
+}
+function sigPreview(){
+  const pv = document.getElementById('preview'), svg = document.getElementById('psvg');
+  if (!pv) return;
+  svg.innerHTML = sigFit(140, 38).map(d => `<path pathLength="100" d="${d}"/>`).join('');
+  pv.classList.remove('play');
+  if (SIG.length) requestAnimationFrame(() => pv.classList.add('play'));
+}
+
 function bindSig(){
   const pad = document.getElementById('sigpad'), ink = document.getElementById('sigink');
   let cur = null, drawing = false;
@@ -292,6 +344,7 @@ function bindSig(){
   const draw = () => {
     ink.innerHTML = SIG.map(st => `<path d="${sigPath(st)}"/>`).join('');
     pad.classList.toggle('dirty', SIG.length > 0);
+    sigPreview();
   };
   pad.addEventListener('pointerdown', e => {
     e.stopPropagation();                    // 슬라이드 넘김으로 새지 않게

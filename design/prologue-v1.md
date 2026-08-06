@@ -272,7 +272,7 @@ No text, no readable letters, no logos, no certification marks, no stickers.
 
 #### P07 — 마지막 문장
 
-> ⚠ 현재 채택 이미지에 주황 충전 표시등이 안 보인다. 아래 프롬프트로 **재생성 필요**.
+*(⚠ 현재 채택 이미지에 주황 충전 표시등이 안 보인다. 아래 프롬프트로 재생성 필요.)*
 
 > 충전기에 꽂아 놓고 노트북을 열었다.
 > 후기는 써 보면서 쓰는 편이다.
@@ -533,9 +533,9 @@ No text, no readable letters, no writing on the parchment.
 
 #### P15 — 등록 ⌨
 
-> **프롤로그 마지막 슬라이드이자 플레이어 입력 슬라이드.** 이름과 서명을 **한 장에서 함께**
-> 받는다(ADR-020·021). 저장: `localStorage['reviewhero.penname']` · `['reviewhero.sig']`.
-> 둘 다 채우면 완료 화면(게이트)을 거쳐 곧장 온보딩 1판으로 이어진다.
+*(프롤로그 마지막 슬라이드이자 플레이어 입력 슬라이드. 이름과 서명을 한 장에서 함께
+받는다 — ADR-020·021. 저장: `localStorage['reviewhero.penname']` · `['reviewhero.sig']`.
+둘 다 채우면 완료 화면(게이트)을 거쳐 곧장 온보딩 1판으로 이어진다.)*
 
 > 소환사가 장부를 밀어 놓았다. 이름 칸이 비어 있었다.
 >
