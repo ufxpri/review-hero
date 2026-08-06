@@ -33,15 +33,22 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import sys
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[2]
-SERVER = "http://127.0.0.1:8188"
+# 기본은 로컬 맥. 원격 A6000은 SSH 터널을 열고 --server 로 가리킨다.
+#   bash infra/comfy/deploy.sh tunnel        (localhost:8189 → 원격 8188)
+#   generate.py --server http://127.0.0.1:8189 ...
+# 또는 환경변수 COMFY_SERVER 로 고정한다.
+SERVER = os.environ.get("COMFY_SERVER", "http://127.0.0.1:8188")
+REMOTE = False          # --server 를 주면 True. 결과를 로컬로 내려받는다
 
 DOCS = [
     REPO / "design" / "ui-mockup-prompts.md",
@@ -259,16 +266,36 @@ def upload_image(path: Path) -> str:
         return json.load(r)["name"]
 
 
+LOCAL_OUT = Path.home() / "ComfyUI" / "output"
+
+
+def fetch(images: list[dict]) -> None:
+    """원격 서버에서 생성한 이미지를 로컬 출력 디렉터리로 내려받는다.
+
+    원격 GPU를 쓰면 결과가 그쪽에 남는다. 빌드 스크립트(tools/ui/*.py)는 로컬
+    ~/ComfyUI/output 을 보므로, 여기서 받아와 로컬-원격 구분 없이 같은 흐름이 되게 한다.
+    """
+    for im in images:
+        sub = im.get("subfolder", "")
+        dst = LOCAL_OUT / sub / im["filename"]
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        q = urllib.parse.urlencode({"filename": im["filename"], "subfolder": sub,
+                                    "type": im.get("type", "output")})
+        with urllib.request.urlopen(f"{SERVER}/view?{q}", timeout=120) as r:
+            dst.write_bytes(r.read())
+
+
 def run(graph: dict, label: str) -> list[str]:
     pid = _post("/prompt", {"prompt": graph})["prompt_id"]
     t0 = time.time()
     while True:
         hist = _get(f"/history/{pid}")
         if pid in hist:
-            outs = []
-            for node in hist[pid]["outputs"].values():
-                for im in node.get("images", []):
-                    outs.append(im["filename"])
+            metas = [im for node in hist[pid]["outputs"].values()
+                     for im in node.get("images", [])]
+            outs = [im["filename"] for im in metas]
+            if REMOTE:
+                fetch(metas)
             print(f"  ✓ {label}  {time.time()-t0:.0f}초  →  {', '.join(outs)}")
             return outs
         time.sleep(2)
@@ -280,6 +307,7 @@ def run(graph: dict, label: str) -> list[str]:
 # ── CLI ──────────────────────────────────────────────────────
 
 def main():
+    global NEGATIVE, NEG_EXTRA, SERVER, REMOTE
     ap = argparse.ArgumentParser(description="ComfyUI 배치 생성")
     ap.add_argument("--list", action="store_true", help="프롬프트 목록만 출력")
     ap.add_argument("--match", help="제목 부분 일치로 프롬프트 선택")
@@ -291,10 +319,14 @@ def main():
     ap.add_argument("--cn-strength", type=float, default=0.75, help="ControlNet 강도")
     ap.add_argument("--cn-end", type=float, default=0.65,
                     help="ControlNet 적용 종료 시점. 낮출수록 후반부를 모델이 자유롭게 그린다")
+    ap.add_argument("--server", help="ComfyUI 주소. 원격 GPU는 터널 주소(예: http://127.0.0.1:8189)")
     ap.add_argument("--style", choices=sorted(STYLES), help="화풍 교체 (첫 문단만 갈아끼움)")
     ap.add_argument("--neg-extra", default="",
                     help="이 생성에만 덧붙일 네거티브. 카드별 금지어(예: 뒷모습의 face 계열)")
     args = ap.parse_args()
+    if args.server:
+        SERVER = args.server.rstrip('/')
+        REMOTE = True
 
     prompts = parse_prompts()
     if args.list or not args.match:
@@ -315,12 +347,11 @@ def main():
         sys.exit(1)
 
     if not server_alive():
-        print("ComfyUI 서버에 연결할 수 없다. 먼저 실행:\n"
-              "  ~/ComfyUI/venv/bin/python ~/ComfyUI/main.py", file=sys.stderr)
+        print(f"ComfyUI 서버에 연결할 수 없다: {SERVER}\n"
+              "  로컬: ~/ComfyUI/venv/bin/python ~/ComfyUI/main.py\n"
+              "  원격: bash infra/comfy/deploy.sh tunnel  (다른 터미널에서)", file=sys.stderr)
         sys.exit(1)
 
-    global NEG_EXTRA
-    global NEGATIVE
     if args.style: NEGATIVE = strip_neg(NEGATIVE, args.style)
     NEG_EXTRA = args.neg_extra.strip()
     key = args.ckpt or ("dreamshaper" if args.wireframe else "juggernaut")
@@ -354,7 +385,7 @@ def main():
             g = workflow_txt2img(ckpt, body, args.seed, w, h, args.batch, prefix)
         run(g, h_title[:52])
 
-    print(f"\n출력: ~/ComfyUI/output/review-hero/")
+    print(f"\n출력: {LOCAL_OUT}/review-hero/" + ("  (원격에서 수신)" if REMOTE else ""))
 
 
 if __name__ == "__main__":

@@ -1,0 +1,30 @@
+# 원격 GPU 서버(A6000-1-002)에서 ComfyUI를 띄운다.
+#
+#   배포:  bash infra/comfy/deploy.sh
+#   접속:  ssh -N -L 8189:127.0.0.1:8188 A6000-1-002
+#          → http://127.0.0.1:8189 로 로컬에서 쓴다
+#
+# 포트를 127.0.0.1 에만 묶는 이유: 이 서버는 다른 서비스가 여럿 돌아가는 공용 장비다.
+# 사내망이라도 인증 없는 ComfyUI를 열어두지 않는다. 접근은 SSH 터널로만 한다.
+services:
+  comfy:
+    build: .
+    image: review-hero-comfy:latest
+    container_name: review-hero-comfy
+    # docker 20.10 + compose v2 조합에서는 deploy.devices 보다 runtime 지정이 안정적이다
+    runtime: nvidia
+    environment:
+      NVIDIA_VISIBLE_DEVICES: all
+      NVIDIA_DRIVER_CAPABILITIES: compute,utility
+    ports:
+      - "127.0.0.1:8188:8188"
+    volumes:
+      - ./models:/opt/ComfyUI/models     # 체크포인트·ControlNet·IPAdapter (호스트에 영속)
+      - ./output:/opt/ComfyUI/output     # 생성 결과
+      - ./input:/opt/ComfyUI/input       # 와이어프레임 등 업로드 입력
+    restart: unless-stopped
+    # 공용 GPU다. 다른 작업(llama.cpp 등)이 이미 VRAM을 쓰고 있으므로
+    # ComfyUI가 전부 선점하지 않도록 상한을 둔다.
+    command: >
+      python main.py --listen 0.0.0.0 --port 8188
+      --reserve-vram 2.0
