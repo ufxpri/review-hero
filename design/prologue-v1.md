@@ -419,24 +419,24 @@ No text, no readable letters, no legible runes — abstract carved marks only.
 > 좋게 쓰면 그 대상이 실제로 강해지고, 나쁘게 쓰면 약해져요.
 > 별점이 바닥까지 떨어지면 그냥 사라집니다. 비유가 아니라 진짜로요.
 >
-> **소환사** 원래는 신들이 관리하던 세계였습니다.
-> 그런데 만들어만 놓고 손을 놔 버려서, 다리가 무너지고 강이 마르고, 그런 일이 계속 생겼죠.
+> **소환사** 원래는 순서가 있었습니다.
+> 저희 같은 사람들이 물건을 먼저 받아서 써 보고 리뷰를 씁니다.
+> 그걸 신이 읽고 확정을 해요. 확정이 돼야 대장에 남고, 남아야 효력이 생깁니다.
 >
-> **소환사** 사람들이 하도 원망을 하니까 신들이 뭐라고 했는지 아십니까.
-> 세계를 고쳐 주겠다는 말은 없었습니다.
+> 그는 소환사의 목에 걸린 나무 패를 봤다. 별이 하나 새겨져 있었다.
 >
-> **소환사** ─ 그렇게 불만이면 너희가 직접 평가해라.
+> **소환사** 만물체험단 패입니다.
+> 별 수가 곧 발언권이에요. 원래는 넷이었습니다.
 >
-> **소환사** 그 한마디 남기고 전부 손을 뗐습니다.
-> 그날부터 축복이니 저주니 하는 건 없어졌고, 별점만 남았어요.
+> **소환사** 그런데 어느 날 신이 사라졌습니다.
+> 이유도 없고 예고도 없었어요.
 >
-> 그는 소환사의 목에 걸린 나무 패를 다시 봤다. 별이 하나뿐이었다.
+> **소환사** 확정할 사람이 없으니 리뷰가 쌓이기만 하더군요.
+> 무너진 다리는 무너진 채로, 병든 가축은 병든 채로.
+> 세계가 그냥 멈췄습니다.
 >
-> **소환사** 아, 이거요.
-> 만물체험단 패입니다. 물건을 먼저 받아서 써 보고 평가하는 게 저희 일이었어요.
->
-> **소환사** 별 수가 곧 발언권입니다.
-> 원래는 넷이었습니다.
+> **소환사** 그래서 저희끼리 정했습니다.
+> 우리가 확정하자고.
 
 ```
 Hand-painted digital illustration for a stylized fantasy card game.
@@ -454,38 +454,62 @@ Warm light filters down between the hanging tags.
 No text, no readable letters — carved star shapes only.
 ```
 
-#### P10 — 마왕
+#### P10 — 베스트 리뷰어
 
-> **소환사** 이 세계에도 관리자는 있었습니다. 심사위원이라고, 백 명이요.
+> **소환사** 한동안은 잘 돌아갔습니다.
 >
-> **소환사** 지금은 없습니다.
-> 그중 한 명이 나머지 아흔아홉을 전부 별 영 개로 만들어 버렸거든요.
+> **소환사** 그런데 쓰는 사람이랑 확정하는 사람이 같아지면 어떻게 되는지,
+> 저희는 그때 생각을 못 했어요.
 >
-> **소환사** 사람들은 그자를 마왕이라고 부릅니다.
+> **소환사** 단원 하나가 먼저 알아챘습니다.
 >
-> **소환사** 저는 그 말을 잘 안 씁니다.
-> 마왕이라고 하면 무슨 대단한 힘이라도 있는 것처럼 들리잖아요.
+> **소환사** 그자는 남이 쓴 건 확정을 안 해 줬습니다.
+> 자기 걸 먼저 확정하고, 자기를 비판한 건 그냥 묻어 뒀어요.
+> 확정 안 된 리뷰는 없는 거나 마찬가지니까요.
 >
-> **소환사** 그자한테는 힘이 없습니다. 원래 숫자를 세는 자리에 있었을 뿐이에요.
+> **소환사** 이상하다고 말한 사람들한테는 별 하나짜리를 써서 자기가 확정했습니다.
+> 별이 바닥에 닿은 사람은 사라집니다.
 >
-> **소환사** 그런데 자기 평점을 직접 고칩니다.
-> 아무리 깎아 놔도 다음 날이면 원래대로 돌아가 있어요.
+> **소환사** 그렇게 나머지가 전부 없어졌어요.
 >
-> **소환사** 그리고 자기를 나쁘게 쓴 사람을 찾아냅니다.
-> 이 세계 사람은 전부 대장에 이름이 올라가 있으니까요.
+> 사람들은 그를 마왕이라고 부른다고 했다.
 >
-> **소환사** 쓰는 순간 누가 썼는지 다 나옵니다.
+> **소환사** 저는 그 말을 안 씁니다. 그자 직함이 따로 있거든요.
 >
-> **소환사** 저희 체험단이 제일 먼저 썼습니다. 그게 저희 일이었으니까요.
-> 그리고 제일 먼저 없어졌습니다.
+> **소환사** ─ 베스트 리뷰어.
 >
-> **소환사** 지금 이 세계에 그자를 욕한 사람은 한 명도 남아 있지 않습니다.
+> **소환사** 원래는 그 주에 제일 잘 쓴 사람한테 주는 상이었습니다.
+> 매주 다시 뽑았어요.
+>
+> **소환사** 그자가 마지막으로 뽑힌 게 삼 년 전입니다.
+
+```
+Hand-painted digital illustration for a stylized fantasy card game.
+Bold confident brushwork with visible painterly strokes, monumental scale.
+Palette: aged bronze, parchment cream, cold slate, oxblood, one warm amber accent.
+Visible canvas grain and ink texture. Cinematic wide 16:9 composition.
+
+A long horizontal row of bare empty iron hooks on a stone wall, filling the width of the frame,
+every single hook holding nothing. Dust and cobwebs stretch between them.
+At the far left end of the row, one lone wooden tag still hangs from its hook — the only one
+left — its cord grey with dust, a single star carved on it.
+Shot straight on from a few paces back so the long emptiness of the row dominates.
+Warm dim light from one side, a neglected ceremonial hall behind.
+Nobody is in the frame. The empty hooks are the subject.
+No text, no readable letters — one carved star shape only.
+```
 
 #### P11 — 그래서 당신
 
 > **소환사** 그런데 당신은 대장에 없더군요.
 >
 > 그는 자기 손을 내려다봤다. 아무 표시도 없었다.
+>
+> **소환사** 대장에 이름이 있으면 그자를 나쁘게 쓰는 순간 누가 썼는지 찍힙니다.
+> 확정을 그자가 하니까요.
+>
+> **소환사** 저희 체험단이 제일 먼저 썼습니다. 그게 저희 일이었으니까요.
+> 그리고 제일 먼저 없어졌습니다.
 >
 > **소환사** 죽는 순간까지 뭔가를 평가하고 있던 사람의 기록을 찾았습니다.
 > 어느 대장에도 올라가 있지 않은 걸로요. 삼 년 걸렸습니다.
@@ -495,6 +519,22 @@ No text, no readable letters — carved star shapes only.
 > **소환사** 「이 제품은」.
 >
 > **소환사** ……그 뒤가 궁금해서 견딜 수가 없었어요.
+
+```
+Hand-painted digital illustration for a stylized fantasy card game.
+Bold confident brushwork with visible painterly strokes, clean readable shapes.
+Warm characterful lighting, visible canvas grain and ink texture.
+Palette: aged bronze, parchment cream, cold slate, oxblood, one warm amber accent.
+Cinematic wide 16:9 composition.
+
+Two bare open palms held up close to camera, filling most of the frame, seen from above as the
+owner looks down at his own hands. Plain ordinary skin — smooth, clean, entirely blank.
+Absolutely nothing is drawn, printed, tattooed, branded or carved on them.
+Faint warm light falls across the palms. In the blurred background a robed figure stands
+watching, and a stone hall recedes into darkness beyond.
+The blankness of the skin is the subject of the image.
+No text, no letters, no symbols, no runes, no tattoos, no markings, no lines drawn on the skin.
+```
 
 #### P12 — 명명
 
@@ -517,9 +557,26 @@ No text, no readable letters — carved star shapes only.
 >
 > 그는 조금 웃었다. 죽고 나서 처음이었다.
 
+```
+Hand-painted digital illustration for a stylized fantasy card game.
+Bold confident brushwork with visible painterly strokes, clean readable shapes.
+Warm characterful lighting, visible canvas grain and ink texture.
+Palette: aged bronze, parchment cream, cold slate, oxblood, one warm amber accent.
+Cinematic wide 16:9 composition.
+
+A plain blank wooden tag on a leather cord, held out on an open palm in the center of the frame,
+close to camera and filling a third of it. The tag is completely uncarved — smooth, pale,
+not a single star mark on it, unlike the worn star-carved tag hanging at the neck of the figure
+offering it. A second hand reaches in from the opposite edge to take it.
+Warm low light, a dark stone hall behind, everything else out of focus.
+The empty tag is the subject.
+No text, no readable letters — the tag surface is blank.
+```
+
 ---
 
 ### 3막 · 각성
+
 
 #### P13 — 자유이자 저주
 
