@@ -20,7 +20,7 @@
 
 ## 2. 진행 규칙
 
-- 슬라이드 **16장, 총 112비트**(개정 시 이 숫자도 갱신할 것). 마지막 P15가 플레이어 입력이다. 한 장은 2~11비트이고 비트마다 텍스트가 넘어간다.
+- 슬라이드 **15장, 총 112비트**(개정 시 이 숫자도 갱신할 것). 마지막 P15가 플레이어 입력이다. 한 장은 2~11비트이고 비트마다 텍스트가 넘어간다.
 - 자동 진행 없음 — 클릭/스페이스로 넘긴다. 읽는 속도는 플레이어가 정한다.
 - **건너뛰기 항상 노출.** 2회차 플레이어를 붙잡지 않는다.
 - **등록은 프롤로그의 마지막 슬라이드(P15)다.** 이름 칸과 서명란이 한 장에 있고,
@@ -501,8 +501,13 @@ No text, no readable letters — one carved star shape only.
 
 #### P11 — 그래서 당신
 
-> **소환사** 여기 사람은 못 씁니다. 이름이 대장에 있으니까요.
-> 썼다가 걸리면 그 사람 앞으로 별 하나짜리가 올라옵니다. 그걸로 끝이에요.
+> 그럼 삼 년 동안 아무도 안 나섰느냐고 물으려다 말았다.
+> 방금 나선 사람들 얘기를 들은 참이었다.
+>
+> **소환사** 여기 사람은 두 번을 못 씁니다. 이름이 대장에 있으니까요.
+>
+> **소환사** 한 번 올리면 누가 올렸는지 나옵니다.
+> 그다음은 저희가 당한 그대로고요.
 >
 > 그는 자기 목을 만져 봤다. 아무것도 걸려 있지 않았다.
 >
@@ -602,35 +607,6 @@ No text, no readable letters — the tag surface is blank.
 
 ### 3막 · 각성
 
-
-#### P13 — 자유이자 저주
-
-> 며칠 지나면서 자기 상태가 어떤 건지 조금씩 알게 됐다.
->
-> 이 세계의 규칙이 그를 비껴갔다.
-> 누가 그를 리뷰하려고 하면 쓸 대상이 잡히지 않았다. 대장에 그의 카드가 아예 없었다.
->
-> 그가 쓴 글은 올라갔다. 그런데 그게 그의 것으로 집계되지는 않았다.
-> 사람을 구해도, 뭘 부숴도 붙을 자리가 없었다.
->
-> 그는 소환사의 장부를 한 번 넘겨 봤다.
-> 자기 이름이 있을 자리에 아무것도 없었다. 빈칸조차 없었다.
-
-```
-Hand-painted digital illustration for a stylized fantasy card game.
-Bold confident brushwork with visible painterly strokes, clean readable shapes.
-Warm characterful lighting, visible canvas grain and ink texture.
-Palette: aged bronze, parchment cream, cold slate, oxblood, one warm amber accent.
-Cinematic wide 16:9 composition.
-
-A man in a grey hoodie standing alone in the center of a bright sunlit stone plaza, seen from
-the front at full height, casting absolutely no shadow on the ground beneath him.
-Directly beside him a stone bench and a tall post throw long hard black shadows across the same
-paving in the same direction, making the missing shadow at his feet unmistakable.
-Strong low sunlight from the left. Empty plaza, no other people.
-The absence of his shadow is the subject of the image.
-No text, no readable letters, no logos.
-```
 
 #### P14 — 선언
 
