@@ -1143,7 +1143,7 @@ export class Battle {
         // B01 사장님 답글 (GDD §3.8, R22): 활성 디버프 중 Tier/위력 최상위를 "이번 전투 한정 정지"
         const pool = e.debuffs.filter((d) => !d.suspended && !d.beenRebutted);
         if (pool.length === 0) return 'no_rebut_target'; // → 의지 +5 효과로
-        pool.sort((a, b) => b.tier - a.tier || b.value - a.value || b.createdAt - a.createdAt); // 동률: (공감 — 시뮬 밖) → 최근
+        pool.sort((a, b) => b.tier - a.tier || b.value - a.value || b.createdAt - a.createdAt); // 동률: (좋아요 — 시뮬 밖) → 최근
         const target = pool[0]!;
         target.suspended = true;
         target.beenRebutted = true; // 디버프당 반박 1회 — 재반박 부활 후 다시 반박 불가

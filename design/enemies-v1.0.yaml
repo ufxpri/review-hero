@@ -320,7 +320,7 @@ bosses:
         text: >
           활성 디버프 1개를 반박하여 「이번 전투 한정 정지」시킨다(제거 아님 — 반박당한 리뷰는 회색 처리).
           대상은 출처 무관(전투 중 부착 + 비동기 보스 리뷰 유래) 활성 디버프 중 Tier/위력 최상위,
-          동률이면 공감 높은 것 → 가장 최근 것. 힙스터 평론가 크리(공격력 −50%)는 Tier 3 상당으로 최우선 반박 대상.
+          동률이면 좋아요 높은 것 → 가장 최근 것. 힙스터 평론가 크리(공격력 −50%)는 Tier 3 상당으로 최우선 반박 대상.
           디버프당 반박은 1회만. 같은 계열 팩트 리뷰를 제출하면 재반박 — 정지된 디버프가 부활하고 신뢰도 게이지 +1.
           반박할 대상이 없으면 의지 +5. 기절 중에도 발동한다.
         effects:
@@ -328,7 +328,7 @@ bosses:
             action: suspend_this_battle        # "반박·제거" → "이번 전투 한정 정지"(§3.8, 03 제안1, R18)
             target_pool: all_active_debuffs    # 출처 무관: 전투 내 부착 + 비동기 슬롯 디버프 전부(R22)
             priority: [tier_desc, power_desc]  # Tier/위력 최상위. 힙스터 크리 = Tier 3 상당(§3.5)
-            tiebreak: [empathy_desc, most_recent]  # 동률 시 공감↑ → 최근
+            tiebreak: [likes_desc, most_recent]    # 동률 시 좋아요↑ → 최근 (구 empathy_desc, ADR-015)
             once_per_debuff: true              # 디버프당 반박 1회
             counter_rebut:                     # 재반박(플레이어 측 카운터플레이)
               condition: fact_review_same_suit # 정지된 디버프와 같은 계열의 팩트 판정 리뷰 제출
@@ -345,7 +345,7 @@ bosses:
       effects:
         - {op: attack_up, value: 3, duration: battle, attachment: 알바_리뷰, counter_card: B02c}
     on_review:                   # 보스 리뷰 작성권(Layer 3, GDD §6.1). v0.1의 on_player_defeat를 승리 경로까지 확장(§3.8)
-      note: "유저당 보스당 주간 1회. 재작성 시 공감 0 리셋 + 신선도 F=0. 깎은 %는 누적 가한 피해 기준."
+      note: "유저당 보스당 주간 1회. 재작성 시 좋아요 0 리셋 + 신선도 F=0. 깎은 %는 누적 가한 피해 기준."
       origins:
         - origin: defeat         # 패배 시 — 깎은 의지 비율로 3등급 인증(§6.1 확장, R18)
           condition: "dmg_pct >= 30"
@@ -392,7 +392,7 @@ bosses:
             action: suspend_this_battle
             target_pool: all_active_debuffs
             priority: [tier_desc, power_desc]
-            tiebreak: [empathy_desc, most_recent]
+            tiebreak: [likes_desc, most_recent]
             once_per_debuff: true
             counter_rebut:
               condition: fact_review_same_suit

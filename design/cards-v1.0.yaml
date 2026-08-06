@@ -403,7 +403,7 @@ specials:
     text: "전투 이탈 (보상 포기, 일반 전투에서만)"
     effect: { type: retreat, condition: normal_battle_only }
   - id: X08
-    name: "별점 구걸"                    # 개명 (구 "공감 좀 눌러주세요" — GDD §3.7, 사전 §6)
+    name: "별점 구걸"                    # 개명 (구 "좋아요 좀 눌러주세요" — GDD §3.7, 사전 §6)
     flavor: "도움이 되셨다면 👍 부탁드립니다."   # 플레이버 유지
     cost: 1
     unique: true                        # 억지 플레이 게이지 우회 차단 (GDD §3.7)
