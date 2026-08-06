@@ -37,6 +37,28 @@ h1{font-size:23px;font-weight:800;letter-spacing:-.5px}
       font-size:12px;pointer-events:none;transition:opacity .2s}
 .pad.dirty .hint{opacity:0}
 
+.field{width:660px;margin-bottom:4px}
+.flabel{display:block;font-size:10px;letter-spacing:4px;color:#a08f68;margin-bottom:6px}
+.field input{width:100%;background:var(--parch);border:2px solid var(--inkc);border-radius:8px;
+      color:var(--inkc);font:inherit;font-size:22px;font-weight:700;padding:10px 14px;outline:none;
+      box-shadow:4px 4px 0 rgba(0,0,0,.5)}
+.field input::placeholder{color:#a89572;font-weight:400;font-size:15px}
+.field input.warn{animation:fshake .34s}
+@keyframes fshake{25%{transform:translateX(-6px)}50%{transform:translateX(5px)}75%{transform:translateX(-3px)}}
+
+.doneov{position:fixed;inset:0;z-index:40;display:none;place-items:center;
+      background:rgba(8,6,4,.86);backdrop-filter:blur(4px)}
+.doneov.on{display:grid}
+.doneov .box{text-align:center;display:flex;flex-direction:column;align-items:center;gap:14px;
+      animation:dvin .5s ease both}
+@keyframes dvin{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.doneov .call{font-size:26px;font-weight:800;color:#e0a94b}
+.doneov .dn{color:#9b8c74;font-size:14px}
+.doneov .dq{color:#f2e6cf;font-size:16px;margin-top:6px}
+.doneov a{margin-top:14px;padding:13px 30px;border-radius:9px;font-weight:800;text-decoration:none;
+      background:linear-gradient(#7a2a1c,#4d1a11);color:#f0e2c6;border:1px solid #a4553c}
+.doneov a:hover{filter:brightness(1.2)}
+
 .row{display:flex;gap:10px;align-items:center}
 .btn{padding:11px 22px;border-radius:8px;font-weight:700;cursor:pointer;
      border:1px solid var(--edge);background:rgba(0,0,0,.4);color:var(--ink)}
@@ -75,11 +97,17 @@ h1{font-size:23px;font-weight:800;letter-spacing:-.5px}
   <div class="grain"></div>
   <span class="logo">만물마켓</span>
 
-  <h1>서명 다시 하기</h1>
+  <h1>만물대장 · 리뷰어 등록</h1>
   <p class="lead">
-작성자명 <b id="pen">……</b> 으로 등록되어 있습니다. 이름은 바꿀 수 없지만 서명은 다시 할 수 있습니다.<br>
-    <b>서명은 올리는 행위 그 자체입니다</b> — 새로 그은 서명이 등록되면, 다음 리뷰부터 그 서명으로 올라갑니다.
+    사람들은 <b>이름</b>으로 당신을 구분하고, 대장은 <b>서명</b>을 대조합니다.<br>
+    서명하지 않은 글은 올라가지 않습니다 — <b>올리는 것이 곧 서명하는 것입니다.</b>
   </p>
+
+  <div class="field">
+    <span class="flabel">작 성 자 명</span>
+    <input id="pname" maxlength="12" autocomplete="off" spellcheck="false"
+           placeholder="저쪽 세계에서 쓰던 이름">
+  </div>
 
   <div class="pad" id="pad">
     <div class="rule"></div>
@@ -90,7 +118,7 @@ h1{font-size:23px;font-weight:800;letter-spacing:-.5px}
   <div class="row">
     <button class="btn" id="undo" disabled>한 획 지우기</button>
     <button class="btn" id="clear" disabled>다시 쓰기</button>
-    <button class="btn primary" id="save" disabled>이 서명으로 등록</button>
+    <button class="btn primary" id="save" disabled>이 이름과 서명으로 등록</button>
   </div>
 
   <div class="plabel">카드에 얹힌 모습</div>
@@ -103,6 +131,15 @@ h1{font-size:23px;font-weight:800;letter-spacing:-.5px}
   </div>
 </div>
 
+<div class="doneov" id="doneov">
+  <div class="box">
+    <div class="call">─ <b id="dname"></b> 님.</div>
+    <p class="dn">그 이름을 소리 내어 부른 사람은 처음이었다.</p>
+    <p class="dq">뭐라고 쓰실 겁니까? <b>— 일단 좀 보고요.</b></p>
+    <a href="combat.html">첫 리뷰 쓰러 가기 →</a>
+  </div>
+</div>
+
 <p class="note">
   <b>서명 등록</b> — 그린 획을 SVG path로 저장한다(localStorage <code>reviewhero.sig</code>).
   카드에서 <code>stroke-dasharray</code> 애니메이션으로 다시 그어지므로,
@@ -111,9 +148,8 @@ h1{font-size:23px;font-weight:800;letter-spacing:-.5px}
 
 <script>
 const KEY = 'reviewhero.sig';
-// 프롤로그 P12에서 등록한 필명 (worldview §2.1)
-document.getElementById('pen').textContent =
-  localStorage.getItem('reviewhero.penname') || '(미등록)';
+const pname = document.getElementById('pname');
+pname.value = localStorage.getItem('reviewhero.penname') || '';
 const pad = document.getElementById('pad'), ink = document.getElementById('ink');
 const psvg = document.getElementById('psvg'), preview = document.getElementById('preview');
 let strokes = [], cur = null, drawing = false;
@@ -178,9 +214,15 @@ addEventListener('pointerup', () => { drawing = false; cur = null; });
 undo.onclick  = () => { strokes.pop(); render(); };
 clear.onclick = () => { strokes = []; render(); };
 save.onclick  = () => {
+  const name = pname.value.trim();
+  if (!name) {                                  // 이름 없이는 등록되지 않는다
+    pname.classList.remove('warn'); pname.offsetHeight; pname.classList.add('warn');
+    pname.focus(); return;
+  }
+  localStorage.setItem('reviewhero.penname', name);
   localStorage.setItem(KEY, JSON.stringify({v: 1, box: [660, 236], strokes}));
-  save.textContent = '등록 완료 — 이 서명으로 리뷰를 씁니다';
-  save.disabled = true;
+  document.getElementById('dname').textContent = name;
+  document.getElementById('doneov').classList.add('on');
 };
 
 // 이미 등록된 서명이 있으면 불러온다

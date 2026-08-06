@@ -47,75 +47,6 @@ body{background:var(--bg);color:var(--ink);display:flex;flex-direction:column;
 /* 비트가 넘어갈 때 문장이 아래에서 올라온다 */
 .beat{animation:beatin .34s ease both}
 
-/* ══ 리뷰어 등록 계약서 — A4 세로, 화면 중앙 ══════════════════ */
-#sheet{position:absolute;inset:0;z-index:46;display:none;place-items:center;
-       background:rgba(8,6,4,.74);backdrop-filter:blur(3px)}
-#sheet.on{display:grid}
-#sheet .paper{position:relative;height:86vh;aspect-ratio:210/297;max-width:94vw;
-       background:#e9ddc2;color:#2b2119;border-radius:3px;
-       box-shadow:0 30px 70px rgba(0,0,0,.7), 0 0 0 1px rgba(0,0,0,.5);
-       background-image:repeating-linear-gradient(91deg,rgba(120,100,60,.045) 0 2px,transparent 2px 6px);
-       padding:5.4% 7%;display:flex;flex-direction:column;
-       animation:paperin .5s cubic-bezier(.2,.8,.3,1) both}
-@keyframes paperin{from{opacity:0;transform:translateY(26px) rotate(-.6deg) scale(.985)}
-                   to{opacity:1;transform:none}}
-#sheet .paper::after{content:"";position:absolute;inset:2.6% 3.2%;border:1px solid #c8b48c;
-       pointer-events:none}
-#sheet h2{font-size:19px;font-weight:800;letter-spacing:6px;text-align:center}
-#sheet .sub{margin-top:7px;text-align:center;font-size:11px;letter-spacing:3px;color:#8a7a5c}
-#sheet .sep{margin:16px 0 4px;height:1px;background:#c8b48c}
-#sheet ol{margin:14px 0 0;padding:0;list-style:none;font-size:12.5px;line-height:2;color:#4a3f31}
-#sheet ol li{position:relative;padding-left:26px;margin-bottom:6px;text-indent:0}
-#sheet ol li b{position:absolute;left:0;top:0;color:#7a2a1c;font-weight:800}
-#sheet .fields{margin-top:auto}
-#sheet .fld{margin-top:20px}
-#sheet .cap{font-size:10px;letter-spacing:4px;color:#8a7a5c;margin-bottom:5px}
-#sheet input{width:100%;background:transparent;border:0;border-bottom:1px solid #a89572;
-       color:#2b2119;font:inherit;font-size:26px;font-weight:700;padding:2px 2px 9px;outline:none}
-#sheet input::placeholder{color:rgba(43,33,25,.24);font-weight:400;font-size:17px}
-#sheet input:focus{border-bottom-color:#7a2a1c}
-#sheet .pad{position:relative;width:100%;aspect-ratio:660/220;border-bottom:1px solid #a89572;
-       cursor:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='30' height='30' viewBox='0 0 30 30'><path d='M26 3C16 6 8 13 5 23l3 3C18 23 25 15 26 3z' fill='%23e8dcc0' stroke='%232b2119'/><path d='M5 26l-3 3' stroke='%232b2119' stroke-width='2'/></svg>") 2 28,crosshair;
-       touch-action:none;overflow:hidden}
-#sheet .pad svg{position:absolute;inset:0;width:100%;height:100%;display:block}
-#sheet .pad path{fill:none;stroke:#2b2119;stroke-width:3.2;stroke-linecap:round;stroke-linejoin:round}
-#sheet .sigph{position:absolute;left:2px;bottom:9px;font-size:12px;color:#a89572;
-       pointer-events:none;transition:opacity .2s}
-#sheet .pad.dirty .sigph{opacity:0}
-#sheet .foot{display:flex;align-items:center;gap:10px;margin-top:16px}
-#sheet .note2{flex:1;font-size:10.5px;line-height:1.6;color:#8a7a5c;text-align:right;padding-right:4px}
-#sheet button{font:inherit;cursor:pointer;border-radius:4px}
-#sheet .undo{background:none;border:1px solid #c8b48c;color:#6b5c44;font-size:10.5px;padding:6px 10px}
-#sheet .undo:hover{border-color:#7a2a1c;color:#7a2a1c}
-#sheet .ok{border:1px solid #5c1f14;background:linear-gradient(#8a3020,#5c1f14);color:#f0e2c6;
-       font-weight:800;font-size:13px;letter-spacing:2px;padding:11px 26px}
-#sheet .ok:hover{filter:brightness(1.15)}
-#sheet .paper.warn{animation:regshake .34s}
-
-/* 카드 미리보기 — 서명이 획순 그대로 다시 그어진다 (구 signature.html 이식) */
-#sheet .preview{position:absolute;right:-186px;bottom:28px;width:168px;height:214px;
-       background:#efe4c8;color:#2b2119;border:2px solid #2b2119;border-radius:9px;
-       padding:9px 10px;display:flex;flex-direction:column;
-       box-shadow:8px 8px 0 rgba(0,0,0,.5);transform:rotate(2deg)}
-#sheet .preview .st{font-size:11px;color:#c9a24a}
-#sheet .preview .nm{font-weight:800;font-size:13px;margin:3px 0 5px}
-#sheet .preview .tx{font-size:10.5px;line-height:1.45;color:#3a3229;flex:1}
-#sheet .preview .ft{border-top:1px solid #c8b48c;padding-top:5px;font-size:10.5px;display:flex;gap:5px}
-#sheet .preview .tag{background:#2f2a20;color:#e8d9ae;border-radius:3px;padding:1px 6px;font-size:10px}
-#sheet .preview .cost{margin-left:auto;font-weight:800}
-#sheet .plabel{position:absolute;right:-186px;bottom:252px;width:168px;text-align:center;
-       font-size:10px;letter-spacing:2px;color:var(--dim)}
-#sheet .psig{position:absolute;left:11px;right:11px;bottom:40px;height:38px;pointer-events:none;opacity:0}
-#sheet .psig svg{width:100%;height:100%;overflow:visible;display:block}
-#sheet .psig path{fill:none;stroke:#2b2119;stroke-width:2.3;stroke-linecap:round;stroke-linejoin:round;
-       stroke-dasharray:100;stroke-dashoffset:100}
-#sheet .preview.play .psig{opacity:1}
-#sheet .preview.play .psig path{animation:sigdraw .5s cubic-bezier(.5,.05,.55,.95) forwards}
-@keyframes sigdraw{to{stroke-dashoffset:0}}
-@media (max-width:1500px){#sheet .preview,#sheet .plabel{display:none}}
-@keyframes regshake{25%{transform:translateX(-6px)}50%{transform:translateX(5px)}
-                    75%{transform:translateX(-3px)}}
-@keyframes beatin{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:none}}
 /* 비트 진행 표시 — 슬라이드 점 아래 작은 눈금 */
 .beats{position:absolute;left:96px;bottom:44px;z-index:5;display:flex;gap:4px}
 .beats i{width:9px;height:2px;border-radius:1px;background:rgba(239,231,216,.2)}
@@ -167,18 +98,17 @@ body{background:var(--bg);color:var(--ink);display:flex;flex-direction:column;
 
   <div class="gate" id="gate">
     <div class="box">
-      <h2 id="gatename">리뷰어 등록 완료</h2>
-      <p>만물대장이 이름을 새겼습니다. 조회해도 아무것도 나오지 않는 이름입니다.<br>
-         지금부터 서명하는 모든 리뷰가 그대로 올라갑니다.</p>
-      <a href="combat.html">첫 리뷰 쓰러 가기 →</a>
-      <a class="sub" href="signature.html">서명 다시 하기</a>
+      <h2>마지막 한 가지가 남았습니다</h2>
+      <p>만물대장에 리뷰를 올리려면 이름과 서명을 등록해야 합니다.<br>
+         등록하고 나면 바로 쓸 수 있습니다.</p>
+      <a href="signature.html">서명 남기러 가기 →</a>
     </div>
   </div>
 </div>
 
 <p class="note">
   <b>프롤로그</b> — 본문과 이미지 프롬프트의 정본은 <code>design/prologue-v1.md</code> §3이고,
-  빌드가 그것을 읽어 이 화면을 만든다. 마지막 슬라이드 P15에서 이름과 서명을 한 장에 받아 <code>reviewhero.penname</code>·<code>reviewhero.sig</code>로 저장하고, 온보딩 1판(GDD §4.4)으로 넘어간다.
+  빌드가 그것을 읽어 이 화면을 만든다. 마지막 게이트가 서명 페이지(signature.html)로 이어지고, 거기서 이름·서명을 등록한 뒤 온보딩 1판(GDD §4.4)으로 넘어간다.
 </p>
 
 <script>
@@ -189,17 +119,13 @@ const beatsEl = document.getElementById('beats');
 wrap.innerHTML = SLIDES.map((s, i) => `
   <div class="slide" data-i="${i}">
     ${s.img ? `<img src="${s.img}" alt="">` : `<div class="miss">${s.title} — 이미지 생성 대기</div>`}
-  </div>`).join('') + `<div class="copy cur" id="copy"></div><div id="sheet"></div>`;
+  </div>`).join('') + `<div class="copy cur" id="copy"></div>`;
 dots.innerHTML = SLIDES.map(() => '<i></i>').join('');
 
 let n = -1, b = 0;
 
 function show(i, beat = 0){
-  if (i >= SLIDES.length) {
-    const g = document.getElementById('gate');
-    if (PEN) document.getElementById('gatename').textContent = `「${PEN}」 — 리뷰어 등록 완료`;
-    g.classList.add('on'); return;
-  }
+  if (i >= SLIDES.length) { document.getElementById('gate').classList.add('on'); return; }
   const slideChanged = i !== n;
   n = i; b = beat;
   const s = SLIDES[i];
@@ -216,31 +142,16 @@ function show(i, beat = 0){
   }
 
   // 현재 비트만 보여준다 — 비주얼 노벨 문법
-  let wantSheet = false;
   document.getElementById('copy').innerHTML =
     `<div class="no">${String(i + 1).padStart(2, '0')} · ${s.title}</div>` +
     `<div class="beat">${(() => {
         let insay = false;
         return s.beats[beat].map(l => {
-          const inp = l.match(/^\[PLAYER_INPUT:\s*(.+?)\]$/);
-          if (inp) { wantSheet = true; return ''; }        // 계약서는 별도 레이어에 띄운다
           if (l.startsWith('<b>')) { insay = true; return `<p class="say">${l}</p>`; }
           if (insay) return `<p class="say cont">${l}</p>`;   // 대사 둘째 줄부터
           return `<p>${l}</p>`;
         }).join('');
       })()}</div>`;
-
-  const sheet = document.getElementById('sheet');
-  sheet.classList.toggle('on', wantSheet);
-  sheet.innerHTML = wantSheet ? SHEET_HTML() : '';
-  if (wantSheet) {
-    const pen = document.getElementById('penname');
-    pen.focus();
-    pen.addEventListener('input', () => { PEN = pen.value.trim(); });
-    pen.addEventListener('keydown', e => { if (e.code === 'Enter') document.getElementById('sigpad').scrollIntoView({block:'nearest'}); });
-    bindSig();
-    document.getElementById('regok').onclick = e => { e.stopPropagation(); advance(); };
-  }
 
   beatsEl.innerHTML = s.beats.map((_, j) =>
     `<i class="${j <= beat ? 'on' : ''}"></i>`).join('');
@@ -262,124 +173,7 @@ function boom(){
     {duration:440, easing:'cubic-bezier(.36,.07,.19,.97)'});
 }
 
-let PEN = localStorage.getItem('reviewhero.penname') || '';
-
-// 만물대장 리뷰어 등록 계약서 — 조항은 worldview §1.1 원칙에서 나온다
-function SHEET_HTML(){
-  return `<div class="paper" id="paper">
-    <h2>만 물 대 장 · 리 뷰 어 등 록</h2>
-    <div class="sub">등 록 하 는 순 간 부 터 효 력 이 발 생 한 다</div>
-    <div class="sep"></div>
-    <ol>
-      <li><b>一</b>올린 글은 지워지지 않는다. 틀린 것도, 작정하고 쓴 것도 그대로 남는다.</li>
-      <li><b>二</b>글의 힘은 그 글이 받은 좋아요가 정한다. 아무도 누르지 않은 글은 올라가 있어도 아무것도 깎지 못한다.</li>
-      <li><b>三</b>서명하지 않은 글은 올라가지 않는다. 올리는 것이 곧 서명하는 것이다.</li>
-      <li><b>四</b>여기 적는 이름은 사람들이 본다. 서명은 대장이 대조한다.</li>
-    </ol>
-    <div class="fields">
-      <div class="fld">
-        <div class="cap">작 성 자 명</div>
-        <input id="penname" maxlength="12" autocomplete="off" spellcheck="false"
-               placeholder="저쪽 세계에서 쓰던 이름" value="${PEN.replace(/"/g,'&quot;')}">
-      </div>
-      <div class="fld">
-        <div class="cap">서 명</div>
-        <div class="pad" id="sigpad">
-          <svg id="sigink" viewBox="0 0 660 220" preserveAspectRatio="none"></svg>
-          <div class="sigph">여기에 서명하세요</div>
-        </div>
-      </div>
-      <div class="foot">
-        <button class="undo" id="sigundo" type="button">한 획 지우기</button>
-        <button class="undo" id="sigclear" type="button">다시 쓰기</button>
-        <div class="note2">이름과 서명은 되돌릴 수 없다.</div>
-        <button class="ok" id="regok" type="button">등 록</button>
-      </div>
-    </div>
-    <div class="plabel">카드에 얹힌 모습</div>
-    <div class="preview" id="preview">
-      <div class="st">★☆☆☆☆</div>
-      <div class="nm">손목 나감</div>
-      <div class="tx">위력은 확실한데 손목이 나갑니다.<br>데드리프트 삼 년 하고 오세요.</div>
-      <div class="psig"><svg id="psvg" viewBox="0 0 140 38" preserveAspectRatio="none"></svg></div>
-      <div class="ft"><span class="tag">#무게</span><span>👍 7</span><span class="cost">✍1</span></div>
-    </div>
-  </div>`;
-}
-// 서명 — ui/signature.html 과 같은 660×236 좌표계, 같은 저장 스키마
-let SIG = (() => { try { return JSON.parse(localStorage.getItem('reviewhero.sig'))?.strokes || []; }
-                   catch { return []; } })();
-
-function sigPath(pts){                      // 중점 이차 베지어로 손떨림을 눌러준다
-  if (pts.length < 2) return `M${pts[0][0]},${pts[0][1]} l0.1,0`;
-  let d = `M${pts[0][0]},${pts[0][1]}`;
-  for (let i = 1; i < pts.length - 1; i++){
-    const [x, y] = pts[i], [nx, ny] = pts[i + 1];
-    d += ` Q${x},${y} ${((x + nx) / 2).toFixed(1)},${((y + ny) / 2).toFixed(1)}`;
-  }
-  const l = pts[pts.length - 1];
-  return d + ` L${l[0]},${l[1]}`;
-}
-
-function sigFit(w, h){
-  if (!SIG.length) return [];
-  const xs = SIG.flat().map(q => q[0]), ys = SIG.flat().map(q => q[1]);
-  const x0 = Math.min(...xs), x1 = Math.max(...xs);
-  const y0 = Math.min(...ys), y1 = Math.max(...ys);
-  const sw = Math.max(1, x1 - x0), sh = Math.max(1, y1 - y0);
-  const k = Math.min(w / sw, h / sh) * .94;
-  const ox = (w - sw * k) / 2 - x0 * k, oy = (h - sh * k) / 2 - y0 * k;
-  return SIG.map(st => sigPath(st.map(([x, y]) => [+(x * k + ox).toFixed(1), +(y * k + oy).toFixed(1)])));
-}
-function sigPreview(){
-  const pv = document.getElementById('preview'), svg = document.getElementById('psvg');
-  if (!pv) return;
-  svg.innerHTML = sigFit(140, 38).map(d => `<path pathLength="100" d="${d}"/>`).join('');
-  pv.classList.remove('play');
-  if (SIG.length) requestAnimationFrame(() => pv.classList.add('play'));
-}
-
-function bindSig(){
-  const pad = document.getElementById('sigpad'), ink = document.getElementById('sigink');
-  let cur = null, drawing = false;
-  const pt = e => { const r = pad.getBoundingClientRect();
-    return [ +((e.clientX - r.left) / r.width  * 660).toFixed(1),
-             +((e.clientY - r.top ) / r.height * 220).toFixed(1) ]; };
-  const draw = () => {
-    ink.innerHTML = SIG.map(st => `<path d="${sigPath(st)}"/>`).join('');
-    pad.classList.toggle('dirty', SIG.length > 0);
-    sigPreview();
-  };
-  pad.addEventListener('pointerdown', e => {
-    e.stopPropagation();                    // 슬라이드 넘김으로 새지 않게
-    drawing = true; cur = [pt(e)]; SIG.push(cur);
-    pad.setPointerCapture(e.pointerId); draw();
-  });
-  pad.addEventListener('pointermove', e => {
-    if (!drawing) return;
-    const q = pt(e), last = cur[cur.length - 1];
-    if (Math.hypot(q[0] - last[0], q[1] - last[1]) < 2.5) return;
-    cur.push(q); draw();
-  });
-  addEventListener('pointerup', () => { drawing = false; cur = null; });
-  document.getElementById('sigundo').onclick  = e => { e.stopPropagation(); SIG.pop(); draw(); };
-  document.getElementById('sigclear').onclick = e => { e.stopPropagation(); SIG.length = 0; draw(); };
-  draw();
-}
-
 function advance(){
-  const pen = document.getElementById('penname');
-  if (pen) {                                   // 이름과 서명이 둘 다 있어야 넘어간다
-    PEN = pen.value.trim();
-    if (!PEN || !SIG.length) {
-      const box = document.getElementById('paper');
-      box.classList.remove('warn'); box.offsetHeight; box.classList.add('warn');
-      if (!PEN) pen.focus();
-      return;
-    }
-    localStorage.setItem('reviewhero.penname', PEN);
-    localStorage.setItem('reviewhero.sig', JSON.stringify({v:1, box:[660,220], strokes:SIG}));
-  }
   const s = SLIDES[n];
   if (s && b + 1 < s.beats.length) show(n, b + 1);
   else show(n + 1, 0);
@@ -390,7 +184,7 @@ function back(){
 }
 
 document.getElementById('screen').addEventListener('click', e => {
-  if (e.target.closest('.skip') || e.target.closest('.gate') || e.target.closest('#sheet')) return;
+  if (e.target.closest('.skip') || e.target.closest('.gate')) return;
   advance();
 });
 document.getElementById('skip').addEventListener('click', e => {
@@ -398,9 +192,6 @@ document.getElementById('skip').addEventListener('click', e => {
   show(SLIDES.length);
 });
 addEventListener('keydown', e => {
-  const typing = e.target instanceof HTMLInputElement;
-  // 입력 중에는 스페이스가 글자다. 엔터만 제출로 받는다.
-  if (typing && e.code !== 'Enter') return;
   if (e.code === 'Space' || e.code === 'Enter' || e.code === 'ArrowRight'){ e.preventDefault(); advance(); }
   if (e.code === 'ArrowLeft'){ e.preventDefault(); back(); }
 });
