@@ -175,10 +175,12 @@ Painterly but restrained brushwork, muted naturalistic color, documentary framin
 Cold ordinary interior lighting. Palette: grey-green, dull beige, cold blue screen light, dirty white.
 Cinematic wide 16:9 composition.
 
-A wall of unopened cardboard delivery boxes stacked chest-high along the side of a small
-room, a dozen of them, tape still sealed, a film of dust on the topmost ones. A narrow gap of
-floor is left to walk through. Behind them a cheap desk and an unmade bed in dim light.
-The boxes are the subject — nobody is in the frame.
+A dozen unopened cardboard delivery boxes stacked in a messy pile, filling the left half of the
+frame and rising above head height, tape still sealed, dust on the top ones.
+They are crammed into the corner of a small cluttered bedroom — an unmade bed with tangled
+sheets on the right, a cheap desk with a laptop, clothes on the floor, one lamp on.
+Shot from standing height inside the room. Lived-in and claustrophobic, not a warehouse.
+The boxes fill roughly half the frame. Nobody is in it.
 No text, no readable letters, no logos, no barcodes.
 ```
 
@@ -207,11 +209,13 @@ Painterly but restrained brushwork, muted naturalistic color, documentary framin
 Cold ordinary interior lighting. Palette: grey-green, dull beige, cold blue screen light, dirty white.
 Cinematic wide 16:9 composition.
 
-A laptop screen filled edge to edge with a long dense block of written text, shot close from
-slightly above and behind a pair of hands resting on the keyboard. The screen is the brightest
-thing in the dark room. A cheap pair of wireless earbuds and their opened case sit beside the
-laptop, one earbud out of the case.
-No readable letters — the text renders as abstract line strokes. No logos.
+A laptop screen showing a review being written — a white page with several paragraphs of dark
+body text and a row of small star shapes at the top, like an online shopping review form.
+The screen fills about 60 percent of the frame, shot from slightly above and behind two hands
+resting on the keyboard. Warm room light, a dark bedroom behind.
+A pair of cheap wireless earbuds and their open case lie next to the laptop.
+Clearly a document being typed, not code, not a terminal.
+No readable letters — text renders as abstract grey line strokes. No logos.
 ```
 
 #### P04 — 네임드
@@ -235,15 +239,17 @@ Painterly but restrained brushwork, muted naturalistic color, documentary framin
 Cold ordinary interior lighting. Palette: grey-green, dull beige, cold blue screen light, dirty white.
 Cinematic wide 16:9 composition.
 
-Five or six phone and tablet screens laid out together on a dark surface, overlapping slightly,
-every one of them displaying the same block of text — the same shape of paragraphs reposted
-across all of them. Each screen glows faintly in the dark; nothing else is lit.
-No readable letters — text renders as abstract line strokes. No logos, no interface chrome.
+Six smartphones lying scattered and overlapping on a dark wooden table, seen from directly
+above, filling the whole frame. Every screen is on and every one shows the same thing — the same
+block of paragraphs with a row of small star shapes above it, copied and reposted across all of
+them. The screens are the only light source, glowing up onto the table.
+Casual and messy, like a pile of phones tossed down, not a product display.
+No readable letters — text renders as abstract grey line strokes. No logos.
 ```
 
 #### P05 — 메일
 
-> 어느 날 메일이 하나 왔다. 제목은 [광고 협업 제안]이었다.
+> 어느 날 메일이 하나 왔다. 제목은 [체험단 제안]이었다.
 >
 > 내용은 꽤 정중했다.
 > 자기네가 그의 글을 오래 봐 왔다는 얘기,
@@ -251,8 +257,8 @@ No readable letters — text renders as abstract line strokes. No logos, no inte
 > 요즘 이렇게 믿을 만한 리뷰어가 없다는 얘기가 세 문단쯤 이어졌다.
 >
 > 조건은 맨 아래에 있었다.
-> 제품 하나 써 보고 후기 한 편 써 주면 되는데,
-> 금액이 그가 한 달에 쓰는 돈보다 많았다.
+> 제품은 그냥 드리고, 써 보고 후기 한 편만 남겨 주면 된다고 했다.
+> 원고료가 그가 한 달에 쓰는 돈보다 많았다.
 >
 > 그는 그 줄을 한참 봤다.
 >
@@ -269,10 +275,13 @@ Painterly but restrained brushwork, muted naturalistic color, documentary framin
 Cold ordinary interior lighting. Palette: grey-green, dull beige, cold blue screen light, dirty white.
 Cinematic wide 16:9 composition.
 
-An email window open on a dark monitor, filling the frame, showing a long formal message.
-Near the bottom of the message a single short line sits apart from the rest, and a text cursor
-rests at the end of it. The rest of the room is black.
-No readable letters — all text renders as abstract line strokes. No logos, no numbers.
+A computer monitor filling almost the entire frame, shot straight on from close range,
+displaying an open email — a white message window with a header block at the top and four
+paragraphs of dark body text below it. Near the bottom, set apart with blank space around it,
+sits one short isolated line. A blinking text cursor rests beside that line.
+The screen is the only light; a dark room barely visible at the edges.
+Unmistakably an email client on a desktop.
+No readable letters — all text renders as abstract grey line strokes. No logos, no numbers.
 ```
 
 #### P06 — 그 물건
@@ -293,11 +302,13 @@ Painterly but restrained brushwork, muted naturalistic color, documentary framin
 Cold ordinary interior lighting. Palette: grey-green, dull beige, cold blue screen light, dirty white.
 Cinematic wide 16:9 composition.
 
-A cheap white plastic power bank lying in an opened cardboard box on a desk, close to camera,
-nested in thin crumpled packing paper. The packaging is completely plain — no certification
-marks, no printed labels, one corner of the box liner glued crooked and lifting.
-A hand rests on the edge of the open flap, not yet lifting the product out.
-No text, no readable letters, no logos, no certification marks.
+A rectangular white plastic power bank sitting in the middle of an opened cardboard box,
+filling the center of the frame and clearly the subject, seen from directly above.
+It rests on thin crumpled packing paper. The cardboard is plain brown with no printing at all.
+Two hands hold the box flaps open at the edges of the frame.
+A dark desk surface around the box, one warm lamp above.
+The power bank is a plain white brick with a USB port on one edge, nothing printed on it.
+No text, no readable letters, no logos, no certification marks, no stickers.
 ```
 
 #### P07 — 마지막 문장
@@ -319,10 +330,12 @@ Painterly but restrained brushwork, muted naturalistic color, documentary framin
 Palette: near-black room, cold laptop screen glow, one small orange indicator point.
 Cinematic wide 16:9 composition.
 
-A dark bedroom at night, seen from the side. On a bedside table a cheap white plastic power
-bank sits plugged into a charging cable, a tiny orange indicator glowing on it. Just beyond it
-an open laptop throws cold blue light across the rumpled bed and the wall.
-Everything is completely still. Nothing has happened yet.
+A white plastic power bank sitting on a wooden bedside table in the foreground, close to camera
+and sharply lit, a charging cable plugged into it and one small orange indicator light glowing on
+its side. Behind it and slightly out of focus, an open laptop sits on a rumpled bed, its screen
+throwing cold blue light up the wall of a dark bedroom.
+The power bank occupies the lower third of the frame and is unmistakably the subject.
+Completely still. Nothing has happened yet.
 No text, no readable letters, no logos.
 ```
 
@@ -338,13 +351,14 @@ Painterly brushwork with violent value contrast, documentary framing.
 Palette: near-black room, searing orange-white at the center, hard cast shadows.
 Cinematic wide 16:9 composition.
 
-A violent explosion of searing white-orange fire bursting out of a small plastic power bank on
-a bedside table, flame and sparks erupting from the split seam in a hard bright bloom that blows
-out the center of the frame. Molten plastic spraying, the charging cable whipping away.
-The same dark bedroom behind it, the blast throwing hard shadows up the wall and across a
-rumpled bed. An open laptop beside it, its screen washed out by the light. No person visible.
-The fire is the subject and by far the brightest thing in the image.
-No text, no readable letters, no logos.
+A white plastic power bank on a wooden bedside table splitting open and exploding — a hard
+bright fireball of white-orange flame bursting straight up out of its cracked seam, with a spray
+of orange sparks flying outward in all directions and a plume of dark smoke above.
+The power bank itself is still visible at the base of the flame, cracked and deformed.
+The blast lights a dark bedroom: hard shadows thrown up the wall, a rumpled bed, an open laptop
+beside it with its screen washed out. A charging cable whipping through the air.
+Sharp defined flame shapes and distinct individual sparks, not a soft glow or a blur.
+No person visible. No text, no readable letters, no logos.
 ```
 
 
@@ -419,6 +433,9 @@ No text, no readable letters, no legible runes — abstract carved marks only.
 > 그는 소환사의 목에 걸린 나무 패를 다시 봤다. 별이 하나뿐이었다.
 >
 > **소환사** 아, 이거요.
+> 만물체험단 패입니다. 물건을 먼저 받아서 써 보고 평가하는 게 저희 일이었어요.
+>
+> **소환사** 별 수가 곧 발언권입니다.
 > 원래는 넷이었습니다.
 
 ```
@@ -428,12 +445,13 @@ Warm characterful lighting, visible canvas grain and ink texture.
 Palette: aged bronze, parchment cream, cold slate, oxblood, one warm amber accent.
 Cinematic wide 16:9 composition.
 
-Countless small wooden rating plaques hanging on cords from an unseen ceiling, filling the
-entire frame at every depth, each one carved with a different number of star marks — some with
-five, most with two or one, a few blank and cracked. They drift slightly as if in a draft.
-Far below and small, two figures stand looking up at them.
-Warm light filters down between the hanging plaques.
-No text, no readable letters — carved star marks only.
+Hundreds of small flat wooden tags hanging on thin cords at many different heights, densely
+filling the whole frame from top to bottom like a forest of wind chimes, receding into warm haze.
+Each tag is carved with a row of small star shapes — a few have five, most have one or two,
+some are blank and split. The tags are close to camera in the foreground and tiny in the distance.
+Far below at the bottom edge, two small robed figures stand looking up.
+Warm light filters down between the hanging tags.
+No text, no readable letters — carved star shapes only.
 ```
 
 #### P10 — 마왕
@@ -457,7 +475,11 @@ No text, no readable letters — carved star marks only.
 > 이 세계 사람은 전부 대장에 이름이 올라가 있으니까요.
 >
 > **소환사** 쓰는 순간 누가 썼는지 다 나옵니다.
-> 그래서 지금 이 세계에 그자를 욕한 사람은 한 명도 남아 있지 않습니다.
+>
+> **소환사** 저희 체험단이 제일 먼저 썼습니다. 그게 저희 일이었으니까요.
+> 그리고 제일 먼저 없어졌습니다.
+>
+> **소환사** 지금 이 세계에 그자를 욕한 사람은 한 명도 남아 있지 않습니다.
 
 #### P11 — 그래서 당신
 
@@ -486,7 +508,10 @@ No text, no readable letters — carved star marks only.
 > **소환사** 우리가 그자한테 받아낼 건 사과가 아닙니다. 반성 같은 것도 아니고요.
 > 뺏긴 별점을 돌려받아야죠. 그건 사과가 아니라 환불입니다.
 >
-> **소환사** 그걸 받으러 가는 원정대의 대장.
+> **소환사** 그걸 받으러 가는 원정대가 필요합니다.
+> 만물체험단이 마지막으로 꾸리는 원정이고요.
+>
+> **소환사** 그 대장 자리를 맡아 주십시오.
 >
 > **소환사** ─ 환불원정대장.
 >
@@ -516,10 +541,12 @@ Warm characterful lighting, visible canvas grain and ink texture.
 Palette: aged bronze, parchment cream, cold slate, oxblood, one warm amber accent.
 Cinematic wide 16:9 composition.
 
-A pair of worn boots standing on a sunlit stone plaza, casting no shadow at all, while every
-other object in the frame — a bench, a post, a low wall — throws a long hard shadow across the
-same stone in the same direction. The absence where the shadow should be is the subject.
-Shot from waist height looking down and slightly forward. Quiet, bright, and wrong.
+A man in a grey hoodie standing alone in the center of a bright sunlit stone plaza, seen from
+the front at full height, casting absolutely no shadow on the ground beneath him.
+Directly beside him a stone bench and a tall post throw long hard black shadows across the same
+paving in the same direction, making the missing shadow at his feet unmistakable.
+Strong low sunlight from the left. Empty plaza, no other people.
+The absence of his shadow is the subject of the image.
 No text, no readable letters, no logos.
 ```
 
