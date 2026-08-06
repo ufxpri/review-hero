@@ -139,11 +139,19 @@ v3의 주제는 다르다 — **실력으로 얻은 명성을 돈에 팔았고, 
 > 커튼은 몇 달째 닫혀 있었다.
 > 지금이 낮인지 밤인지는 모니터를 봐야 알 수 있었는데, 그것도 장이 열려 있을 때 얘기였다.
 >
-> 삼 년 전에 주식으로 돈을 좀 벌었다.
-> 종목 하나가 갑자기 올랐고, 언제 팔아야 할지 몰라서 그냥 들고 있었는데 그게 운 좋게 맞았다.
+> 삼 년 전, 대학 때 친하던 친구가 술자리에서 하이맥스라는 회사 얘기를 했다.
+> 반도체 장비 쪽인데 곧 큰 계약이 하나 터진다고, 자기도 넣어놨다고 했다.
 >
-> 자기 실력이 아니라는 건 본인도 알고 있었다.
-> 그래도 통장에 찍힌 숫자는 그대로였다.
+> 그런 얘기를 진지하게 들은 적은 한 번도 없었는데 그날은 그냥 넣어 봤다.
+> 모아둔 돈 거의 전부였다.
+>
+> 여섯 달 만에 네 배가 됐다.
+> 언제 팔아야 할지 몰라서 그냥 들고 있었던 게 결과적으로 맞았다.
+> 정작 그 친구는 중간에 팔아서 조금만 벌었다고 했다.
+>
+> 자기가 잘해서 번 돈이 아니라는 건 알고 있었다.
+> 그래도 그 돈으로 몇 년치 걱정이 한꺼번에 없어졌다.
+> 월세도, 남은 학자금도, 다음 달도.
 >
 > 그때부터 밖에 나갈 일이 거의 없어졌다.
 
@@ -161,6 +169,19 @@ v3의 주제는 다르다 — **실력으로 얻은 명성을 돈에 팔았고, 
 > 나중에는 뜯지도 않은 상자가 벽을 따라 쌓였다.
 > 그래도 치우지는 않았다. 치우고 나면 방이 너무 조용해졌다.
 
+```
+Contemporary realistic digital illustration, present day, no fantasy elements whatsoever.
+Painterly but restrained brushwork, muted naturalistic color, documentary framing.
+Cold ordinary interior lighting. Palette: grey-green, dull beige, cold blue screen light, dirty white.
+Cinematic wide 16:9 composition.
+
+A wall of unopened cardboard delivery boxes stacked chest-high along the side of a small
+room, a dozen of them, tape still sealed, a film of dust on the topmost ones. A narrow gap of
+floor is left to walk through. Behind them a cheap desk and an unmade bed in dim light.
+The boxes are the subject — nobody is in the frame.
+No text, no readable letters, no logos, no barcodes.
+```
+
 #### P03 — 필력
 
 > 어느 날은 할 일이 정말 없어서, 그날 온 이어폰의 후기를 써 봤다.
@@ -170,11 +191,28 @@ v3의 주제는 다르다 — **실력으로 얻은 명성을 돈에 팔았고, 
 > 십몇 년 만에 쓰는데도 문장은 생각보다 쉽게 나왔다.
 >
 > 음질 얘기는 별로 하지 않았다.
-> 대신 상세페이지에 적힌 문구를 하나씩 짚었다.
-> "공간을 가득 채우는 사운드"가 정확히 무슨 뜻인지,
-> 그 문장을 쓴 사람이 이 제품을 실제로 들어보기는 했는지.
+> 대신 상세페이지에 적힌 문장들을 하나씩 짚었다.
 >
-> 세 문단을 썼고, 그중에 거짓말은 하나도 없었다.
+> **후기** '공간을 가득 채우는 사운드'라고 적혀 있는데, 제 방은 여섯 평입니다.
+> 여섯 평을 채우는 데 실패한 스피커는 아직 못 봤습니다.
+>
+> **후기** '프리미엄 무광 마감'은 지문이 잘 묻는다는 뜻이더군요.
+> 하루 쓰고 나면 마감보다 제 지문이 더 프리미엄입니다.
+>
+> 세 문단을 썼는데, 그중에 거짓말은 하나도 없었다.
+
+```
+Contemporary realistic digital illustration, present day, no fantasy elements whatsoever.
+Painterly but restrained brushwork, muted naturalistic color, documentary framing.
+Cold ordinary interior lighting. Palette: grey-green, dull beige, cold blue screen light, dirty white.
+Cinematic wide 16:9 composition.
+
+A laptop screen filled edge to edge with a long dense block of written text, shot close from
+slightly above and behind a pair of hands resting on the keyboard. The screen is the brightest
+thing in the dark room. A cheap pair of wireless earbuds and their opened case sit beside the
+laptop, one earbud out of the case.
+No readable letters — the text renders as abstract line strokes. No logos.
+```
 
 #### P04 — 네임드
 
@@ -191,6 +229,18 @@ v3의 주제는 다르다 — **실력으로 얻은 명성을 돈에 팔았고, 
 >
 > 처음에는 그게 좀 부담스러웠다. 얼마 안 가서 익숙해졌지만.
 
+```
+Contemporary realistic digital illustration, present day, no fantasy elements whatsoever.
+Painterly but restrained brushwork, muted naturalistic color, documentary framing.
+Cold ordinary interior lighting. Palette: grey-green, dull beige, cold blue screen light, dirty white.
+Cinematic wide 16:9 composition.
+
+Five or six phone and tablet screens laid out together on a dark surface, overlapping slightly,
+every one of them displaying the same block of text — the same shape of paragraphs reposted
+across all of them. Each screen glows faintly in the dark; nothing else is lit.
+No readable letters — text renders as abstract line strokes. No logos, no interface chrome.
+```
+
 #### P05 — 메일
 
 > 어느 날 메일이 하나 왔다. 제목은 [광고 협업 제안]이었다.
@@ -205,7 +255,25 @@ v3의 주제는 다르다 — **실력으로 얻은 명성을 돈에 팔았고, 
 > 금액이 그가 한 달에 쓰는 돈보다 많았다.
 >
 > 그는 그 줄을 한참 봤다.
-> 그리고 답장을 썼다.
+>
+> 어차피 물건 받아서 써 보고 쓰는 건 삼 년째 하던 일이었다.
+> 돈을 받는다고 없는 말을 쓸 것도 아니고, 별로면 별로라고 쓰면 그만이라고 생각했다.
+>
+> **환불원정대장** 보내주시면 써 보고 솔직하게 쓰겠습니다.
+>
+> 그렇게 답장을 보냈다.
+
+```
+Contemporary realistic digital illustration, present day, no fantasy elements whatsoever.
+Painterly but restrained brushwork, muted naturalistic color, documentary framing.
+Cold ordinary interior lighting. Palette: grey-green, dull beige, cold blue screen light, dirty white.
+Cinematic wide 16:9 composition.
+
+An email window open on a dark monitor, filling the frame, showing a long formal message.
+Near the bottom of the message a single short line sits apart from the rest, and a text cursor
+rests at the end of it. The rest of the room is black.
+No readable letters — all text renders as abstract line strokes. No logos, no numbers.
+```
 
 #### P06 — 그 물건
 
@@ -219,6 +287,19 @@ v3의 주제는 다르다 — **실력으로 얻은 명성을 돈에 팔았고, 
 >
 > 그는 상자를 도로 덮었다가, 잠시 뒤에 다시 열었다.
 
+```
+Contemporary realistic digital illustration, present day, no fantasy elements whatsoever.
+Painterly but restrained brushwork, muted naturalistic color, documentary framing.
+Cold ordinary interior lighting. Palette: grey-green, dull beige, cold blue screen light, dirty white.
+Cinematic wide 16:9 composition.
+
+A cheap white plastic power bank lying in an opened cardboard box on a desk, close to camera,
+nested in thin crumpled packing paper. The packaging is completely plain — no certification
+marks, no printed labels, one corner of the box liner glued crooked and lifting.
+A hand rests on the edge of the open flap, not yet lifting the product out.
+No text, no readable letters, no logos, no certification marks.
+```
+
 #### P07 — 마지막 문장
 
 > 충전기에 꽂아 놓고 노트북을 열었다.
@@ -226,22 +307,53 @@ v3의 주제는 다르다 — **실력으로 얻은 명성을 돈에 팔았고, 
 > 후기는 물건을 써 보면서 쓰는 편이었다.
 > 다 쓰고 나서 정리하려고 하면 처음에 느낀 게 흐려지기 때문이다.
 >
+> 협탁 위에서 충전 표시등이 주황색으로 깜빡이고 있었다.
+>
 > 커서를 놓고 첫 문장을 쳤다.
 >
 > **「이 제품은」**
->
-> 그때 협탁 쪽에서 소리가 났다.
-> 플라스틱이 안쪽에서부터 천천히 벌어지는 소리였다.
->
+
+```
+Contemporary realistic digital illustration, present day, no fantasy elements whatsoever.
+Painterly but restrained brushwork, muted naturalistic color, documentary framing.
+Palette: near-black room, cold laptop screen glow, one small orange indicator point.
+Cinematic wide 16:9 composition.
+
+A dark bedroom at night, seen from the side. On a bedside table a cheap white plastic power
+bank sits plugged into a charging cable, a tiny orange indicator glowing on it. Just beyond it
+an open laptop throws cold blue light across the rumpled bed and the wall.
+Everything is completely still. Nothing has happened yet.
+No text, no readable letters, no logos.
+```
+
+#### P07b — 폭발 ⚡
+
 > 새벽 세 시 십사 분이었다.
+>
 > 12,848번째 후기는 그 다섯 글자에서 멈췄다.
+
+```
+Contemporary realistic digital illustration, present day, no fantasy elements whatsoever.
+Painterly brushwork with violent value contrast, documentary framing.
+Palette: near-black room, searing orange-white at the center, hard cast shadows.
+Cinematic wide 16:9 composition.
+
+A violent explosion of searing white-orange fire bursting out of a small plastic power bank on
+a bedside table, flame and sparks erupting from the split seam in a hard bright bloom that blows
+out the center of the frame. Molten plastic spraying, the charging cable whipping away.
+The same dark bedroom behind it, the blast throwing hard shadows up the wall and across a
+rumpled bed. An open laptop beside it, its screen washed out by the light. No person visible.
+The fire is the subject and by far the brightest thing in the image.
+No text, no readable letters, no logos.
+```
+
 
 ---
 
 ### 2막 · 이세계 — 소환
 
-> **화자 표기**: 인용문에서 `**이름**` 으로 시작하는 줄은 대사다. 빌드가 감지해 화자를 금색으로,
-> 본문과 다른 들여쓰기로 렌더한다.
+*(작성 규칙 — 인용문에서 `**이름**` 으로 시작하는 줄은 대사다. 빌드가 감지해 화자를 금색으로
+렌더하고, 이어지는 줄은 화자 이름 폭만큼 들여쓴다. 인용문 밖에 두어야 슬라이드에 섞이지 않는다.)*
 
 #### P08 — 소환
 
@@ -257,8 +369,33 @@ v3의 주제는 다르다 — **실력으로 얻은 명성을 돈에 팔았고, 
 >
 > **소환사** 괜찮습니다. 처음엔 다들 말을 못 해요. 숨만 쉬어지면 된 겁니다.
 >
-> **소환사** 몸은 빌렸습니다. 어차피 곧 사라질 사람이라 찾는 이도 없을 거예요.
-> 미안하게 됐지만, 그쪽도 이름은 없었습니다.
+> 그는 자기 손을 들어 봤다. 자기 손이 아니었다.
+> 손가락도 더 길고, 손등에 없던 흉터가 있었다.
+>
+> **소환사** 아, 그건 원래 당신 몸이 아닙니다.
+>
+> **소환사** 기록만 불러올 수는 없어서요. 담을 그릇이 하나 필요했습니다.
+> 마침 소멸 직전인 사람이 있길래 그 자리에 넣었습니다.
+>
+> **소환사** 별이 하나도 없던 사람이었어요.
+> 아무도 평가한 적이 없어서 이름조차 안 남았습니다. 찾을 사람도 없고요.
+>
+> **소환사** 미안하게 된 일이지만, 그래서 당신이 들어갈 수 있었습니다.
+
+```
+Hand-painted digital illustration for a stylized fantasy card game.
+Bold confident brushwork with visible painterly strokes, clean readable shapes.
+Warm characterful lighting, visible canvas grain and ink texture.
+Palette: aged bronze, parchment cream, cold slate, oxblood, one warm amber accent.
+Cinematic wide 16:9 composition.
+
+A summoning circle burned into a cracked stone floor, glowing faintly along its carved
+grooves, seen at a low three-quarter angle. A man in a modern grey hoodie sits at its center,
+one hand on the floor, looking down at himself. Just outside the circle stands a robed figure
+holding a thick ledger under one arm, face in shadow, watching him.
+A cold vaulted hall around them, mostly dark. The circle is the brightest thing in the frame.
+No text, no readable letters, no legible runes — abstract carved marks only.
+```
 
 #### P09 — 이 세계의 규칙
 
@@ -268,18 +405,36 @@ v3의 주제는 다르다 — **실력으로 얻은 명성을 돈에 팔았고, 
 > 좋게 쓰면 그 대상이 실제로 강해지고, 나쁘게 쓰면 약해져요.
 > 별점이 바닥까지 떨어지면 그냥 사라집니다. 비유가 아니라 진짜로요.
 >
-> 원래는 신들이 관리하던 세계였다고 한다.
-> 그런데 만들어 놓고 손을 놓는 바람에 여기저기 무너지기 시작했고,
-> 원성이 커지자 신들은 세계를 고치는 대신 이렇게 말했다고 했다.
+> **소환사** 원래는 신들이 관리하던 세계였습니다.
+> 그런데 만들어만 놓고 손을 놔 버려서, 다리가 무너지고 강이 마르고, 그런 일이 계속 생겼죠.
+>
+> **소환사** 사람들이 하도 원망을 하니까 신들이 뭐라고 했는지 아십니까.
+> 세계를 고쳐 주겠다는 말은 없었습니다.
 >
 > **소환사** ─ 그렇게 불만이면 너희가 직접 평가해라.
 >
-> **소환사** 그 말 한마디 남기고 다들 손을 뗐습니다.
-> 그날부터 축복이나 저주 같은 건 없어졌고, 별점만 남았어요.
+> **소환사** 그 한마디 남기고 전부 손을 뗐습니다.
+> 그날부터 축복이니 저주니 하는 건 없어졌고, 별점만 남았어요.
 >
-> 그러고 보니 소환사의 목에 걸린 패에는 별이 하나뿐이었다.
+> 그는 소환사의 목에 걸린 나무 패를 다시 봤다. 별이 하나뿐이었다.
 >
-> **소환사** 원래는 넷이었습니다.
+> **소환사** 아, 이거요.
+> 원래는 넷이었습니다.
+
+```
+Hand-painted digital illustration for a stylized fantasy card game.
+Bold confident brushwork with visible painterly strokes, clean readable shapes.
+Warm characterful lighting, visible canvas grain and ink texture.
+Palette: aged bronze, parchment cream, cold slate, oxblood, one warm amber accent.
+Cinematic wide 16:9 composition.
+
+Countless small wooden rating plaques hanging on cords from an unseen ceiling, filling the
+entire frame at every depth, each one carved with a different number of star marks — some with
+five, most with two or one, a few blank and cracked. They drift slightly as if in a draft.
+Far below and small, two figures stand looking up at them.
+Warm light filters down between the hanging plaques.
+No text, no readable letters — carved star marks only.
+```
 
 #### P10 — 마왕
 
@@ -288,10 +443,14 @@ v3의 주제는 다르다 — **실력으로 얻은 명성을 돈에 팔았고, 
 > **소환사** 지금은 없습니다.
 > 그중 한 명이 나머지 아흔아홉을 전부 별 영 개로 만들어 버렸거든요.
 >
-> 사람들은 그를 마왕이라고 부른다고 했다.
-> 소환사는 그 말을 쓰지 않았다. 다들 그렇게 부르니까 편의상 그런다고만 했다.
+> **소환사** 사람들은 그자를 마왕이라고 부릅니다.
 >
-> **소환사** 그자는 자기 평점을 직접 고칩니다.
+> **소환사** 저는 그 말을 잘 안 씁니다.
+> 마왕이라고 하면 무슨 대단한 힘이라도 있는 것처럼 들리잖아요.
+>
+> **소환사** 그자한테는 힘이 없습니다. 원래 숫자를 세는 자리에 있었을 뿐이에요.
+>
+> **소환사** 그런데 자기 평점을 직접 고칩니다.
 > 아무리 깎아 놔도 다음 날이면 원래대로 돌아가 있어요.
 >
 > **소환사** 그리고 자기를 나쁘게 쓴 사람을 찾아냅니다.
@@ -350,6 +509,20 @@ v3의 주제는 다르다 — **실력으로 얻은 명성을 돈에 팔았고, 
 > 현실에서는 이름으로 먹고살던 사람인데,
 > 여기서는 이름 자체가 없었다.
 
+```
+Hand-painted digital illustration for a stylized fantasy card game.
+Bold confident brushwork with visible painterly strokes, clean readable shapes.
+Warm characterful lighting, visible canvas grain and ink texture.
+Palette: aged bronze, parchment cream, cold slate, oxblood, one warm amber accent.
+Cinematic wide 16:9 composition.
+
+A pair of worn boots standing on a sunlit stone plaza, casting no shadow at all, while every
+other object in the frame — a bench, a post, a low wall — throws a long hard shadow across the
+same stone in the same direction. The absence where the shadow should be is the subject.
+Shot from waist height looking down and slightly forward. Quiet, bright, and wrong.
+No text, no readable letters, no logos.
+```
+
 #### P14 — 선언
 
 > 기록에 남을 수 없다면 방법은 하나였다.
@@ -363,6 +536,20 @@ v3의 주제는 다르다 — **실력으로 얻은 명성을 돈에 팔았고, 
 > **소환사** 뭐라고 쓰실 겁니까?
 >
 > **환불원정대장** 일단 좀 보고요.
+
+```
+Hand-painted digital illustration for a stylized fantasy card game.
+Bold confident brushwork with visible painterly strokes, clean readable shapes.
+Warm characterful lighting, visible canvas grain and ink texture.
+Palette: aged bronze, parchment cream, cold slate, oxblood, one warm amber accent.
+Cinematic wide 16:9 composition.
+
+A long pale quill pen resting on a worn stone ledge, close to camera, with a hand reaching
+down into frame to pick it up — fingers just about to close on it. Beside the quill sits a
+squat ink pot and a single blank sheet of parchment.
+Warm low light from one side, the background falling into soft dark.
+No text, no readable letters, no writing on the parchment.
+```
 
 ---
 

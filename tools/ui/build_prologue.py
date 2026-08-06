@@ -60,7 +60,10 @@ def parse_slides() -> list[dict]:
         m = re.match(r"^#{3,4}\s+(P\d+[a-z]?)\s*—\s*(.+?)\s*$", line)
         if m:
             flush()
-            cur = {"key": m.group(1), "title": m.group(2), "beats": []}
+            title = m.group(2)
+            impact = title.endswith("⚡")          # 전환 순간에 섬광·흔들림
+            cur = {"key": m.group(1), "title": title.rstrip(" ⚡"),
+                   "beats": [], "impact": impact}
             slides.append(cur)
             continue
         if line.startswith("## "):          # 절이 바뀌면 수집 중단
@@ -115,7 +118,8 @@ def main():
     print(f"슬라이드 {len(slides)}장")
     pick_art(slides)
 
-    payload = [{"title": s["title"], "beats": s["beats"], "img": s["img"]} for s in slides]
+    payload = [{"title": s["title"], "beats": s["beats"], "img": s["img"],
+                "impact": s.get("impact", False)} for s in slides]
     html = (UI / "prologue.template.html").read_text(encoding="utf-8")
     html = html.replace("/*{{SLIDES}}*/[]", json.dumps(payload, ensure_ascii=False, indent=1))
 
