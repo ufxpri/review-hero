@@ -188,7 +188,7 @@ function show(i, beat = 0){
                 `</div>` +
                 `<button class="undo" id="sigundo" type="button">한 획 지우기</button>` +
               `</div>` +
-              `<div class="hint">이름과 서명이 함께 올라간다. 앞으로 쓰는 모든 리뷰 밑에 이 서명이 그어진다. 되돌릴 수 없다.</div></div>`;
+              `<div class="hint">사람들은 <b>이름</b>으로 당신을 구분한다. <b>서명</b>은 대장이 대조한다 — 앞으로 서명하지 않은 글은 올라가지 않는다.</div></div>`;
           }
           l = l.replace(/\{필명\}/g, PEN || '……');   // 등록한 이름을 그대로 부른다
           if (l.startsWith('<b>')) { insay = true; return `<p class="say">${l}</p>`; }
