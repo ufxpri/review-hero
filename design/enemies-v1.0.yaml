@@ -147,8 +147,8 @@ enemies:
         name: 내려찍기
         type: attack
         charge_turns: 1
-        cancel_on: [둔화, 지연]   # 준비 중 둔화(P03 계열)/지연(X01) 적중 시 캔슬
-        text: "1턴 준비 후 의지 피해 9. 준비 중 둔화/지연 적중 시 발동 캔슬."
+        cancel_on: [delay_enemy_action]   # 지연 효과 적중 시 캔슬 (O02·L01·W02·X01)
+        text: "1턴 준비 후 의지 피해 9. 준비 중 지연 효과 적중 시 발동 캔슬."
         effects:
           - {op: damage, value: 9}
       - id: roar
@@ -171,8 +171,8 @@ enemies:
     null_tags: [무게]
     traits:
       - id: casting_weakness
-        text: "영창(준비) 중에는 「이펙트가…」(P06) 접두 효과 ×2 적용 대상."
-        applies_to: [P06]
+        text: "영창(준비) 중에는 #이펙트 태그 리뷰의 효과 ×2 적용 대상."
+        applies_to_tag: 이펙트
         multiplier: 2.0
         condition: charging
     equipment:
@@ -185,7 +185,7 @@ enemies:
         name: 화려한 파이어볼
         type: attack
         charge_turns: 1
-        text: "영창 1턴 후 의지 피해 7. 영창 중 이펙트 접두(P06)의 카운터 대상."
+        text: "영창 1턴 후 의지 피해 7. 영창 중 #이펙트 태그 리뷰의 카운터 대상."
         effects:
           - {op: damage, value: 7}
       - id: mana_shield
@@ -285,14 +285,15 @@ bosses:
     tier: boss
     role: >
       1막 보스 (MVP 최종 보스. 사장님 답글 기믹 + 보스 리뷰 작성권).
-      세계관상 「집계관」(마왕, worldview §1.4)이 1막 구역에 세운 대리인이며,
-      「사장님 답글」은 집계관 권능의 하급 복제품이다 —
-      집계관이 나쁜 평가를 집계에서 걸러낸다면, B01은 반박해 이번 전투 한정으로 정지시킨다.
+      세계관상 「베스트 리뷰어」(마왕, worldview §1.4)가 1막 구역에 세운 대리인이며,
+      「사장님 답글」은 그 권능의 하급 복제품이다 —
+      베스트 리뷰어가 나쁜 리뷰를 아예 올리지 않아 영구히 무효화한다면,
+      B01은 반박해 이번 전투 한정으로 정지시킨다.
       대리인이라 불완전하고, 그래서 banned_words(금지어)라는 약점이 생긴다.
     will: 60    # MVP(1막 완결 런) = 60 유지. R11 해소(v1.1): 48 하향은 phase2 비례 트리거(50%)와 함께면 완화로 작동 — Layer 1.5 배치 시 적용 가능
     weakness_tags: [응대, 개연성]
     null_tags: []               # 보스는 무효 태그 없음. 대응은 사장님 답글 기믹이 담당
-    banned_words: [환불, 응대, 답변, 고객센터, 사장]   # Layer 4 금지어 팩폭용(GDD §3.8, 04 제안1)
+    banned_words: [환불, 응대, 답변, 고객센터, 게시]   # Layer 4 금지어 팩폭용. 「게시」는 대리인이라 게시 권한이 없다는 급소(worldview §1.4)
     equipment:
       - name: 노예 계약서 낫
         durability: 15
@@ -335,14 +336,14 @@ bosses:
               limit_per_debuff: 1              # 부활한 디버프는 다시 반박 불가(once_per_debuff 소진)
           - op: heal
             value: 5
-            condition: no_rebut_target         # 반박 대상 없을 때만 의지 +5(§3.8 "반박 대상 없으면 의지 +5만")
+            condition: no_rebut_target         # 반박 대상이 없으면 자기 답글을 자기 상세페이지에 올려 의지 +5 — 자기 리뷰를 자기가 올리는 짓의 축소판
     pattern: [contract_slash, forced_overtime, owner_reply]
     phase2:
       trigger: "의지 50% 이하"   # v1.1: "의지 30 이하" 절대값 → 비례 (제안 3, R11 필요조건. 현행 의지 60에선 30=50%라 무변화)
       name: 리뷰 조작
-      text: "자신에게 5성 알바 리뷰 부착: 공격력 +3. 「고객센터가…」(P11) 접두로 이 버프를 저격 가능."
+      text: "자신에게 5성 알바 리뷰 부착: 공격력 +3. 「후기가 전부 같은 날」(B02c)로 이 버프를 저격 가능."
       effects:
-        - {op: attack_up, value: 3, duration: battle, attachment: 알바_리뷰, counter_card: P11}
+        - {op: attack_up, value: 3, duration: battle, attachment: 알바_리뷰, counter_card: B02c}
     on_review:                   # 보스 리뷰 작성권(Layer 3, GDD §6.1). v0.1의 on_player_defeat를 승리 경로까지 확장(§3.8)
       note: "유저당 보스당 주간 1회. 재작성 시 공감 0 리셋 + 신선도 F=0. 깎은 %는 누적 가한 피해 기준."
       origins:
@@ -404,9 +405,9 @@ bosses:
     phase2:
       trigger: "의지 50% 이하"   # v1.1: "의지 30 이하" 절대값 → 비례 (제안 3, R11 필요조건. 현행 의지 60에선 30=50%라 무변화)
       name: 리뷰 조작
-      text: "자신에게 5성 알바 리뷰 부착: 공격력 +3. 「고객센터가…」(P11) 접두로 이 버프를 저격 가능."
+      text: "자신에게 5성 알바 리뷰 부착: 공격력 +3. 「후기가 전부 같은 날」(B02c)로 이 버프를 저격 가능."
       effects:
-        - {op: attack_up, value: 3, duration: battle, attachment: 알바_리뷰, counter_card: P11}
+        - {op: attack_up, value: 3, duration: battle, attachment: 알바_리뷰, counter_card: B02c}
     on_review:
       note: "온보딩 1판도 작성권 규칙은 B01과 동일(Layer 3 도입 후). 정본은 B01 참조."
       same_as: B01
