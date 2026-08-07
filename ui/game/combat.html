@@ -775,49 +775,19 @@
   }
 
   // ── 판정 미리보기 — 엔진 submitReview 와 동일 규칙 (policies.ts evaluate 이식) ──
-  const attachBonus = () => st.player.equipment.reduce(
-    (s, eq) => s + eq.attachments.reduce((x, a) => x + (a.kind === 'damage_buff' ? a.value : 0), 0), 0);
-
   /** @param d 카드 정의 @param info {kind, idx} — 생략하면 카드의 기본 대상 + 현재 지목 인덱스 */
-  function judgePreview(d, info) {
-    if (d.kind !== 'review') return { j: 'none', likes: null, gauge: 0 };
-    const t = info || { kind: d.target, idx: d.target === 'my_equipment' ? myEq : enEq };
-    const e = st.enemy, gate = e.def.stealthGate;
-    if (e.stealth && gate && (t.kind === 'enemy' || t.kind === 'enemy_equipment')
-        && !gate.hittableSuits.includes(d.suit)) return { j: 'miss', likes: null, gauge: 0 };
-    let tags, nulls, isOrigin = false;
-    if (t.kind === 'my_equipment') {
-      const eq = st.player.equipment[t.idx] || st.player.equipment[0];
-      tags = eq.def.tags; nulls = eq.def.nullTags;
-    } else if (t.kind === 'enemy_equipment') {
-      const alive = e.equipment.map((q, i) => ({ q, i })).filter((x) => !x.q.destroyed);
-      const pick = alive.find((x) => x.i === t.idx) || alive[0];
-      if (!pick) return { j: 'void', likes: null, gauge: 0 };
-      tags = pick.q.tags; nulls = e.def.nullTags;
-      isOrigin = !!d.origin && d.origin.equipment === pick.q.name;
-    } else {
-      tags = e.def.weaknessTags; nulls = e.def.nullTags;
-      isOrigin = !!d.origin && d.origin.enemy === e.def.id;
-    }
-    const j = battle.judge(d, tags, nulls, isOrigin);
-    // 예상 좋아요 — 좋아요 환산식 (GDD §2): ⌊기본×판정×기타⌋ + 원산지 +1
-    const ef = d.effect;
-    const isEqDmg = ef.type === 'equipment_damage';
-    const base = (ef.type === 'damage' || isEqDmg) ? (ef.value ?? 0) : (ef.damage ?? 0);
-    let likes = null;
-    if (base > 0) {
-      let mult = RHEngine.JUDGE_MULT[j];
-      const cw = e.def.castingWeakness;
-      if (cw && e.charging && d.tag === cw.tag) mult *= cw.multiplier;
-      if (isEqDmg) likes = RHEngine.applyMult(base, mult) + (j === 'origin' ? 1 : 0);
-      else {
-        const vanity = e.def.suitDamageMult?.[d.suit] ?? 1;
-        likes = RHEngine.applyMult(base + attachBonus(), mult * vanity)
-          + (j === 'origin' ? 1 : 0) + (st.player.storedDamageBonus || 0);
-      }
-    }
-    const gauge = j === 'fumble' ? -2 : (RHEngine.JUDGE_GAUGE[j] ?? 0);
-    return { j, likes, gauge };
+  /**
+   * 판정 미리보기 — **계산은 전부 엔진이 한다**(battle.previewSubmit).
+   * 화면이 규칙을 다시 구현하면 밸런스를 고칠 때 표시값만 조용히 틀려지므로,
+   * 여기서는 엔진 결과를 화면 표기(j/likes/gauge)로 옮기기만 한다.
+   */
+  function judgePreview(uid, info) {
+    const t = info || {};
+    const opts = t.kind === 'my_equipment' ? { myEquipmentIndex: t.idx ?? myEq }
+      : t.kind === 'enemy_equipment' ? { enemyEquipmentIndex: t.idx ?? enEq }
+      : {};
+    const pv = battle.previewSubmit(uid, opts);
+    return { j: pv.blocked === 'not_review' ? 'none' : (pv.blocked || pv.judgement), ...pv };
   }
 
   // 판정 뱃지 (design/card-system-v2 §8: 원산지 ★ / 팩트 ● / 헛소리 ⚠ / 일반 무표시)
@@ -878,7 +848,7 @@
       label = '대상 아님';
       note = `이 리뷰는 ${tgtLabel(d.target)} 앞으로만 낼 수 있다. 다른 상품엔 놓이지 않는다.`;
     } else {
-      const pv = judgePreview(d, info);
+      const pv = judgePreview(held, info);   // held = 끌거나 고른 카드 uid
       kind = pv.j;
       label = V_LABEL[pv.j];
       note = verdictNote(d, pv.j, info);
@@ -1124,7 +1094,7 @@
   function paintHand() {
     $('#cards').innerHTML = st.player.hand.map((c) => {
       const d = def(c.cardId);
-      const pv = judgePreview(d);
+      const pv = judgePreview(c.uid);
       const b = JB[pv.j];
       const badge = b ? `<span class="jb ${b[0]}">${b[1]}</span>` : '';
       // 이 리뷰가 태어난 상품 = 상성의 근거. 그 상품이 이번 전투에 있으면 금색으로 못박는다

@@ -125,6 +125,22 @@ export interface BattleConfig {
 
 export type BattleResult = 'win' | 'lose' | 'retreat' | 'timeout' | null;
 
+/** previewSubmit 결과 — 화면이 제출 전에 보여줄 값. 규칙 계산은 전부 엔진이 소유한다. */
+export interface SubmitPreview {
+  judgement: Judgement | null; // blocked 가 있으면 null
+  blocked: 'miss' | 'void' | 'not_review' | null; // 은신 빗나감 / 남은 구성품 없음 / 무판정 카드
+  likes: number | null; // 최종 좋아요 (피해가 없는 카드는 null)
+  likesKind: 'will' | 'equipment' | null; // 그 좋아요가 무엇을 깎는가
+  gauge: number; // 신뢰도 게이지 증감 (카드 인라인 gauge 포함)
+  affordable: boolean; // 지금 필력으로 낼 수 있는가
+  /** 절대 수치에 걸리는 배율 = 판정 × 조건부(E03 영창 약점). 지속 턴·%·개수는 비대상 */
+  mult: number;
+  /** 의지 피해 전용 추가 배율 (E05 vanity) */
+  vanityMult: number;
+  /** 내림 뒤 더해지는 고정 가산 (원산지 +1) */
+  fixedAdd: number;
+}
+
 export interface PlayerState {
   will: number;
   maxWill: number;
@@ -429,6 +445,151 @@ export class Battle {
     return 'normal';
   }
 
+  /**
+   * E04 은신 게이트 — 은신 중 명중 가능 계열(배송)이 아니면 빗나간다.
+   * 제출과 미리보기가 같은 판단을 쓰도록 분리했다.
+   */
+  private stealthBlocks(card: ReviewCardDef): boolean {
+    const e = this.state.enemy;
+    const gate = e.def.stealthGate;
+    return !!(
+      e.stealth &&
+      gate &&
+      (card.target === 'enemy' || card.target === 'enemy_equipment') &&
+      !gate.hittableSuits.includes(card.suit)
+    );
+  }
+
+  /**
+   * 대상 결정 + 원산지 판정 범위 (card-system-v2 §2):
+   *   적 본체 대상 제출 → origin.enemy 일치 / 구성품 대상 제출 → origin.equipment 일치(이름 완전 일치)
+   *   내 장비 대상·origin 없는 카드(Z##·X##·P해금)는 원산지 영구 미발동
+   * 상태를 바꾸지 않는다 — submitReview 와 previewSubmit 의 단일 경로다.
+   */
+  private resolveReviewTarget(
+    card: ReviewCardDef,
+    opts: { enemyEquipmentIndex?: number; myEquipmentIndex?: number },
+  ): {
+    void: boolean; // 구성품 대상인데 남은 구성품이 없다
+    targetTags: string[];
+    targetNull: string[];
+    isOrigin: boolean;
+    myEq: PlayerEquipmentState | null;
+    enemyEq: EnemyEquipmentState | null;
+  } {
+    const p = this.state.player;
+    const e = this.state.enemy;
+    const none = { targetTags: [], targetNull: [], isOrigin: false, myEq: null, enemyEq: null };
+
+    if (card.target === 'my_equipment') {
+      // 버프 카드는 반드시 내 장비 1개 대상 (GDD §3.3)
+      const myEq = p.equipment[opts.myEquipmentIndex ?? 0] ?? p.equipment[0]!;
+      return { ...none, void: false, targetTags: myEq.def.tags, targetNull: myEq.def.nullTags, myEq };
+    }
+    if (card.target === 'enemy_equipment') {
+      const alive = e.equipment.filter((eq) => !eq.destroyed);
+      // 가정(v1 승계): 구성품 대상 카드인데 남은 구성품이 없으면 제출 자체가 낭비(효과 없음)
+      if (alive.length === 0) return { ...none, void: true };
+      const picked = e.equipment[opts.enemyEquipmentIndex ?? -1];
+      const enemyEq = picked && !picked.destroyed ? picked : alive[0]!;
+      return {
+        ...none,
+        void: false,
+        targetTags: enemyEq.tags,
+        // 가정(v1 승계): 구성품 대상의 무효 태그는 적 본체의 무효 태그를 따른다
+        targetNull: e.def.nullTags,
+        isOrigin: card.origin?.equipment !== undefined && card.origin.equipment === enemyEq.name,
+        enemyEq,
+      };
+    }
+    return {
+      ...none,
+      void: false,
+      targetTags: e.def.weaknessTags,
+      targetNull: e.def.nullTags,
+      isOrigin: card.origin?.enemy !== undefined && card.origin.enemy === e.def.id,
+    };
+  }
+
+  /** 내 장비에 붙은 damage_buff 가산 합 — "제출당 1회" (GDD §3.3) */
+  private attachDamageBuffTotal(): number {
+    return this.state.player.equipment.reduce(
+      (s, eq) => s + eq.attachments.filter((a) => a.kind === 'damage_buff').reduce((x, a) => x + a.value, 0),
+      0,
+    );
+  }
+
+  /**
+   * 좋아요 환산식 (GDD §2) — ⌊기본 × 판정 × 기타⌋ + 고정 가산. 순수 계산.
+   * 카드의 **첫** 의지 피해에만 부착 버프·고정 가산·X05 예약분이 붙는다.
+   */
+  private firstWillDamage(base: number, mult: number, vanityMult: number, fixedAdd: number): number {
+    const b = base + this.attachDamageBuffTotal();
+    return applyMult(b, mult * vanityMult) + fixedAdd + this.state.player.storedDamageBonus;
+  }
+
+  /** 카드가 내는 의지 피해의 기본 수치 (없으면 null) */
+  private cardWillBase(card: ReviewCardDef): number | null {
+    const ef = card.effect;
+    if (ef.type === 'damage') return ef.value ?? 0;
+    return ef.damage ?? null;
+  }
+
+  /**
+   * 제출 미리보기 — 상태를 바꾸지 않고 판정·최종 좋아요·게이지를 계산한다.
+   * UI 가 규칙을 재구현하지 않도록 submitReview 와 같은 경로(resolveReviewTarget·firstWillDamage)를 쓴다.
+   */
+  previewSubmit(cardUid: number, opts: { enemyEquipmentIndex?: number; myEquipmentIndex?: number } = {}): SubmitPreview {
+    const p = this.state.player;
+    const inst = p.hand.find((c) => c.uid === cardUid);
+    if (!inst) throw new Error('손패에 없는 카드');
+    const card = this.def(inst.cardId);
+    const affordable = p.energy >= card.cost;
+    if (card.kind !== 'review') {
+      return { judgement: null, blocked: 'not_review', likes: null, likesKind: null, gauge: 0, affordable, mult: 0, vanityMult: 1, fixedAdd: 0 };
+    }
+    if (this.stealthBlocks(card)) {
+      return { judgement: null, blocked: 'miss', likes: null, likesKind: null, gauge: 0, affordable, mult: 0, vanityMult: 1, fixedAdd: 0 };
+    }
+    const t = this.resolveReviewTarget(card, opts);
+    if (t.void) {
+      return { judgement: null, blocked: 'void', likes: null, likesKind: null, gauge: 0, affordable, mult: 0, vanityMult: 1, fixedAdd: 0 };
+    }
+
+    let judgement = this.judge(card, t.targetTags, t.targetNull, t.isOrigin);
+    if (this.buffNoJudgement && card.target === 'my_equipment') judgement = 'normal';
+
+    const e = this.state.enemy;
+    let mult = JUDGE_MULT[judgement];
+    const cw = e.def.castingWeakness;
+    if (cw && e.charging && card.tag === cw.tag) mult *= cw.multiplier;
+    const vanityMult = e.def.suitDamageMult?.[card.suit] ?? 1;
+    const fixedAdd = judgement === 'origin' ? 1 : 0;
+
+    // 화면에 띄울 좋아요 — 의지 피해 우선, 없으면 구성품 내구도 피해(내구도도 좋아요 단위 · ADR-015)
+    let likes: number | null = null;
+    let likesKind: SubmitPreview['likesKind'] = null;
+    const willBase = this.cardWillBase(card);
+    if (willBase !== null) {
+      likes = this.firstWillDamage(willBase, mult, vanityMult, fixedAdd);
+      likesKind = 'will';
+    } else if (card.effect.type === 'equipment_damage' && t.enemyEq) {
+      likes = applyMult(card.effect.value ?? 0, mult) + fixedAdd; // vanity(의지 전용) 비대상
+      likesKind = 'equipment';
+    }
+
+    // 게이지는 0~10 클램프 후의 **실제 증감**을 준다 (§2-2 초과 소실).
+    // 판정분과 카드 인라인분을 제출과 같은 순서로 따로 반영해야 값이 맞는다
+    // (예: 게이지 0에서 헛소리 −2 → 0, 이어서 인라인 +2 → 2. 합산 후 클램프와 결과가 다르다).
+    let g = p.gauge;
+    const step = (d: number): void => {
+      g = Math.max(0, Math.min(10, g + d));
+    };
+    step(judgement === 'fumble' ? this.fumbleGaugeDelta : JUDGE_GAUGE[judgement]);
+    step(card.effect.gauge ?? 0);
+    return { judgement, blocked: null, likes, likesKind, gauge: g - p.gauge, affordable, mult, vanityMult, fixedAdd };
+  }
+
   // ── 리뷰 제출 (v2 — 카드 1장 = 완성 리뷰) ──
 
   submitReview(
@@ -456,12 +617,7 @@ export class Battle {
 
     // E04 은신: 은신 중에는 명중 가능 계열(배송)만 명중. 그 외는 빗나감.
     // 가정(v1 승계): 빗나간 리뷰는 판정·게이지 없이 소모만 된다 ("평가 불가" — 물건이 안 옴).
-    if (
-      e.stealth &&
-      gate &&
-      (card.target === 'enemy' || card.target === 'enemy_equipment') &&
-      !gate.hittableSuits.includes(card.suit)
-    ) {
+    if (this.stealthBlocks(card)) {
       this.log(`${card.name}: 은신 중 — 빗나감`);
       return { missed: true, judgement: null };
     }
@@ -472,40 +628,11 @@ export class Battle {
       this.log('은신 해제!');
     }
 
-    // 대상 결정 + 원산지 판정 범위 (card-system-v2 §2):
-    //   적 본체 대상 제출 → origin.enemy 일치 / 구성품 대상 제출 → origin.equipment 일치(이름 완전 일치)
-    //   내 장비 대상·origin 없는 카드(Z##·X##·P해금)는 원산지 영구 미발동
-    let targetTags: string[];
-    let targetNull: string[];
-    let isOrigin = false;
-    let myEq: PlayerEquipmentState | null = null;
-    let enemyEq: EnemyEquipmentState | null = null;
-    if (card.target === 'my_equipment') {
-      // 버프 카드는 반드시 내 장비 1개 대상 (GDD §3.3)
-      const idx = opts.myEquipmentIndex ?? 0;
-      myEq = p.equipment[idx] ?? p.equipment[0]!;
-      targetTags = myEq.def.tags;
-      targetNull = myEq.def.nullTags;
-    } else if (card.target === 'enemy_equipment') {
-      const alive = e.equipment.filter((eq) => !eq.destroyed);
-      if (alive.length === 0) {
-        // 가정(v1 승계): 구성품 대상 카드인데 남은 구성품이 없으면 제출 자체가 낭비(효과 없음)
-        return { missed: true, judgement: null };
-      }
-      enemyEq =
-        opts.enemyEquipmentIndex !== undefined && e.equipment[opts.enemyEquipmentIndex] && !e.equipment[opts.enemyEquipmentIndex]!.destroyed
-          ? e.equipment[opts.enemyEquipmentIndex]!
-          : alive[0]!;
-      targetTags = enemyEq.tags;
-      targetNull = e.def.nullTags; // 가정(v1 승계): 구성품 대상의 무효 태그는 적 본체의 무효 태그를 따른다
-      isOrigin = card.origin?.equipment !== undefined && card.origin.equipment === enemyEq.name;
-    } else {
-      targetTags = e.def.weaknessTags;
-      targetNull = e.def.nullTags;
-      isOrigin = card.origin?.enemy !== undefined && card.origin.enemy === e.def.id;
-    }
+    const t = this.resolveReviewTarget(card, opts);
+    if (t.void) return { missed: true, judgement: null };
+    const { myEq, enemyEq } = t;
 
-    let judgement = this.judge(card, targetTags, targetNull, isOrigin);
+    let judgement = this.judge(card, t.targetTags, t.targetNull, t.isOrigin);
     // 온보딩 1판 한정: 버프 카드(내 장비 대상)는 무판정 = 항상 일반 (GDD §3.3)
     if (this.buffNoJudgement && card.target === 'my_equipment') judgement = 'normal';
     const jm = JUDGE_MULT[judgement];
@@ -562,20 +689,11 @@ export class Battle {
 
     let fixedAdd = judgement === 'origin' ? 1 : 0; // 원산지 고정 좋아요 +1
 
+    // 환산식은 firstWillDamage 가 소유한다 (previewSubmit 과 공유 — 미리보기가 규칙을 재구현하지 않도록)
     const dealCardWillDamage = (base: number): void => {
-      let b = base;
-      // 부착 버프 가산 — "제출당 1회" (카드당 의지 피해 소스는 1개뿐이라 자연 충족)
-      b += p.equipment.reduce(
-        (s, eq) => s + eq.attachments.filter((a) => a.kind === 'damage_buff').reduce((x, a) => x + a.value, 0),
-        0,
-      );
-      let dmg = applyMult(b, mult * vanityMult); // 내림 1회, 최소 1 (GDD §2-1)
-      dmg += fixedAdd;
+      const dmg = this.firstWillDamage(base, mult, vanityMult, fixedAdd);
       fixedAdd = 0;
-      if (p.storedDamageBonus > 0) {
-        dmg += p.storedDamageBonus; // X05 — 고정 가산 (내림 후 — GDD §2)
-        p.storedDamageBonus = 0;
-      }
+      p.storedDamageBonus = 0; // X05 예약분은 첫 피해에서 소진 (GDD §2)
       this.dealWillDamageToEnemy(dmg);
     };
 

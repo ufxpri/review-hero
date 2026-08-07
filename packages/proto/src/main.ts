@@ -6,14 +6,13 @@ import {
   applyMult,
   Battle,
   buildCardIndex,
-  JUDGE_GAUGE,
-  JUDGE_MULT,
   mulberry32,
   type CardDef,
   type EnemyDef,
   type Judgement,
   type ReviewCardDef,
   type SpecialDef,
+  type SubmitPreview,
   type TargetKind,
 } from '../../core/src/index.ts';
 import data from './data.json';
@@ -109,59 +108,38 @@ interface Preview {
   gauge: number; // 판정 게이지 증감 (헛소리 −2는 온보딩 무보정 기본값)
 }
 
-function preview(d: ReviewCardDef): Preview {
-  const st = battle!.state;
-  const e = st.enemy;
-  const p = st.player;
+/**
+ * 판정 미리보기 — **계산은 엔진이 소유한다**(battle.previewSubmit).
+ * 여기서 규칙을 재구현하면 밸런스를 고칠 때 표시값만 조용히 틀려진다.
+ */
+function preview(uid: number, d: ReviewCardDef): Preview {
   const none: Preview = { compatible: false, missed: false, judgement: null, expect: '', gauge: 0 };
   if (d.target !== sel.kind) return none;
-
-  // E04 은신 게이트: 명중 불가 계열은 판정 없이 빗나감 (필력·카드 소모)
-  const gate = e.def.stealthGate;
-  if (e.stealth && gate && (d.target === 'enemy' || d.target === 'enemy_equipment') && !gate.hittableSuits.includes(d.suit)) {
+  const opts =
+    d.target === 'my_equipment' ? { myEquipmentIndex: sel.index }
+    : d.target === 'enemy_equipment' ? { enemyEquipmentIndex: sel.index }
+    : {};
+  const pv = battle!.previewSubmit(uid, opts);
+  if (pv.blocked === 'void') return none;
+  if (pv.blocked === 'miss') {
     return { compatible: true, missed: true, judgement: null, expect: '🌫 빗나감', gauge: 0 };
   }
-
-  // 대상 태그·무효 태그·원산지 범위 (card-system-v2 §2 — 엔진 submitReview와 동일 분기)
-  let tags: string[];
-  let nulls: string[];
-  let isOrigin = false;
-  if (d.target === 'my_equipment') {
-    const eq = p.equipment[sel.index] ?? p.equipment[0]!;
-    tags = eq.def.tags;
-    nulls = eq.def.nullTags;
-  } else if (d.target === 'enemy_equipment') {
-    const eq = e.equipment[sel.index];
-    if (!eq || eq.destroyed) return none;
-    tags = eq.tags;
-    nulls = e.def.nullTags;
-    isOrigin = d.origin?.equipment !== undefined && d.origin.equipment === eq.name;
-  } else {
-    tags = e.def.weaknessTags;
-    nulls = e.def.nullTags;
-    isOrigin = d.origin?.enemy !== undefined && d.origin.enemy === e.def.id;
-  }
-  const j = battle!.judge(d, tags, nulls, isOrigin); // 원산지 최우선 · 원산지는 무효 태그 무시
-  return { compatible: true, missed: false, judgement: j, expect: expectText(d, j), gauge: j === 'fumble' ? -2 : JUDGE_GAUGE[j] };
+  return {
+    compatible: true,
+    missed: false,
+    judgement: pv.judgement,
+    expect: expectText(d, pv),
+    gauge: pv.gauge,
+  };
 }
 
 /** 예상 좋아요 — 엔진 applyReviewEffect의 좋아요 환산식(GDD §2) 재현. 피해 없는 효과는 수치만 배율 반영 */
-function expectText(d: ReviewCardDef, j: Judgement): string {
+function expectText(d: ReviewCardDef, pv: SubmitPreview): string {
   const st = battle!.state;
-  const e = st.enemy;
   const p = st.player;
   const ef = d.effect;
-  const cw = e.def.castingWeakness;
-  const mult = JUDGE_MULT[j] * (cw && e.charging && d.tag === cw.tag ? cw.multiplier : 1); // 판정 × E03 영창 약점
-  const vanity = e.def.suitDamageMult?.[d.suit] ?? 1; // E05 — 의지 피해에만
-  const originAdd = j === 'origin' ? 1 : 0; // 원산지 고정 좋아요 +1 (내림 후 가산)
-  const attach = p.equipment.reduce(
-    (s, eq) => s + eq.attachments.filter((a) => a.kind === 'damage_buff').reduce((x, a) => x + a.value, 0),
-    0,
-  );
-  const willBase = ef.type === 'damage' ? ef.value ?? 0 : ef.damage; // 의지 피해(주효과 또는 동반)
-  if (willBase !== undefined) return `👍 ${applyMult(willBase + attach, mult * vanity) + originAdd + p.storedDamageBonus}`;
-  if (ef.type === 'equipment_damage') return `👍 ${applyMult(ef.value ?? 0, mult) + originAdd} 내구도`;
+  const mult = pv.mult; // 판정 × E03 영창 약점 — 엔진이 계산한 값
+  if (pv.likes !== null) return `👍 ${pv.likes}${pv.likesKind === 'equipment' ? ' 내구도' : ''}`;
   if (ef.type === 'equipment_dot') {
     const dur = typeof ef.duration === 'number' ? ef.duration : 2;
     return `도트 👍 ${applyMult(ef.value ?? 0, mult)}×${dur}턴`;
@@ -208,7 +186,7 @@ function cardHtml(uid: number, d: CardDef): string {
     </div>`;
   }
   const r = d as ReviewCardDef;
-  const pv = preview(r);
+  const pv = preview(uid, r);
   const jc = pv.missed ? 'missed' : pv.judgement ?? '';
   const badge = !pv.compatible
     ? `<span class="badge off">대상: ${TARGET_LABEL[r.target]}</span>`

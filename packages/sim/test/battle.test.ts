@@ -424,3 +424,55 @@ test('결정성: 같은 시드·같은 정책 입력 → 같은 결과', () => {
   };
   assert.equal(run(), run());
 });
+
+// ── previewSubmit: 미리보기 = 실제 (화면이 규칙을 재구현하지 않는다) ──
+
+/** 미리보기 값과 실제 제출 결과가 어긋나면 실패한다 — 밸런스 변경 시 UI 드리프트 탐지용 */
+function assertPreviewMatches(b: Battle, cardUid: number, opts = {}): void {
+  const pv = b.previewSubmit(cardUid, opts);
+  const willBefore = b.state.enemy.will;
+  const gaugeBefore = b.state.player.gauge;
+  const eqBefore = b.state.enemy.equipment.map((q) => q.durability);
+  const r = b.submitReview(cardUid, opts);
+
+  assert.equal(pv.judgement, r.judgement, '판정 불일치');
+  assert.equal(pv.blocked === 'miss' || pv.blocked === 'void', r.missed, 'missed 불일치');
+  if (pv.likesKind === 'will') {
+    assert.equal(willBefore - b.state.enemy.will, pv.likes, '의지 좋아요 불일치');
+  } else if (pv.likesKind === 'equipment') {
+    const dealt = eqBefore.reduce((s, d, i) => s + (d - b.state.enemy.equipment[i]!.durability), 0);
+    assert.equal(dealt, pv.likes, '내구도 좋아요 불일치');
+  }
+  if (!r.missed) {
+    assert.equal(b.state.player.gauge - gaugeBefore, pv.gauge, '게이지 불일치');
+  }
+}
+
+test('previewSubmit: 판정 4단계 전부 실제 제출과 일치', () => {
+  assertPreviewMatches(makeBattle('E01', ['Q01']), 1); // 원산지
+  assertPreviewMatches(makeBattle('E01', ['Z06']), 1); // 팩트
+  assertPreviewMatches(makeBattle('E01', ['Z01']), 1); // 일반
+  assertPreviewMatches(makeBattle('E05', ['Z01']), 1); // 헛소리 (E05 무효 [출력]… 계열 확인용)
+});
+
+test('previewSubmit: 구성품 대상·내 장비 대상도 일치', () => {
+  const b = makeBattle('E02', ['W01']); // 초대형 둔기 원산지
+  assertPreviewMatches(b, uid(b, 'W01'), { enemyEquipmentIndex: 0 });
+});
+
+test('previewSubmit: 상태를 바꾸지 않는다', () => {
+  const b = makeBattle('E01', ['Q01']);
+  const snap = JSON.stringify(b.state);
+  b.previewSubmit(uid(b, 'Q01'));
+  b.previewSubmit(uid(b, 'Q01'), { enemyEquipmentIndex: 0 });
+  assert.equal(JSON.stringify(b.state), snap, 'previewSubmit 이 상태를 오염시킴');
+});
+
+test('previewSubmit: 은신 빗나감·무판정 카드를 blocked 로 알린다', () => {
+  const b = makeBattle('E04', ['Z01', 'X01']); // E04 은신 게이트
+  b.state.enemy.stealth = true;
+  const pv = b.previewSubmit(uid(b, 'Z01'));
+  assert.equal(pv.blocked, 'miss');
+  assert.equal(pv.likes, null);
+  assert.equal(b.previewSubmit(uid(b, 'X01')).blocked, 'not_review'); // 진상 화법 = 무판정
+});
