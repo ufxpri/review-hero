@@ -1,4 +1,6 @@
-// 밸런스 라운드 1 (GDD v1.1) 신규 규칙 검증 — 제안 1·3·5·6 + 퇴고(교착 안전장치)
+// 밸런스 라운드 1 (GDD v1.1) 신규 규칙 검증 — 제안 1·3·5·6 + 퇴고
+// v2 전환 노트: 카드 참조만 v2(단일 리뷰 카드)로 교체. 규칙 자체는 판정 하류라 무변경.
+// 퇴고는 v1의 "교착 안전장치"에서 v2의 "태그 사냥 도구"로 역할이 승격됐다 (card-system-v2 §7).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { Battle, mulberry32, type BattleConfig } from '../../core/src/index.ts';
@@ -25,8 +27,8 @@ function uid(b: Battle, cardId: string, nth = 0): number {
 }
 
 test('v1.1 제안 1: 팩트 판정 게이지 +3', () => {
-  const b = makeBattle('E01', ['P01', 'S01']);
-  b.submitReview(uid(b, 'P01'), uid(b, 'S01')); // 마감 ∈ E01 약점 → 팩트
+  const b = makeBattle('E01', ['Z06']);
+  b.submitReview(uid(b, 'Z06')); // #마감 ∈ E01 약점 → 팩트
   assert.equal(b.state.player.gauge, 3);
 });
 
@@ -41,7 +43,7 @@ test('v1.1 제안 3: 페이즈2 비례 트리거 — 의지 48이면 50% = 24에
   const base = data.enemies.get('B01')!;
   assert.equal(base.phase2!.triggerPct, 50); // YAML "의지 50% 이하" 파싱
   const enemy = { ...base, will: 48 };
-  const b = makeBattle('B01', ['P01', 'S01'], { enemy } as Partial<BattleConfig>);
+  const b = makeBattle('B01', [], { enemy } as Partial<BattleConfig>);
   // 의지를 25까지 깎아도 미발동 (문턱 = floor(48×50%) = 24)
   b.state.enemy.will = 25;
   b.endTurn();
@@ -53,19 +55,19 @@ test('v1.1 제안 3: 페이즈2 비례 트리거 — 의지 48이면 50% = 24에
 });
 
 test('v1.1 제안 5: 바이럴 크리 바닥 보장 — 버프 0개면 +3 가산 버프 부착 (+12 상한 공유)', () => {
-  const b = makeBattle('E01', ['P13', 'S01'], { initialSuitCounters: { 감성: 5 } });
+  const b = makeBattle('E01', [], { initialSuitCounters: { 감성: 5 } });
   assert.equal(b.state.player.disposition, '바이럴 앞잡이');
   b.state.player.gauge = 10;
   b.useCritical();
   const buffs = b.state.player.equipment.flatMap((eq) => eq.attachments.filter((a) => a.kind === 'damage_buff'));
   assert.equal(buffs.length, 1);
-  assert.equal(buffs[0]!.value, 3); // S13 상당
+  assert.equal(buffs[0]!.value, 3); // 기본 버프 상당
   assert.equal(buffs[0]!.usesSlot, false); // 크리 산출물 — 부착 슬롯 미점유
   assert.equal(b.state.player.viralBonusGranted, 3); // +12 상한 공유
 });
 
 test('v1.1 제안 6: 불편러 크리 — 기절 + 다음 행동 위력 −50% (기절 면역 시에도 −50%는 적용)', () => {
-  const b = makeBattle('E01', ['P09', 'S01'], { initialSuitCounters: { 배송: 5 } });
+  const b = makeBattle('E01', [], { initialSuitCounters: { 배송: 5 } });
   assert.equal(b.state.player.disposition, '프로 불편러');
   // 경직 내성 상태를 만들어 기절이 무효인 상황에서 −50%가 남는지 확인
   b.state.enemy.staggerImmunityTurns = 1;
@@ -77,15 +79,15 @@ test('v1.1 제안 6: 불편러 크리 — 기절 + 다음 행동 위력 −50% (
   assert.equal(b.state.player.will, 28);
 });
 
-test('v1.1 퇴고: 필력 1로 손패 1장 교체 — 접두 고착 해소 (GDD §3.2)', () => {
-  const b = makeBattle('E01', ['S01', 'S03', 'S05', 'S13', 'S14'], { deck: ['P01'] });
-  // 손패에 접두 0장 — 구판이면 교착. 퇴고로 S14를 버리고 P01 드로우
+test('v2 퇴고: 필력 1로 손패 1장 교체 — 태그 사냥 (card-system-v2 §7)', () => {
+  const b = makeBattle('E01', ['Z01', 'Z02', 'Z04', 'Z05', 'Z06'], { deck: ['G01'] });
+  // E01전에서 헛소리(Z01 #연비)를 버리고 원하는 태그를 찾는 용도
   const before = b.state.player.energy;
-  b.revise(uid(b, 'S14'));
+  b.revise(uid(b, 'Z01'));
   assert.equal(b.state.player.energy, before - 1);
-  assert.ok(b.state.player.hand.some((c) => c.cardId === 'P01'));
+  assert.ok(b.state.player.hand.some((c) => c.cardId === 'G01'));
   assert.equal(b.state.player.hand.length, 5);
   // 뽑을 카드가 없으면 사용 불가
-  const empty = makeBattle('E01', ['S01', 'S03', 'S05', 'S13', 'S14']);
-  assert.throws(() => empty.revise(uid(empty, 'S01')), /뽑을 카드 없음/);
+  const empty = makeBattle('E01', ['Z01', 'Z02', 'Z04', 'Z05', 'Z06']);
+  assert.throws(() => empty.revise(uid(empty, 'Z01')), /뽑을 카드 없음/);
 });

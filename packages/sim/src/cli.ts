@@ -1,17 +1,16 @@
-// 전투 시뮬레이터 CLI
+// 전투 시뮬레이터 CLI (v2 — 단일 리뷰 카드 체계)
 // 사용: npx tsx packages/sim/src/cli.ts --enemy B01 --policy standard --runs 1000 --seed 42 [--json]
-//       [--deck P01,S01,...] [--deck-preset boss1] [--layer N] [--disposition-suit 계열]
-//       [--will N]  ← 적 의지 오버라이드 (TBD R11: B01 60→48 하향 재시뮬 전용, YAML은 불변)
+//       [--deck Z01,G01,...] [--deck-preset boss1] [--layer N] [--disposition-suit 계열]
+//       [--will N]  ← 적 의지 오버라이드 (재시뮬 전용, YAML은 불변)
 //
-// 결과 해석 주의 (감사 반영):
-// - 판정 비율은 "실현(achieved)"이며, 정책의 "의도(attempted)" 비율과 함께 병기된다.
-//   손패 가용성 제약으로 실현치는 GDD §3.4 전제(50%/75%/30%)에 크게 못 미칠 수 있다.
-// - gauge 지표 3종: judgement_net(§3.4 정의와 동일 — 판정 유래 raw 순증, 클램프 전) /
+// 결과 해석 주의:
+// - 판정 4단계(원산지/팩트/일반/헛소리 — card-system-v2 §2). 판정 비율은 "실현(achieved)"이며
+//   정책이 제출 시점에 기대한 판정(attempted)과 병기된다(정상이면 양자 일치 — 괴리 시 엔진/정책 판정 규칙 불일치 진단).
+// - 시작 덱 12장은 전생 카드(Z##) — 원산지 영구 미발동. 원산지 실측은 --deck/--deck-preset 주입 필요.
+// - gauge 지표 3종: judgement_net(판정 유래 raw 순증 — v2 원산지 +4/팩트 +3/헛소리 −2, 클램프 전) /
 //   applied_gain(0~10 클램프 후 실반영 획득) / overflow_lost(상한 초과 소실).
-// - 보스(B01) 시뮬은 시작 덱만으로는 적 본체 팩트가 구조적으로 불가(태그 교집합 공집합) —
-//   --deck-preset boss1(보스 도달 기대 덱) 또는 --deck 주입 없이는 R11 재시뮬 도구로 쓰지 말 것.
-// - 교착 패배(리뷰 제출 0회 패배: 접두 없는 손패 고정 — 손패 유지형 §3.1의 빈틈)는 정책 무관
-//   강제 패배라 별도 집계하고, 교착 제외 조건부 승률을 병기한다. 설계 질의 대상.
+// - deadlock(리뷰 제출 0회 패배)은 v1 접두 교착의 잔재 계측 — v2는 손패 전장이 제출 가능해
+//   구조적으로 0이어야 한다 (0이 아니면 회귀 신호).
 // - 최소 런 수 가이드: 승률 ±2%p 판별에는 약 2,500판 필요(Wilson 95% CI 참조).
 import { Battle, mulberry32, type Suit } from '../../core/src/index.ts';
 import { loadAll } from './data.ts';
@@ -30,11 +29,14 @@ interface Args {
   will?: number; // 적 의지 오버라이드 (R11 재시뮬용)
 }
 
-// 덱 프리셋 — 가정(GDD 침묵: 보스 시뮬용 표준 덱 미정의. GDD '가정' 명시 필요, 에스컬레이션 대상):
-// boss1 = "1막 보스 도달 기대 덱" = 시작 덱 12장 + 일반층 5회 보상 중 3장 획득 가정
-//   (B01 약점 태그 응대/개연성 대응 접두 P11·P15 + 데미지 접미 S02 — 층당 3택1에서 보스 대비 픽)
+// 덱 프리셋 — TBD(에스컬레이션 대상): GDD §3.6 v1.1의 「표준 검증 덱」 정의(B01 = P11/P15/S02)는
+// v1 조합형 카드라 무효. v2 정의는 GDD·enemies YAML 어디에도 아직 없어 잠정 구성한다:
+// boss1 = "1막 보스 도달 기대 덱" = 시작 덱 12장 + 일반·정예 전투 보상 3장 가정.
+//   B01 약점 태그(응대/개연성) 카드 중 보스 격파 "전"에 획득 가능한 것만 — 원산지 B01 카드
+//   (B01c~B04c·K##)는 카드 보상이 "이긴 대상의 리뷰"라(card-system-v2 §1-①) 보스전 이전 획득 불가.
+//   → G01(응대, E01) + G02(개연성, E01) + D02(응대, E04). GDD v2.0 병합 시 정본 확정 필요.
 const DECK_PRESETS: Record<string, (startingDeck: string[]) => string[]> = {
-  boss1: (s) => [...s, 'P11', 'P15', 'S02'],
+  boss1: (s) => [...s, 'G01', 'G02', 'D02'],
 };
 
 function parseArgs(argv: string[]): Args {
@@ -75,9 +77,9 @@ interface RunRecord {
   gaugeLost: number;
   gaugeOverflowLost: number;
   remainingWill: number;
-  judgements: { fact: number; normal: number; fumble: number };
+  judgements: { origin: number; fact: number; normal: number; fumble: number };
   surrender: boolean;
-  deadlock: boolean; // 리뷰 제출 0회 패배 = 접두 없는 손패 교착 (정책 무관 강제 패배)
+  deadlock: boolean; // 리뷰 제출 0회 패배 (v1 접두 교착 잔재 계측 — v2는 0이어야 정상)
 }
 
 /** 승률용 Wilson 95% 신뢰구간 */
@@ -162,12 +164,17 @@ function main(): void {
     return d;
   };
   const totalJ = records.reduce(
-    (acc, x) => ({ fact: acc.fact + x.judgements.fact, normal: acc.normal + x.judgements.normal, fumble: acc.fumble + x.judgements.fumble }),
-    { fact: 0, normal: 0, fumble: 0 },
+    (acc, x) => ({
+      origin: acc.origin + x.judgements.origin,
+      fact: acc.fact + x.judgements.fact,
+      normal: acc.normal + x.judgements.normal,
+      fumble: acc.fumble + x.judgements.fumble,
+    }),
+    { origin: 0, fact: 0, normal: 0, fumble: 0 },
   );
-  const jSum = totalJ.fact + totalJ.normal + totalJ.fumble;
+  const jSum = totalJ.origin + totalJ.fact + totalJ.normal + totalJ.fumble;
   const totalTurns = records.reduce((a, x) => a + x.turns, 0);
-  const aSum = telemetry.attempted.fact + telemetry.attempted.normal + telemetry.attempted.fumble;
+  const aSum = telemetry.attempted.origin + telemetry.attempted.fact + telemetry.attempted.normal + telemetry.attempted.fumble;
   const winRate = wins.length / n;
   const [ciLo, ciHi] = wilson95(winRate, n);
   const nExDeadlock = n - deadlocks.length;
@@ -206,28 +213,35 @@ function main(): void {
       stealth_misses: records.reduce((a, x) => a + x.critMisses, 0),
       dist: dist(records.map((x) => x.crits)),
     },
-    // §3.4 "+1.44/턴"과 동일 정의 = 판정 유래 raw 순증(클램프 전): (팩트×2 − 헛소리×2) / 턴
+    // 판정 유래 raw 순증(클램프 전, v2 값: 원산지 +4 / 팩트 +3 / 헛소리 −2) / 턴
     gauge: {
-      judgement_net_per_turn: (totalJ.fact * 2 - totalJ.fumble * 2) / totalTurns,
+      judgement_net_per_turn: (totalJ.origin * 4 + totalJ.fact * 3 - totalJ.fumble * 2) / totalTurns,
       applied_gain_per_turn: records.reduce((a, x) => a + x.gaugeGained, 0) / totalTurns, // 클램프 후 실반영 획득
       lost_per_turn: records.reduce((a, x) => a + x.gaugeLost, 0) / totalTurns,
       overflow_lost_per_turn: records.reduce((a, x) => a + x.gaugeOverflowLost, 0) / totalTurns,
     },
     avg_remaining_will_all: avg(records.map((x) => x.remainingWill)),
     avg_remaining_will_wins: avg(wins.map((x) => x.remainingWill)),
-    // achieved = 엔진 실현 판정 / attempted = 정책 목표 롤 (§3.4 전제와의 괴리 진단용)
+    // achieved = 엔진 실현 판정 / attempted = 정책 기대 판정 (괴리 = 판정 규칙 불일치 진단)
     judgement_rates: jSum
-      ? { fact: totalJ.fact / jSum, normal: totalJ.normal / jSum, fumble: totalJ.fumble / jSum, per_turn: jSum / totalTurns }
+      ? {
+          origin: totalJ.origin / jSum,
+          fact: totalJ.fact / jSum,
+          normal: totalJ.normal / jSum,
+          fumble: totalJ.fumble / jSum,
+          per_turn: jSum / totalTurns,
+        }
       : null,
     attempted_rates: aSum
       ? {
+          origin: telemetry.attempted.origin / aSum,
           fact: telemetry.attempted.fact / aSum,
           normal: telemetry.attempted.normal / aSum,
           fumble: telemetry.attempted.fumble / aSum,
-          fallbacks: telemetry.noWantedFallbacks,
+          fallbacks: telemetry.noWantedFallbacks, // 우위 판정(원산지/팩트) 없이 제출한 횟수
           fallback_rate: telemetry.noWantedFallbacks / aSum,
         }
-      : null, // reckless(완전 무작위)는 목표 롤이 없어 미집계
+      : null, // reckless(완전 무작위)는 미집계
   };
 
   if (args.json) {
@@ -240,7 +254,7 @@ function main(): void {
   console.log(
     `승률           : ${pct(summary.win_rate)}  [95% CI ${pct(ciLo)}~${pct(ciHi)}]  (승 ${summary.results.win} / 패 ${summary.results.lose} / 시간초과 ${summary.results.timeout}, 항복승 ${summary.surrender_wins})`,
   );
-  console.log(`교착 패배      : ${summary.deadlock_losses}판 (제출 0회 — 접두 없는 손패 고착. 교착 제외 승률 ${pct(summary.win_rate_excl_deadlock)})`);
+  console.log(`교착 패배      : ${summary.deadlock_losses}판 (제출 0회 — v2에선 0이어야 정상. 교착 제외 승률 ${pct(summary.win_rate_excl_deadlock)})`);
   console.log(`평균 턴 수     : 전체 ${summary.turns.avg_all.toFixed(2)} / 승리 ${summary.turns.avg_wins.toFixed(2)} / 패배 ${summary.turns.avg_losses.toFixed(2)}`);
   console.log(`턴 분포        : ${Object.entries(summary.turns.dist).map(([k, v]) => `${k}턴:${v}`).join(' ')}`);
   console.log(
@@ -253,12 +267,12 @@ function main(): void {
   console.log(`평균 잔여 의지 : 전체 ${summary.avg_remaining_will_all.toFixed(1)} / 승리 시 ${summary.avg_remaining_will_wins.toFixed(1)} (최대 30)`);
   if (summary.judgement_rates) {
     console.log(
-      `판정 실현      : 팩트 ${pct(summary.judgement_rates.fact)} / 일반 ${pct(summary.judgement_rates.normal)} / 헛소리 ${pct(summary.judgement_rates.fumble)} (판정 ${summary.judgement_rates.per_turn.toFixed(2)}회/턴)`,
+      `판정 실현      : 원산지 ${pct(summary.judgement_rates.origin)} / 팩트 ${pct(summary.judgement_rates.fact)} / 일반 ${pct(summary.judgement_rates.normal)} / 헛소리 ${pct(summary.judgement_rates.fumble)} (판정 ${summary.judgement_rates.per_turn.toFixed(2)}회/턴)`,
     );
   }
   if (summary.attempted_rates) {
     console.log(
-      `판정 의도(롤)  : 팩트 ${pct(summary.attempted_rates.fact)} / 일반 ${pct(summary.attempted_rates.normal)} / 헛소리 ${pct(summary.attempted_rates.fumble)} — 목표 접두 부재 폴백 ${summary.attempted_rates.fallbacks}회(${pct(summary.attempted_rates.fallback_rate)})`,
+      `판정 의도      : 원산지 ${pct(summary.attempted_rates.origin)} / 팩트 ${pct(summary.attempted_rates.fact)} / 일반 ${pct(summary.attempted_rates.normal)} / 헛소리 ${pct(summary.attempted_rates.fumble)} — 우위 판정 부재 제출 ${summary.attempted_rates.fallbacks}회(${pct(summary.attempted_rates.fallback_rate)})`,
     );
   }
 }

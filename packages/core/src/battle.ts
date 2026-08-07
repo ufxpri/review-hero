@@ -1,23 +1,23 @@
 // 이세계 리뷰용사 — 전투 상태머신 (GDD §2 공통 계산, §3 전투 전체)
 // UI 무의존 순수 상태머신. fs/network 접근 금지, Date.now()/Math.random() 금지 — rng 주입.
+//
+// v2 (card-system-v2.md §2·§9, ADR-011): 접두+접미 조합 폐지 → submitReview(cardUid, opts),
+// 판정 3단계 → 4단계(원산지 최우선·무효 태그 무시), modifier 적용부 전량 삭제.
 
 import { type Rng, shuffle } from './rng.ts';
 import {
+  type CardDef,
   type CardIndex,
   type Disposition,
-  type EffectDef,
   type EnemyActionDef,
   type EnemyDef,
   type EnemyEffectDef,
   type PlayerEquipmentDef,
-  type PrefixDef,
-  type SpecialDef,
-  type SuffixDef,
+  type ReviewCardDef,
   type Suit,
   DISPOSITION_SUIT,
   STARTING_EQUIPMENT,
   SUIT_DISPOSITION,
-  tagToSuit,
 } from './types.ts';
 
 // ── 공통 계산 (GDD §2) ────────────────────────────────
@@ -27,9 +27,13 @@ export function applyMult(value: number, mult: number): number {
   return Math.max(1, Math.floor(value * mult));
 }
 
-export type Judgement = 'fact' | 'normal' | 'fumble';
+/** 판정 4단계 (card-system-v2 §2): 원산지 > 헛소리 > 팩트 > 일반 순서로 검사 */
+export type Judgement = 'origin' | 'fact' | 'normal' | 'fumble';
 
-export const JUDGE_MULT: Record<Judgement, number> = { fact: 1.5, normal: 1.0, fumble: 0.5 };
+export const JUDGE_MULT: Record<Judgement, number> = { origin: 1.5, fact: 1.5, normal: 1.0, fumble: 0.5 };
+
+/** 판정별 게이지 (v2 — 원산지 +4 / 팩트 +3 / 일반 0. 헛소리는 온보딩 보정 가능이라 별도) */
+export const JUDGE_GAUGE: Record<Exclude<Judgement, 'fumble'>, number> = { origin: 4, fact: 3, normal: 0 };
 
 // ── 상태 타입 ─────────────────────────────────────────
 
@@ -74,12 +78,13 @@ export interface EnemyBuff {
   uid: number;
   kind: 'attack_up';
   value: number;
-  protectedBy?: string; // phase2 알바_리뷰: P11 접두로만 제거 가능 (counter_card)
+  protectedBy?: string; // phase2 알바_리뷰: counter_card로만 제거 가능
+  counterCard?: string; // 저격 카드 id (B02c) — remove_enemy_buff가 대조
 }
 
 export interface BattleStats {
   submissions: number;
-  judgements: { fact: number; normal: number; fumble: number };
+  judgements: Record<Judgement, number>;
   gaugeGained: number; // 0~10 클램프 후 실제 반영된 획득분 (§3.4 판정 순증과는 정의가 다름 — 시뮬 해석 주의)
   gaugeLost: number;
   gaugeOverflowLost: number; // 상한 10 초과로 소실된 획득분 (GDD §2-2 "초과 소실" 계측)
@@ -95,7 +100,7 @@ export interface OnboardingMods {
   enemyDamageMult?: number;
   /** 헛소리 판정 게이지 증감 (1판 −1, 기본 −2 — §4.4) */
   fumbleGaugeDelta?: number;
-  /** true면 버프 접미(내 장비 대상)는 무판정 = 항상 일반 (1판 한정 — §3.3) */
+  /** true면 버프 카드(내 장비 대상)는 무판정 = 항상 일반 (1판 한정 — §3.3) */
   buffNoJudgement?: boolean;
 }
 
@@ -108,7 +113,7 @@ export interface BattleConfig {
   gold?: number;
   maxTurns?: number; // 기본 30 — 초과 시 패배(timeout) 처리
   layer?: number; // 기본 1 (MVP). X09는 layer 2
-  /** 성향 스냅샷용 런 누적 접두 계열 카운터 (GDD §3.5 — 전투 시작 시 스냅샷 고정) */
+  /** 성향 스냅샷용 런 누적 제출 카드 계열 카운터 (GDD §3.5 — 전투 시작 시 스냅샷 고정) */
   initialSuitCounters?: Partial<Record<Suit, number>>;
   initialLastSuit?: Suit;
   startGauge?: number; // 외부 보정 (캡 ±는 런 레벨 규칙 — 시뮬은 값 그대로 클램프만)
@@ -273,7 +278,7 @@ export class Battle {
       },
       stats: {
         submissions: 0,
-        judgements: { fact: 0, normal: 0, fumble: 0 },
+        judgements: { origin: 0, fact: 0, normal: 0, fumble: 0 },
         gaugeGained: 0,
         gaugeLost: 0,
         gaugeOverflowLost: 0,
@@ -311,7 +316,7 @@ export class Battle {
     return SUIT_DISPOSITION[top[0]!] ?? '팩트 폭격기';
   }
 
-  private def(cardId: string): PrefixDef | SuffixDef | SpecialDef {
+  private def(cardId: string): CardDef {
     const d = this.cards.byId.get(cardId);
     if (!d) throw new Error(`카드 정의 없음: ${cardId}`);
     return d;
@@ -410,79 +415,81 @@ export class Battle {
     this.checkEnd();
   }
 
-  // ── 판정 (GDD §3.3) ──
+  // ── 판정 (v2 4단계 — card-system-v2 §2) ──
 
-  judge(prefix: PrefixDef, targetTags: string[], targetNullTags: string[]): Judgement {
-    // 가정(GDD 침묵): 태그가 대상 태그와 무효 태그에 동시에 들 수는 없다는 전제. 팩트 우선.
-    if (prefix.tags.some((t) => targetTags.includes(t))) return 'fact';
-    let j: Judgement = prefix.tags.some((t) => targetNullTags.includes(t)) ? 'fumble' : 'normal';
-    if (j === 'fumble' && prefix.modifier?.type === 'no_fumble') j = 'normal'; // P08
-    return j;
+  /**
+   * ①원산지 ②헛소리 ③팩트 ④일반.
+   * 원산지는 무효 태그를 무시한다 — 직접 산 사람의 증언에는 "평가 불가 항목" 반박이 통하지 않는다.
+   * tag는 정확히 1개(단일 초점 원칙)라 v1의 다중 태그 some() 검사가 단순 포함 검사로 바뀐다.
+   */
+  judge(card: ReviewCardDef, targetTags: string[], targetNullTags: string[], isOrigin: boolean): Judgement {
+    if (isOrigin) return 'origin';
+    if (targetNullTags.includes(card.tag)) return 'fumble';
+    if (targetTags.includes(card.tag)) return 'fact';
+    return 'normal';
   }
 
-  // ── 리뷰 제출 (접두+접미) ──
+  // ── 리뷰 제출 (v2 — 카드 1장 = 완성 리뷰) ──
 
   submitReview(
-    prefixUid: number,
-    suffixUid: number,
+    cardUid: number,
     opts: { enemyEquipmentIndex?: number; myEquipmentIndex?: number } = {},
   ): { missed: boolean; judgement: Judgement | null } {
     const st = this.state;
     if (st.result) throw new Error('전투 종료됨');
     const p = st.player;
-    const prefixCard = p.hand.find((c) => c.uid === prefixUid);
-    const suffixCard = p.hand.find((c) => c.uid === suffixUid);
-    if (!prefixCard || !suffixCard) throw new Error('손패에 없는 카드');
-    const prefix = this.def(prefixCard.cardId);
-    const suffix = this.def(suffixCard.cardId);
-    if (prefix.kind !== 'prefix' || suffix.kind !== 'suffix') throw new Error('접두+접미 조합이 아님');
+    const inst = p.hand.find((c) => c.uid === cardUid);
+    if (!inst) throw new Error('손패에 없는 카드');
+    const card = this.def(inst.cardId);
+    if (card.kind !== 'review') throw new Error('리뷰 카드가 아님 (진상 화법은 playSpecial)');
 
-    const cost = prefix.cost + suffix.cost;
-    if (p.energy < cost) throw new Error('필력 부족');
-    p.energy -= cost;
-    this.discardFromHand(prefixUid);
-    this.discardFromHand(suffixUid);
+    if (p.energy < card.cost) throw new Error('필력 부족');
+    p.energy -= card.cost;
+    this.discardFromHand(cardUid);
 
     st.stats.submissions++;
-    p.suitCounters[prefix.suit]++;
-    p.lastSuit = prefix.suit; // 스냅샷 이후의 누적 — 다음 전투용 (GDD §3.5)
+    p.suitCounters[card.suit]++;
+    p.lastSuit = card.suit; // 스냅샷 이후의 누적 — 다음 전투용 (GDD §3.5)
 
     const e = st.enemy;
     const gate = e.def.stealthGate;
 
     // E04 은신: 은신 중에는 명중 가능 계열(배송)만 명중. 그 외는 빗나감.
-    // 가정(GDD 침묵): 빗나간 리뷰는 판정·게이지 없이 소모만 된다 ("평가 불가" — 물건이 안 옴).
+    // 가정(v1 승계): 빗나간 리뷰는 판정·게이지 없이 소모만 된다 ("평가 불가" — 물건이 안 옴).
     if (
       e.stealth &&
       gate &&
-      (suffix.target === 'enemy' || suffix.target === 'enemy_equipment') &&
-      !gate.hittableSuits.includes(prefix.suit)
+      (card.target === 'enemy' || card.target === 'enemy_equipment') &&
+      !gate.hittableSuits.includes(card.suit)
     ) {
-      this.log(`${prefix.name}+${suffix.name}: 은신 중 — 빗나감`);
+      this.log(`${card.name}: 은신 중 — 빗나감`);
       return { missed: true, judgement: null };
     }
     // 은신 중 명중 계열 명중 시 은신 해제
-    if (e.stealth && gate && gate.breakOnHit && (suffix.target === 'enemy' || suffix.target === 'enemy_equipment')) {
+    if (e.stealth && gate && gate.breakOnHit && (card.target === 'enemy' || card.target === 'enemy_equipment')) {
       e.stealth = false;
       e.stealthEverBroken = true;
       this.log('은신 해제!');
     }
 
-    // 대상 태그 결정
+    // 대상 결정 + 원산지 판정 범위 (card-system-v2 §2):
+    //   적 본체 대상 제출 → origin.enemy 일치 / 구성품 대상 제출 → origin.equipment 일치(이름 완전 일치)
+    //   내 장비 대상·origin 없는 카드(Z##·X##·P해금)는 원산지 영구 미발동
     let targetTags: string[];
     let targetNull: string[];
+    let isOrigin = false;
     let myEq: PlayerEquipmentState | null = null;
     let enemyEq: EnemyEquipmentState | null = null;
-    if (suffix.target === 'my_equipment') {
-      // 버프 접미는 반드시 내 장비 1개 대상 (GDD §3.3)
+    if (card.target === 'my_equipment') {
+      // 버프 카드는 반드시 내 장비 1개 대상 (GDD §3.3)
       const idx = opts.myEquipmentIndex ?? 0;
       myEq = p.equipment[idx] ?? p.equipment[0]!;
       targetTags = myEq.def.tags;
       targetNull = myEq.def.nullTags;
-    } else if (suffix.target === 'enemy_equipment') {
+    } else if (card.target === 'enemy_equipment') {
       const alive = e.equipment.filter((eq) => !eq.destroyed);
       if (alive.length === 0) {
-        // 가정(GDD 침묵): 장비 대상 접미인데 남은 장비가 없으면 제출 자체가 낭비(효과 없음)
+        // 가정(v1 승계): 구성품 대상 카드인데 남은 구성품이 없으면 제출 자체가 낭비(효과 없음)
         return { missed: true, judgement: null };
       }
       enemyEq =
@@ -490,62 +497,60 @@ export class Battle {
           ? e.equipment[opts.enemyEquipmentIndex]!
           : alive[0]!;
       targetTags = enemyEq.tags;
-      targetNull = e.def.nullTags; // 가정(GDD 침묵): 장비 대상의 무효 태그는 적 본체의 무효 태그를 따른다
+      targetNull = e.def.nullTags; // 가정(v1 승계): 구성품 대상의 무효 태그는 적 본체의 무효 태그를 따른다
+      isOrigin = card.origin?.equipment !== undefined && card.origin.equipment === enemyEq.name;
     } else {
       targetTags = e.def.weaknessTags;
       targetNull = e.def.nullTags;
+      isOrigin = card.origin?.enemy !== undefined && card.origin.enemy === e.def.id;
     }
 
-    let judgement = this.judge(prefix, targetTags, targetNull);
-    // 온보딩 1판 한정: 버프 접미(내 장비 대상)는 무판정 = 항상 일반 (GDD §3.3)
-    if (this.buffNoJudgement && suffix.target === 'my_equipment') judgement = 'normal';
+    let judgement = this.judge(card, targetTags, targetNull, isOrigin);
+    // 온보딩 1판 한정: 버프 카드(내 장비 대상)는 무판정 = 항상 일반 (GDD §3.3)
+    if (this.buffNoJudgement && card.target === 'my_equipment') judgement = 'normal';
     const jm = JUDGE_MULT[judgement];
-    const hits = suffix.effect.hits ?? 1;
 
-    // 판정·게이지는 히트당 (GDD §3.3 — S03). 헛소리 게이지는 온보딩 1판 −1 완화 가능 (§4.4)
-    for (let h = 0; h < hits; h++) {
-      st.stats.judgements[judgement]++;
-      if (judgement === 'fact') this.gaugeChange(+3); // v1.1: +2→+3 (밸런스 라운드 1 제안 1 — 제안 2와 묶음)
-      else if (judgement === 'fumble') this.gaugeChange(this.fumbleGaugeDelta);
-    }
+    // 판정·게이지는 제출당 1회 (v2는 다중 히트 카드 없음). 헛소리는 온보딩 1판 −1 완화 가능 (§4.4)
+    st.stats.judgements[judgement]++;
+    if (judgement === 'fumble') this.gaugeChange(this.fumbleGaugeDelta);
+    else this.gaugeChange(JUDGE_GAUGE[judgement]); // 원산지 +4 / 팩트 +3 / 일반 0
 
-    // P12: 팩트 판정 시 드로우 (가정: 제출당 1회)
-    if (judgement === 'fact' && prefix.modifier?.type === 'draw_on_fact') this.draw(prefix.modifier.value ?? 1);
+    // 재반박 (B01 counter_rebut): "같은 계열 팩트 리뷰 제출" — 해석: 원산지는 팩트의 상위 판정이므로 포함
+    // (직접 산 사람의 증언이 일반 팩트보다 약한 재반박 근거일 수 없다)
+    if (judgement === 'fact' || judgement === 'origin') this.tryCounterRebut(card.suit);
 
-    // 재반박 (B01 counter_rebut): 같은 계열 팩트 리뷰 제출 → 정지된 디버프 부활 + 게이지 +1
-    if (judgement === 'fact') this.tryCounterRebut(prefix.suit);
-
-    // 조건부 접두 배율
+    // 기타 배율 ①: E03 casting_weakness — 영창(준비) 중 해당 태그 리뷰 효과 ×2.
+    // v1은 P06 modifier(vs_casting_mult)로 구현했으나 modifier 폐지로 적 특성(트레잇) 판정으로 이관.
     let condMult = 1;
-    const mod = prefix.modifier;
-    if (mod) {
-      if (mod.type === 'vs_casting_mult' && e.charging) condMult *= mod.value ?? 2; // P06
-      if (mod.type === 'vs_gimmick_mult') {
-        // P15: 적의 기믹·페이즈 전환 행동 대상 — 가정(GDD 침묵): 현재 인텐트가 gimmick일 때 적용
-        const intent = e.def.actions.find((a) => a.id === e.intentId);
-        if (intent?.aType === 'gimmick') condMult *= mod.value ?? 2;
-      }
-      if (mod.type === 'vs_boss_mult' && e.def.tier === 'boss') condMult *= mod.value ?? 1.5; // P16
-      // vs_summon_mult(P10)·target_enemy_support(P11)는 별도 처리 / MVP 데이터에 소환수 없음
-    }
+    const cw = e.def.castingWeakness;
+    if (cw && e.charging && card.tag === cw.tag) condMult *= cw.multiplier;
 
-    // E05 vanity: 감성 계열 의지 데미지 ×2
-    const vanityMult = suffix.effect.type === 'damage' ? (e.def.suitDamageMult?.[prefix.suit] ?? 1) : 1;
+    // 기타 배율 ②: E05 vanity — 계열별 "의지 데미지" 배수 (내구도 등 비대상, applyReviewEffect에서 의지 피해에만 곱함)
+    const vanityMult = e.def.suitDamageMult?.[card.suit] ?? 1;
 
-    this.applySuffixEffect(suffix, prefix, judgement, jm * condMult, vanityMult, myEq, enemyEq);
+    this.applyReviewEffect(card, judgement, jm * condMult, vanityMult, myEq, enemyEq);
 
-    // 인라인 게이지 (S04/S11 −1 등) — 가정(GDD 침묵): 히트당이 아니라 제출당 1회
-    if (suffix.effect.gauge) this.gaugeChange(suffix.effect.gauge);
+    // 인라인 게이지 동반 (B02c·A04) — 가정(v1 승계): 제출당 1회, 판정 배율 미적용 고정치
+    if (card.effect.gauge) this.gaugeChange(card.effect.gauge);
 
     this.checkEnd();
     return { missed: false, judgement };
   }
 
-  private applySuffixEffect(
-    suffix: SuffixDef,
-    prefix: PrefixDef,
+  /**
+   * 리뷰 효과 적용 — 좋아요 환산식 (GDD §2):
+   *   최종 좋아요 = ⌊ 기본 × 판정 배율 × 기타 배율 ⌋ + 고정 가산   (내림 1회·최소 1, 고정 가산은 내림 후)
+   * - 기본 = 카드 인쇄 수치 + 부착 버프 가산("제출당 1회" — GDD §3.3, 카드의 첫 의지 피해에만)
+   * - 기타 배율 = casting_weakness(E03, mult에 합산) × vanity(E05, 의지 피해에만)
+   * - 고정 가산 = 원산지 +1(card-system-v2 §2) + X05 예약분. 배율의 영향을 받지 않고 내림 후 더한다.
+   *   해석: 카드의 첫 피해 산출 1회에 적용 — 의지 피해 우선, 의지 피해가 없으면 구성품 내구도 피해
+   *   (내구도도 좋아요 단위 — ADR-015). 피해가 전혀 없는 카드(기절·버프·도트)에선 소멸.
+   * - 판정 배율은 절대 피해 수치에만: 지속 턴·%·개수·드로우 장수·회복량은 판정 무관 (v1 정교화 승계)
+   */
+  private applyReviewEffect(
+    card: ReviewCardDef,
     judgement: Judgement,
-    mult: number, // 판정 × 조건부 접두 배율
+    mult: number, // 판정 × casting_weakness
     vanityMult: number,
     myEq: PlayerEquipmentState | null,
     enemyEq: EnemyEquipmentState | null,
@@ -553,85 +558,68 @@ export class Battle {
     const st = this.state;
     const p = st.player;
     const e = st.enemy;
-    const ef = suffix.effect;
-    const hits = ef.hits ?? 1;
+    const ef = card.effect;
+
+    let fixedAdd = judgement === 'origin' ? 1 : 0; // 원산지 고정 좋아요 +1
+
+    const dealCardWillDamage = (base: number): void => {
+      let b = base;
+      // 부착 버프 가산 — "제출당 1회" (카드당 의지 피해 소스는 1개뿐이라 자연 충족)
+      b += p.equipment.reduce(
+        (s, eq) => s + eq.attachments.filter((a) => a.kind === 'damage_buff').reduce((x, a) => x + a.value, 0),
+        0,
+      );
+      let dmg = applyMult(b, mult * vanityMult); // 내림 1회, 최소 1 (GDD §2-1)
+      dmg += fixedAdd;
+      fixedAdd = 0;
+      if (p.storedDamageBonus > 0) {
+        dmg += p.storedDamageBonus; // X05 — 고정 가산 (내림 후 — GDD §2)
+        p.storedDamageBonus = 0;
+      }
+      this.dealWillDamageToEnemy(dmg);
+    };
 
     switch (ef.type) {
       case 'damage': {
-        for (let h = 0; h < hits; h++) {
-          let base = ef.value ?? 0;
-          if (h === 0) {
-            // 버프 가산은 "제출당 1회" (GDD §3.3) — 첫 히트에만
-            base += p.equipment.reduce(
-              (s, eq) => s + eq.attachments.filter((a) => a.kind === 'damage_buff').reduce((x, a) => x + a.value, 0),
-              0,
-            );
-            if (p.storedDamageBonus > 0) {
-              base += p.storedDamageBonus; // X05 — 다음 리뷰 1회에 가산
-              p.storedDamageBonus = 0;
-            }
-            if (prefix.modifier?.type === 'bonus_damage') base += prefix.modifier.value ?? 0; // P14
-          }
-          const dmg = applyMult(base, mult * vanityMult); // 내림, 최소 1 (GDD §2-1)
-          this.dealWillDamageToEnemy(dmg);
-          if (st.result) return;
-        }
+        dealCardWillDamage(ef.value ?? 0);
+        if (st.result) break;
+        if (ef.weaken_next_action !== undefined) e.weakenNextActionPct = ef.weaken_next_action; // C02c 동반
         break;
       }
-      case 'equipment_damage': {
-        const bonus = prefix.modifier?.type === 'bonus_equipment_damage' ? (prefix.modifier.value ?? 0) : 0; // P02
-        const dmg = applyMult((ef.value ?? 0) + bonus, mult);
-        const targets = ef.target_scope === 'all_enemy_equipment' ? e.equipment.filter((q) => !q.destroyed) : enemyEq ? [enemyEq] : [];
-        for (const eq of targets) this.damageEnemyEquipment(eq, dmg);
-        break;
-      }
-      case 'equipment_dot': {
-        if (!enemyEq) break;
-        const extend = prefix.modifier?.type === 'extend_dot' ? (prefix.modifier.value ?? 0) : 0; // P07
-        const dur = (typeof ef.duration === 'number' ? ef.duration : 2) + extend;
-        // 가정(GDD 침묵): 판정 배율은 도트 틱 값에 적용 (지속엔 미적용). 기존 도트는 갱신(중첩 없음).
-        enemyEq.dot = { value: applyMult(ef.value ?? 0, mult), remaining: dur };
-        break;
-      }
-      case 'disable_equipment': {
-        if (!enemyEq) break;
-        // 가정(GDD 침묵, §3.2 악용 #3 봉쇄 의도 준용): 경직 내성은 비활성화(S07)에도 면역 —
-        // S07 매턴 연쇄로 비기믹 행동을 영구 봉인하는 락(S09 락과 동형) 봉쇄. GDD 개정 필요(에스컬레이션).
-        if (e.staggerImmunityTurns > 0) {
-          this.log('경직 내성 — 비활성화 무효');
-          break;
-        }
-        const dur = typeof ef.duration === 'number' ? ef.duration : 1;
-        enemyEq.disabledTurns = Math.max(enemyEq.disabledTurns, dur);
-        break;
-      }
-      case 'weaken_next_action': {
-        // 가정(정교화): 판정 배율은 "절대 수치"(피해·회복·드로우 장수·필력·부착 가산)에만 적용하고
-        // 퍼센트(%)·지속 턴 수·개수에는 적용하지 않는다 — S08 −50%는 판정 무관 고정.
-        // (equipment_dot의 duration 미적용, S10 remove_enemy_buff의 개수 미적용과 일관)
-        e.weakenNextActionPct = ef.value ?? -50; // S08
+      case 'delay_enemy_action': {
+        // O02·L01·W02 (X01은 playSpecial 경유 동일 로직)
+        if (ef.damage !== undefined) dealCardWillDamage(ef.damage);
+        if (st.result) break;
+        this.applyDelayToEnemy();
         break;
       }
       case 'stun': {
-        // 기절·지연 면역: 경직 내성 (GDD §3.2)
-        if (e.staggerImmunityTurns > 0) {
-          this.log('경직 내성 — 기절 무효');
-          break;
-        }
-        const dur = typeof ef.duration === 'number' ? ef.duration : 1;
-        e.stunTurns = Math.max(e.stunTurns, dur);
+        // L03·W03 — v2는 기절 턴 수를 value로 표기. 경직 내성 면역 (GDD §3.2)
+        if (ef.damage !== undefined) dealCardWillDamage(ef.damage);
+        if (st.result) break;
+        if (e.staggerImmunityTurns > 0) this.log('경직 내성 — 기절 무효');
+        else e.stunTurns = Math.max(e.stunTurns, ef.value ?? 1);
+        break;
+      }
+      case 'weaken_next_action': {
+        // D02·B03c·K04 — %는 판정 무관 고정 (배율은 절대 수치에만 — v1 정교화 승계)
+        if (ef.damage !== undefined) dealCardWillDamage(ef.damage);
+        if (st.result) break;
+        e.weakenNextActionPct = ef.value ?? -50;
         break;
       }
       case 'remove_enemy_buff': {
-        const canRemoveProtected = prefix.modifier?.type === 'target_enemy_support'; // P11: 버프 저격 (phase2 알바_리뷰 counter_card)
+        // O03·N02·B02c — 개수는 판정 무관. phase2 알바_리뷰(protectedBy)는 counter_card 일치 카드로만 제거
+        if (ef.damage !== undefined) dealCardWillDamage(ef.damage);
+        if (st.result) break;
         for (let i = 0; i < (ef.value ?? 1); i++) {
           const idx = [...e.buffs]
             .map((b, k) => ({ b, k }))
-            .filter(({ b }) => canRemoveProtected || !b.protectedBy)
+            .filter(({ b }) => !b.protectedBy || b.counterCard === card.id)
             .map(({ k }) => k)
             .pop();
           if (idx === undefined) {
-            // 가정(GDD 침묵): 제거할 버프가 없으면 다음 받는 피해 감소/반사(포즈·마나 실드)를 대신 해제
+            // 가정(v1 승계): 제거할 버프가 없으면 다음 받는 피해 감소/반사(포즈·마나 실드)를 대신 해제
             if (e.damageReductionNextHit > 0 || e.reflectNextHit > 0) {
               e.damageReductionNextHit = 0;
               e.reflectNextHit = 0;
@@ -642,49 +630,94 @@ export class Battle {
         }
         break;
       }
+      case 'equipment_damage': {
+        // Q03·C03c — 내구도도 좋아요 단위 (ADR-015): 판정 배율 + 원산지 고정 +1 적용. vanity(의지 전용)는 비대상
+        if (!enemyEq) break;
+        const dmg = applyMult(ef.value ?? 0, mult) + fixedAdd;
+        fixedAdd = 0;
+        this.damageEnemyEquipment(enemyEq, dmg);
+        break;
+      }
+      case 'equipment_dot': {
+        // M03·A02 — 가정(v1 승계): 판정 배율은 틱 값에 적용(지속 턴 미적용), 기존 도트는 갱신(중첩 없음).
+        // 원산지 +1은 미적용 (즉발 피해가 아님 — 해석)
+        if (!enemyEq) break;
+        const dur = typeof ef.duration === 'number' ? ef.duration : 2;
+        enemyEq.dot = { value: applyMult(ef.value ?? 0, mult), remaining: dur };
+        break;
+      }
       case 'attack_down': {
-        const v = applyMult(ef.value ?? 0, mult); // 판정 적중 시 강화 (수치 배율 — GDD §3.3)
+        // K01 — 판정 적중 시 수치 강화 (GDD §3.3). duration: combat은 전투 스코프 상태라 별도 처리 불요
         e.debuffs.push({
           uid: this.uidSeq++,
           kind: 'attack_down',
-          value: v,
-          suit: prefix.suit,
-          tier: 1, // 가정(GDD 침묵): 전투 중 부착 일반 디버프 = Tier 1 (힙스터 크리 Tier 3만 명시됨)
+          value: applyMult(ef.value ?? 0, mult),
+          suit: card.suit,
+          tier: 1, // 가정(v1 승계): 전투 중 부착 일반 디버프 = Tier 1 (힙스터 크리 Tier 3만 명시됨)
           suspended: false,
           beenRebutted: false,
           createdAt: this.uidSeq,
         });
         break;
       }
-      case 'damage_buff': {
-        if (!myEq) break;
-        if (ef.uses_attach_slot) {
-          const used = myEq.attachments.filter((a) => a.usesSlot).length;
-          if (used >= 2) {
-            this.log('부착 슬롯 가득 참 — 부착 실패'); // GDD §3.9 (R15)
-            break;
-          }
+      case 'disable_equipment': {
+        // v2 실데이터 미사용 (YAML 스키마 예비). 경직 내성 면역 — S07 무한 락 봉쇄 규칙 유지
+        if (!enemyEq) break;
+        if (e.staggerImmunityTurns > 0) {
+          this.log('경직 내성 — 비활성화 무효');
+          break;
         }
-        myEq.attachments.push({ kind: 'damage_buff', value: applyMult(ef.value ?? 0, mult), usesSlot: ef.uses_attach_slot ?? false });
+        const dur = typeof ef.duration === 'number' ? ef.duration : 1;
+        enemyEq.disabledTurns = Math.max(enemyEq.disabledTurns, dur);
         break;
       }
-      case 'draw': {
-        // 가정(GDD §3.3 "수치 ×1.5" 문언 적용): 드로우 수에도 판정 배율 (2→팩트 3장)
-        this.draw(applyMult(ef.value ?? 0, mult));
-        break;
-      }
-      case 'energy_next_turn': {
-        p.energyNextTurnBonus += applyMult(ef.value ?? 0, mult); // S15 — 이월 아님, 다음 턴 가산 (GDD §2-3)
-        break;
-      }
-      case 'heal': {
-        p.will = Math.min(p.maxWill, p.will + applyMult(ef.value ?? 0, mult)); // S16
+      case 'damage_buff': {
+        // D03·N03·A01 — 부착은 슬롯 2칸 점유 (GDD §3.9).
+        // v2 결정: 리뷰 유래 부착은 전부 슬롯 사용 (v1 uses_attach_slot 필드는 YAML에서 사라짐), 크리 산출물만 예외
+        if (!myEq) break;
+        const used = myEq.attachments.filter((a) => a.usesSlot).length;
+        if (used >= 2) {
+          this.log('부착 슬롯 가득 참 — 부착 실패'); // GDD §3.9 (R15)
+          break;
+        }
+        myEq.attachments.push({ kind: 'damage_buff', value: applyMult(ef.value ?? 0, mult), usesSlot: true });
         break;
       }
       default:
-        throw new Error(`미구현 접미 effect: ${ef.type}`);
+        throw new Error(`미구현 리뷰 effect: ${ef.type}`);
     }
+
+    if (st.result) return;
+    // 동반 효과 (판정 배율 미적용 — 드로우 장수·회복량은 절대 피해 수치가 아님)
+    if (ef.draw) this.draw(ef.draw); // Z03·A01
+    if (ef.heal) p.will = Math.min(p.maxWill, p.will + ef.heal); // G03
     void judgement;
+  }
+
+  /**
+   * 지연 적용 공용 경로 (X01·O02·L01·W02 — GDD §3.2). 경직 내성이면 면역.
+   * 준비(charge) 중 지연 적중 시 cancel_on 검사 — 선재 버그 수정: enemies-v1.0의 표기는
+   * 'delay_enemy_action'인데 구현이 구 표기 '지연'만 비교해 E02 내려찍기 캔슬이 불발했다. 양쪽 지원.
+   */
+  private applyDelayToEnemy(): void {
+    const e = this.state.enemy;
+    if (e.staggerImmunityTurns > 0) {
+      this.log('경직 내성 — 지연 무효');
+      return;
+    }
+    if (e.charging) {
+      const chargingAction = e.def.actions.find((a) => a.id === e.charging!.actionId);
+      if (chargingAction?.cancelOn.some((c) => c === 'delay_enemy_action' || c === '지연')) {
+        // E02 내려찍기: 준비 중 지연 적중 시 발동 캔슬 (행동 소멸, 패턴 진행)
+        e.charging = null;
+        this.advancePattern();
+        this.log('준비 행동 캔슬!');
+        return;
+      }
+      e.pendingDelay = true; // 준비만 1턴 늦춤
+      return;
+    }
+    e.pendingDelay = true;
   }
 
   private damageEnemyEquipment(eq: EnemyEquipmentState, dmg: number): void {
@@ -741,36 +774,29 @@ export class Battle {
 
     switch (ef.type) {
       case 'delay_enemy_action': {
-        // X01 지연 (GDD §3.2). 경직 내성이면 면역.
-        if (e.staggerImmunityTurns > 0) {
-          this.log('경직 내성 — 지연 무효');
-        } else if (e.charging) {
-          const chargingAction = e.def.actions.find((a) => a.id === e.charging!.actionId);
-          if (chargingAction?.cancelOn.includes('지연')) {
-            // E02 내려찍기: 준비 중 지연 적중 시 발동 캔슬 (행동 소멸, 패턴 진행)
-            e.charging = null;
-            this.advancePattern();
-            this.log('준비 행동 캔슬!');
-          } else {
-            e.pendingDelay = true; // 준비만 1턴 늦춤
-          }
-        } else {
-          e.pendingDelay = true;
-        }
+        // X01 지연 (GDD §3.2) — 리뷰 카드 지연(O02 등)과 공용 경로 (경직 내성 면역·cancel_on 캔슬)
+        this.applyDelayToEnemy();
+        break;
+      }
+      case 'damage': {
+        // X02 별점 테러 — 무판정: 판정 배율·부착 버프 가산 비대상 (진상 화법은 팩트 원칙 바깥 — worldview §1.1).
+        // 가정(v1 승계): 특수 카드는 "리뷰"가 아니므로 E04 은신 게이트("리뷰만 명중")의 비대상 — 은신 중에도 적용.
+        this.dealWillDamageToEnemy(ef.value ?? 0);
         break;
       }
       case 'equipment_damage': {
-        // X02: 전체 장비 −3
-        // 가정(GDD 침묵): 특수 카드는 "리뷰"가 아니므로(§3.2 플레이 항목이 "리뷰 제출 / 특수"를 구분,
-        // 무판정) E04 은신 게이트("리뷰만 명중")의 비대상 — 은신 중에도 적용된다.
+        // v2 실데이터 미사용 (v1 X02 전체 장비 −3 잔재 — 스키마 예비로 유지)
         const dmg = ef.value ?? 0;
         for (const eq of e.equipment.filter((q) => !q.destroyed)) this.damageEnemyEquipment(eq, dmg);
         break;
       }
       case 'create_card': {
-        // X03: 접미 풀에서 무작위 생성
-        const pool = this.cards.suffixIds;
-        for (let i = 0; i < (ef.value ?? 1) && p.hand.length < 8; i++) {
+        // X03: pool: any — 전체 카드 풀에서 무작위 생성 (현재 레이어 초과 카드 제외)
+        const pool = this.cards.allIds.filter((id) => {
+          const d = this.cards.byId.get(id);
+          return d !== undefined && d.layer <= this.layer;
+        });
+        for (let i = 0; i < (ef.value ?? 1) && p.hand.length < 8 && pool.length > 0; i++) {
           const id = pool[Math.floor(this.rng() * pool.length)]!;
           p.hand.push({ uid: this.uidSeq++, cardId: id });
         }
@@ -797,18 +823,18 @@ export class Battle {
         break;
       }
       case 'retreat': {
-        // X07: 일반 전투에서만
+        // X07: 전투 이탈 (보상 포기). v2 YAML엔 condition이 없어 전 전투 허용 — 있으면 v1 규칙 존중
         if (ef.condition === 'normal_battle_only' && e.def.tier !== 'normal') throw new Error('일반 전투에서만 이탈 가능');
         st.result = 'retreat';
         break;
       }
       case 'gauge': {
-        this.gaugeChange(ef.value ?? 0); // X08 별점 구걸 +2 (GDD §3.4)
+        this.gaugeChange(ef.value ?? 0); // X08 별점 구걸 +3 (v2)
         break;
       }
       case 'damage_per_penalty': {
-        // X09 (Layer 2): Σp(상한 cap) × per_point, 게이지는 inline gauge로
-        const sp = Math.min(this.sigmaP, ef.cap_points ?? 8);
+        // X09 (Layer 2): Σp(상한 cap_points, v2 기본 5) × per_point
+        const sp = Math.min(this.sigmaP, ef.cap_points ?? 5);
         if (sp > 0) this.dealWillDamageToEnemy(sp * (ef.per_point ?? 3));
         break;
       }
@@ -820,9 +846,9 @@ export class Battle {
     this.checkEnd();
   }
 
-  // ── 퇴고 (GDD §3.2 v1.1 — 손패 교착 안전장치) ──
+  // ── 퇴고 (GDD §3.2 v1.1 신설 → v2에서 태그 사냥 도구로 승격 — card-system-v2 §7) ──
 
-  /** 필력 1: 손패 1장을 버리고 1장 드로우. 턴 제한 없음(필력이 상한). 접두 없는 손패 고착(~2% 강제 패배) 해소 */
+  /** 필력 1: 손패 1장을 버리고 1장 드로우. 턴 제한 없음(필력이 상한). v2엔 교착이 없어 원하는 태그·원산지를 찾는 용도 */
   revise(uid: number): void {
     const st = this.state;
     if (st.result) throw new Error('전투 종료됨');
@@ -1107,7 +1133,13 @@ export class Battle {
         break;
       }
       case 'attack_up': {
-        e.buffs.push({ uid: this.uidSeq++, kind: 'attack_up', value: ef.value ?? 0, protectedBy: ef.attachment as string | undefined });
+        e.buffs.push({
+          uid: this.uidSeq++,
+          kind: 'attack_up',
+          value: ef.value ?? 0,
+          protectedBy: ef.attachment as string | undefined,
+          counterCard: ef.counter_card as string | undefined, // phase2 알바_리뷰 → B02c로만 제거
+        });
         break;
       }
       case 'damage_reduction': {

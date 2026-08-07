@@ -1,87 +1,128 @@
-// 플레이어 정책(AI) 3종 — GDD §3.4 시뮬 전제(표준/숙련/억지)의 "목표 판정 롤" 구현
+// 플레이어 정책(AI) 3종 — v2 (card-system-v2.md, ADR-011): 접두+접미 2단 선택 →
+// 단일 카드 선택 + 대상 지정.
 //
-// ⚠️ pFact/pFumble은 "목표 판정 롤"일 뿐이다: 원하는 판정의 접두가 손패에 없으면 일반(skilled는
-// 팩트 우선)으로 폴백하므로, 실측 판정 비율은 §3.4 전제(표준 50%/10%, 숙련 75%/5%, 억지
-// 30%/25%)에 크게 못 미친다. 실측(시작 덱, seed 42/각 500~1000판): standard 팩트 2.4~28.0%·
-// 헛소리 0.5~12.5%, skilled 팩트 12.2~37.9%, reckless 팩트 20~26%로 매치업 의존 변동이 크다.
-// 특히 시작 덱 접두 태그와 B01 약점 태그(응대/개연성)는 교집합이 없어 보스 시뮬은 --deck 주입
-// 없이는 §3.4 검증·R11 재시뮬 도구로 부적합하다. CLI가 "의도(attempted) vs 실현(achieved)"
-// 판정 비율을 병기하니 결과 해석 시 반드시 대조할 것.
+// 정책 의도(v1 승계):
+// - standard: 우위 판정 우선 (원산지 > 팩트 > 일반), 헛소리 회피 — 헛소리밖에 없으면 제출 대신
+//   퇴고(태그 사냥 — card-system-v2 §7)로 손패를 교체한다.
+// - skilled : standard + 대상 최적화(원산지 구성품·팩트 장비 선택), X06 리액션 타이밍, 초반 버프.
+// - reckless: 완전 무작위 제출(헛소리 포함 — §3.4 "억지 플레이" 상당), 크리 롤 0.7.
+//
+// ⚠️ v1의 pFact/pFumble "목표 판정 롤"(의도적 오류 주입)은 폐기 — v2는 손패 5장 전부가 태그
+// 선택지라 판정이 손패 가용성의 함수가 되고, 정책은 greedy 선택으로 그 상한을 실측한다.
+// telemetry.attempted는 정책이 제출 시점에 기대한 판정(엔진 실현과 일치해야 정상),
+// noWantedFallbacks는 우위 판정(원산지/팩트) 없이 제출한 횟수다.
 // 주의: 정책은 게이지 10 도달 즉시(critProb 롤 통과 시) 크리를 사용한다 — 타이밍 최적화 없음.
 
 import {
   Battle,
   DISPOSITION_SUIT,
+  JUDGE_MULT,
   type CardIndex,
   type Judgement,
-  type PrefixDef,
+  type ReviewCardDef,
   type Rng,
   type SpecialDef,
-  type SuffixDef,
 } from '../../core/src/index.ts';
 
 export type PolicyName = 'standard' | 'skilled' | 'reckless';
 
 interface PolicyParams {
-  pFact: number;
-  pFumble: number;
   critProb: number;
   smart: boolean; // 대상·순서 최적화 여부
-  random: boolean; // 완전 무작위 제출
+  random: boolean; // 완전 무작위 제출 (헛소리 회피 없음)
 }
 
 export const POLICIES: Record<PolicyName, PolicyParams> = {
-  standard: { pFact: 0.5, pFumble: 0.1, critProb: 1.0, smart: false, random: false },
-  skilled: { pFact: 0.75, pFumble: 0.05, critProb: 1.0, smart: true, random: false },
-  reckless: { pFact: 0.3, pFumble: 0.25, critProb: 0.7, smart: false, random: true },
+  standard: { critProb: 1.0, smart: false, random: false },
+  skilled: { critProb: 1.0, smart: true, random: false },
+  reckless: { critProb: 0.7, smart: false, random: true },
 };
 
-interface HandCard {
-  uid: number;
-  def: PrefixDef | SuffixDef | SpecialDef;
+const JUDGE_RANK: Record<Judgement, number> = { origin: 3, fact: 2, normal: 1, fumble: 0 };
+
+/** 의도(정책 기대 판정) vs 실현(엔진 판정) 대조용 계측 — CLI가 집계·출력 */
+export interface PolicyTelemetry {
+  attempted: { origin: number; fact: number; normal: number; fumble: number }; // 제출 시점 기대 판정 (random 정책은 미집계)
+  noWantedFallbacks: number; // 우위 판정(원산지/팩트) 없이 제출한 횟수
 }
 
-function handCards(battle: Battle, cards: CardIndex): HandCard[] {
-  return battle.state.player.hand.map((c) => ({ uid: c.uid, def: cards.byId.get(c.cardId)! }));
-}
-
-/** 대상 태그·무효 태그 계산 (엔진과 동일 규칙) */
-function targetTagsFor(
-  battle: Battle,
-  suffix: SuffixDef,
-  myEqIdx: number,
-  enemyEqIdx: number,
-): { tags: string[]; nulls: string[] } {
-  const st = battle.state;
-  if (suffix.target === 'my_equipment') {
-    const eq = st.player.equipment[myEqIdx] ?? st.player.equipment[0]!;
-    return { tags: eq.def.tags, nulls: eq.def.nullTags };
-  }
-  if (suffix.target === 'enemy_equipment') {
-    const eq = st.enemy.equipment[enemyEqIdx];
-    return { tags: eq && !eq.destroyed ? eq.tags : [], nulls: st.enemy.def.nullTags };
-  }
-  return { tags: st.enemy.def.weaknessTags, nulls: st.enemy.def.nullTags };
-}
-
-function judgeOf(prefix: PrefixDef, tags: string[], nulls: string[]): Judgement {
-  if (prefix.tags.some((t) => tags.includes(t))) return 'fact';
-  if (prefix.tags.some((t) => nulls.includes(t)) && prefix.modifier?.type !== 'no_fumble') return 'fumble';
-  return 'normal';
+export function newTelemetry(): PolicyTelemetry {
+  return { attempted: { origin: 0, fact: 0, normal: 0, fumble: 0 }, noWantedFallbacks: 0 };
 }
 
 function pick<T>(arr: T[], rng: Rng): T {
   return arr[Math.floor(rng() * arr.length)]!;
 }
 
-/** 의도(목표 롤) vs 실현(엔진 판정) 대조용 계측 — CLI가 집계·출력 */
-export interface PolicyTelemetry {
-  attempted: { fact: number; normal: number; fumble: number }; // 목표 롤 결과 (random 정책은 미집계)
-  noWantedFallbacks: number; // 목표 판정 접두가 손패에 없어 폴백한 횟수
+/** 제출 후보 1건 — 카드 + 대상 지정 + 기대 판정 (엔진 판정 규칙과 동일하게 산출) */
+interface PlayOption {
+  uid: number;
+  def: ReviewCardDef;
+  judgement: Judgement;
+  myEquipmentIndex?: number;
+  enemyEquipmentIndex?: number;
+  score: number; // 기대 피해 상당치 (동순위 정렬용)
 }
 
-export function newTelemetry(): PolicyTelemetry {
-  return { attempted: { fact: 0, normal: 0, fumble: 0 }, noWantedFallbacks: 0 };
+/** 엔진과 동일 규칙으로 카드의 최적 대상·판정을 평가한다. 제출 무의미(은신 빗나감·슬롯 만석·대상 없음)면 null */
+function evaluate(battle: Battle, uid: number, def: ReviewCardDef): PlayOption | null {
+  const st = battle.state;
+  const e = st.enemy;
+  const gate = e.def.stealthGate;
+
+  // E04 은신 게이트: 명중 불가 계열은 빗나감 — 제출하지 않는다
+  if (e.stealth && gate && (def.target === 'enemy' || def.target === 'enemy_equipment') && !gate.hittableSuits.includes(def.suit)) {
+    return null;
+  }
+
+  const judgeAgainst = (tags: string[], nulls: string[], isOrigin: boolean): Judgement => {
+    if (isOrigin) return 'origin';
+    if (nulls.includes(def.tag)) return 'fumble';
+    if (tags.includes(def.tag)) return 'fact';
+    return 'normal';
+  };
+
+  let judgement: Judgement;
+  let myEquipmentIndex: number | undefined;
+  let enemyEquipmentIndex: number | undefined;
+
+  if (def.target === 'my_equipment') {
+    // 판정 좋은 내 장비 우선. damage_buff는 부착 슬롯(2칸) 여유 필수 — 만석이면 제출 낭비
+    let best: { idx: number; j: Judgement } | null = null;
+    for (let i = 0; i < st.player.equipment.length; i++) {
+      const eq = st.player.equipment[i]!;
+      if (def.effect.type === 'damage_buff' && eq.attachments.filter((a) => a.usesSlot).length >= 2) continue;
+      const j = judgeAgainst(eq.def.tags, eq.def.nullTags, false);
+      if (!best || JUDGE_RANK[j] > JUDGE_RANK[best.j]) best = { idx: i, j };
+    }
+    if (!best) return null;
+    judgement = best.j;
+    myEquipmentIndex = best.idx;
+  } else if (def.target === 'enemy_equipment') {
+    // 원산지 일치 구성품 우선, 없으면 판정 최선 구성품
+    let best: { idx: number; j: Judgement } | null = null;
+    for (let i = 0; i < e.equipment.length; i++) {
+      const eq = e.equipment[i]!;
+      if (eq.destroyed) continue;
+      const isOrigin = def.origin?.equipment !== undefined && def.origin.equipment === eq.name;
+      const j = judgeAgainst(eq.tags, e.def.nullTags, isOrigin);
+      if (!best || JUDGE_RANK[j] > JUDGE_RANK[best.j]) best = { idx: i, j };
+    }
+    if (!best) return null; // 남은 구성품 없음
+    judgement = best.j;
+    enemyEquipmentIndex = best.idx;
+  } else {
+    const isOrigin = def.origin?.enemy !== undefined && def.origin.enemy === e.def.id;
+    judgement = judgeAgainst(e.def.weaknessTags, e.def.nullTags, isOrigin);
+  }
+
+  // 기대 피해 상당치: 의지 피해(value/damage 동반) 또는 구성품 피해 × 판정 배율 (+원산지 +1)
+  const ef = def.effect;
+  const base = ef.type === 'damage' || ef.type === 'equipment_damage' ? (ef.value ?? 0) : (ef.damage ?? 0);
+  const vanity = e.def.suitDamageMult?.[def.suit] ?? 1;
+  const score = Math.floor(base * JUDGE_MULT[judgement] * vanity) + (judgement === 'origin' ? 1 : 0);
+
+  return { uid, def, judgement, myEquipmentIndex, enemyEquipmentIndex, score };
 }
 
 /** 한 플레이어 턴을 정책대로 진행하고 endTurn까지 수행한다 */
@@ -108,14 +149,13 @@ export function playTurn(battle: Battle, cards: CardIndex, name: PolicyName, rng
       }
     }
 
-    const hand = handCards(battle, cards);
-    const prefixes = hand.filter((c): c is { uid: number; def: PrefixDef } => c.def.kind === 'prefix');
-    const suffixes = hand.filter((c): c is { uid: number; def: SuffixDef } => c.def.kind === 'suffix');
+    const hand = battle.state.player.hand.map((c) => ({ uid: c.uid, def: cards.byId.get(c.cardId)! }));
+    const reviews = hand.filter((c): c is { uid: number; def: ReviewCardDef } => c.def.kind === 'review');
     const specials = hand.filter((c): c is { uid: number; def: SpecialDef } => c.def.kind === 'special');
 
-    // X08 별점 구걸: 게이지 여유 있으면 사용 (전 정책 — 순수 이득)
+    // X08 별점 구걸(+3): 게이지 여유 있으면 사용 (전 정책 — 순수 이득)
     const x08 = specials.find((c) => c.def.id === 'X08');
-    if (x08 && p.energy >= x08.def.cost && p.gauge <= 8) {
+    if (x08 && p.energy >= x08.def.cost && p.gauge <= 7) {
       battle.playSpecial(x08.uid);
       continue;
     }
@@ -131,39 +171,42 @@ export function playTurn(battle: Battle, cards: CardIndex, name: PolicyName, rng
       }
     }
 
-    // 접두+접미 조합 선택
-    const minPrefixCost = prefixes.length ? Math.min(...prefixes.map((c) => c.def.cost)) : Infinity;
-    let affordable = suffixes.filter((s) => s.def.cost + minPrefixCost <= p.energy);
+    // 제출 후보: 필력 내 리뷰 카드 × 최적 대상
+    const options = reviews
+      .filter((c) => c.def.cost <= p.energy)
+      .map((c) => evaluate(battle, c.uid, c.def))
+      .filter((o): o is PlayOption => o !== null);
 
-    // E04 은신 중: 배송 접두가 없으면 적 대상 접미는 빗나감 — skilled는 버프 접미로 전환
-    const stealth = st.enemy.stealth;
-    const hasDeliveryPrefix = prefixes.some((c) => c.def.suit === '배송' && c.def.cost + (affordable[0]?.def.cost ?? 0) <= p.energy);
-    if (params.smart && stealth && !hasDeliveryPrefix) {
-      const buffs = affordable.filter((s) => s.def.target === 'my_equipment');
-      if (buffs.length) affordable = buffs;
-      else {
-        // 낭비 방지: 은신 턴은 패스
-        battle.endTurn();
-        return;
-      }
+    // reckless: 완전 무작위 제출 (헛소리 회피 없음. 대상은 evaluate가 고른 그대로)
+    if (params.random) {
+      if (options.length === 0) break;
+      const o = pick(options, rng);
+      battle.submitReview(o.uid, { myEquipmentIndex: o.myEquipmentIndex, enemyEquipmentIndex: o.enemyEquipmentIndex });
+      continue;
     }
 
-    if (affordable.length === 0) {
-      // X03: 접미가 없으면 무작위 접미 생성 시도
+    // standard/skilled: 헛소리 회피 — 헛소리가 아닌 후보만
+    let pool = options.filter((o) => o.judgement !== 'fumble');
+
+    // skilled: 초반(1~2턴) 버프 부착 우선 (v1 S13/S14 조기 부착 의도 승계)
+    if (params.smart && st.turn <= 2) {
+      const buffs = pool.filter((o) => o.def.effect.type === 'damage_buff');
+      if (buffs.length) pool = buffs;
+    }
+
+    if (pool.length === 0) {
+      // 은신 턴: 명중 계열이 없으면 낭비 방지 — 패스 (퇴고해도 이번 턴 명중 보장 없음)
+      if (st.enemy.stealth && st.enemy.def.stealthGate) break;
+      // X03: 낼 카드가 없으면 무작위 카드 생성 시도
       const x03 = specials.find((c) => c.def.id === 'X03');
-      if (x03 && p.energy >= x03.def.cost && p.hand.length < 8 && suffixes.length === 0) {
+      if (x03 && p.energy >= x03.def.cost && p.hand.length < 8 && options.length === 0) {
         battle.playSpecial(x03.uid);
         continue;
       }
-      // 퇴고 (GDD §3.2 v1.1): 조합 불가 시 필력 1로 손패 1장 교체 — 교착 해소.
-      // 버릴 카드: 접두가 없으면 접미를, 접미가 없으면 접두를, 둘 다 있는데 비용이 안 되면 최고 비용 접미를.
-      if (p.energy >= 1 && p.hand.length > 0 && battle.state.player.deck.length + battle.state.player.discard.length > 0) {
-        const target =
-          prefixes.length === 0
-            ? (suffixes[0] ?? hand[0])
-            : suffixes.length === 0
-              ? prefixes[0]
-              : [...suffixes].sort((a, b) => b.def.cost - a.def.cost)[0];
+      // 퇴고 (v2: 태그 사냥 — card-system-v2 §7): 헛소리/불용 카드를 버리고 교체
+      if (p.energy >= 1 && p.hand.length > 0 && p.deck.length + p.discard.length > 0) {
+        const fumbleOpt = options.find((o) => o.judgement === 'fumble');
+        const target = fumbleOpt ?? hand[0];
         if (target) {
           battle.revise(target.uid);
           continue;
@@ -172,61 +215,14 @@ export function playTurn(battle: Battle, cards: CardIndex, name: PolicyName, rng
       break;
     }
 
-    // 접미 선택
-    let suffix: { uid: number; def: SuffixDef };
-    if (params.random) {
-      suffix = pick(affordable, rng);
-    } else {
-      const damages = affordable
-        .filter((s) => s.def.effect.type === 'damage')
-        .sort((a, b) => (b.def.effect.value ?? 0) * (b.def.effect.hits ?? 1) - (a.def.effect.value ?? 0) * (a.def.effect.hits ?? 1));
-      const buffsEarly = params.smart && st.turn <= 2 ? affordable.filter((s) => ['S13', 'S14'].includes(s.def.id)) : [];
-      suffix = buffsEarly[0] ?? damages[0] ?? affordable[0]!;
+    // 우위 판정 > 기대 피해 > 저비용 순
+    pool.sort((a, b) => JUDGE_RANK[b.judgement] - JUDGE_RANK[a.judgement] || b.score - a.score || a.def.cost - b.def.cost);
+    const best = pool[0]!;
+    if (telemetry) {
+      telemetry.attempted[best.judgement]++;
+      if (JUDGE_RANK[best.judgement] < JUDGE_RANK.fact) telemetry.noWantedFallbacks++;
     }
-
-    // 대상 선택
-    let myEqIdx = 0;
-    let enemyEqIdx = st.enemy.equipment.findIndex((eq) => !eq.destroyed);
-    if (enemyEqIdx < 0) enemyEqIdx = 0;
-    if (suffix.def.target === 'my_equipment') {
-      if (params.smart) {
-        // 팩트 가능한 장비 우선 (부착 슬롯 여유 고려)
-        for (let i = 0; i < p.equipment.length; i++) {
-          const eq = p.equipment[i]!;
-          if (suffix.def.effect.uses_attach_slot && eq.attachments.filter((a) => a.usesSlot).length >= 2) continue;
-          if (prefixes.some((pf) => judgeOf(pf.def, eq.def.tags, eq.def.nullTags) === 'fact' && pf.def.cost + suffix.def.cost <= p.energy)) {
-            myEqIdx = i;
-            break;
-          }
-        }
-      } else {
-        myEqIdx = Math.floor(rng() * p.equipment.length);
-      }
-    }
-
-    // 접두 선택 — 목표 판정 롤 (의도적 오류 주입)
-    const { tags, nulls } = targetTagsFor(battle, suffix.def, myEqIdx, enemyEqIdx);
-    const candidates = prefixes.filter((c) => c.def.cost + suffix.def.cost <= p.energy);
-    if (candidates.length === 0) break;
-
-    let prefix: { uid: number; def: PrefixDef };
-    if (params.random) {
-      prefix = pick(candidates, rng);
-    } else {
-      const r = rng();
-      const want: Judgement = r < params.pFact ? 'fact' : r < params.pFact + params.pFumble ? 'fumble' : 'normal';
-      if (telemetry) telemetry.attempted[want]++;
-      const byJudge = (j: Judgement) => candidates.filter((c) => judgeOf(c.def, tags, nulls) === j);
-      const wanted = byJudge(want);
-      if (wanted.length) prefix = pick(wanted, rng);
-      else {
-        if (telemetry) telemetry.noWantedFallbacks++;
-        if (params.smart) prefix = byJudge('fact')[0] ?? byJudge('normal')[0] ?? candidates[0]!;
-        else prefix = byJudge('normal')[0] ?? candidates[0]!;
-      }
-    }
-
-    battle.submitReview(prefix.uid, suffix.uid, { myEquipmentIndex: myEqIdx, enemyEquipmentIndex: enemyEqIdx });
+    battle.submitReview(best.uid, { myEquipmentIndex: best.myEquipmentIndex, enemyEquipmentIndex: best.enemyEquipmentIndex });
   }
 
   if (!battle.state.result) battle.endTurn();
