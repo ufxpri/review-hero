@@ -3,7 +3,8 @@
 <link rel="stylesheet" href="shared.css">
 <style>
 /* ── 전투 화면 — ui/combat.template.html 의 끌어다 놓기 UX 를 실제 엔진(RHEngine.Battle)에 이식.
-     조작: 손패 카드를 대상(적 본체 / 적 구성품 / 내 장비 / 내 상태창) 위로 끌어다 놓는다.
+     조작: 손패 카드를 상품(판매자 / 그 판매자의 구성품 / 내가 산 상품) 위로 끌어다 놓는다.
+           만물마켓에선 무엇이든 상품이다 — 고블린도 상품이고 고블린이 든 칼도 별개 상품이다.
            끌 수 없는 환경·자동 검증을 위해 「카드 클릭 → 대상 클릭」 폴백도 함께 산다. ── */
 .wrap{width:1344px;margin:6px auto 0}
 .screen{width:1344px;height:768px;position:relative;overflow:hidden;
@@ -58,7 +59,7 @@
 .emods .m.bad{border-color:#7a3a2c;color:#e08b72}
 .emods .m.good{border-color:#3c6b49;color:#8fce9e}
 
-/* 적 본체 — 드롭 존 */
+/* 판매자 상품 — 드롭 존 */
 .enemybox{position:absolute;left:700px;top:170px;width:288px;height:290px;z-index:11;
           cursor:pointer;border-radius:12px}
 .ebody{width:100%;height:100%;display:grid;place-items:center;font-size:168px;line-height:1;
@@ -245,7 +246,10 @@
 /* 본문은 자르지 않는다 — 넘치면 fitTexts() 가 글자를 줄여 전부 보이게 한다 */
 .ctext{font-size:10.6px;line-height:1.45;color:#3a3229;flex:1;min-height:0;
        white-space:pre-line;overflow:hidden}
+/* 원산지 표기 — 이 리뷰가 어느 상품에서 태어났는가. 상성의 근거라 항상 보인다 */
 .corigin{font-size:9px;color:#8a6f3f;margin-top:3px;line-height:1.3}
+.corigin.hit{color:#7d5a08;font-weight:800}
+.corigin.none{color:#a2947a}
 .cui{font-size:9.5px;color:#5a4c34;border-top:1px dashed var(--parch-d);
      padding-top:3px;margin-top:3px;line-height:1.35}
 .cui .exp{color:#8a2f1c;font-weight:800}
@@ -526,7 +530,12 @@
   const ART = { E02: '../assets/enemy-orc.png' };
   const TIER = { normal: '일반 셀러', elite: '파워 셀러', boss: '본사 직영' };
   const ICO = { attack: '📦', gimmick: '📢', stealth: '🌫', buff: '🛠', steal: '🪙' };
-  const TGT_LABEL = { enemy: '상품 본체', enemy_equipment: '적 구성품', my_equipment: '내 장비' };
+  /** 대상 표기 — 만물마켓에선 **무엇이든 상품이다.** 판매자도, 그가 든 칼도, 내 장비도
+   *  각각 별개의 상품이고 각각 따로 리뷰가 달린다. 그래서 대상을 「본체 / 부속」으로
+   *  나누어 부르지 않고 저마다의 상품 이름으로 부른다 (worldview §1.1 · card-system-v2 §3). */
+  const tgtLabel = (t) => t === 'enemy' ? `「${enemyDef.name}」`
+    : t === 'enemy_equipment' ? `「${enemyDef.name}」의 구성품`
+    : '내가 산 상품 (내 장비)';
 
   // ── 전투 생성 (v2 API — packages/sim/src/policies.ts 사용법 준수) ──
   const cards = RHEngine.buildCardIndex(D.cards);
@@ -802,10 +811,18 @@
     miss: ['jb-miss', '빗나감'], void: ['jb-void', '대상 없음'], none: ['jb-none', '무판정'],
   };
   const STAMP_L = { origin: '원산지!', fact: '팩트!', normal: '일반', fumble: '헛소리…' };
+  // 말풍선 라벨엔 배율을 같이 박는다 — 「일반」이 상성 없음(×1.0)이라는 사실이 보여야 한다
   const V_LABEL = {
-    origin: '원산지!', fact: '팩트!', normal: '일반', fumble: '헛소리…',
-    miss: '빗나감', void: '대상 없음', none: '무판정',
+    origin: '원산지! ×1.5 +1', fact: '팩트! ×1.5', normal: '일반 ×1.0', fumble: '헛소리… ×0.5',
+    miss: '빗나감', void: '리뷰할 상품 없음', none: '무판정',
   };
+  const enemyName = (id) => (D.enemies.find((e) => e.id === id) || {}).name || id;
+  /** 이 카드가 태어난 상품 이름 (없으면 null — 전생 상품·해금 카드는 영구히 원산지 미발동) */
+  const bornOf = (d) => d.origin ? (d.origin.equipment || enemyName(d.origin.enemy)) : null;
+  /** 그 상품이 이번 전투에 실제로 있는가 = 원산지가 터질 수 있는가 */
+  const eqNamesHere = new Set(enemyDef.equipment.map((q) => q.name));
+  const originHere = (d) => !!d.origin
+    && (d.origin.enemy === enemyDef.id || (d.origin.equipment && eqNamesHere.has(d.origin.equipment)));
 
   // ── 판정 말풍선 — 그 대상 기준으로 계산해 존 위에 띄운다 ──
   function verdictNote(d, j, info) {
@@ -815,18 +832,16 @@
         ? '직접 써 본 사람의 증언 — 평가 불가 항목도 통한다'
         : '직접 산 사람의 증언 — 평가 불가 항목도 통한다';
     }
-    if (j === 'fact') {
-      return info.kind === 'enemy'
-        ? `[${d.tag}]가 이 상품의 약점이다`
-        : `[${d.tag}]는 이 대상의 실제 항목이다`;
-    }
-    if (j === 'fumble') return `이 대상엔 [${d.tag}] 항목이 없다 — 헛소리로 읽힌다`;
+    if (j === 'fact') return `[${d.tag}]가 이 상품의 실제 약점이다 — 겪지 않았어도 맞는 말이다`;
+    if (j === 'fumble') return `이 상품엔 [${d.tag}] 항목이 없다 — 헛소리로 읽힌다`;
     if (j === 'miss') return '판매자가 잠적했다 — [배송] 계열 리뷰만 도달한다';
-    if (j === 'void') return '남은 구성품이 없다 — 이 대상은 전량 품절이다';
+    if (j === 'void') return '이 판매자의 구성품은 전량 품절 — 리뷰할 상품이 없다';
     if (j === 'none') return '진상 화법 — 팩트 원칙 바깥의 언어라 배율을 받지 않는다';
-    return info.kind === 'my_equipment'
-      ? '찬양 리뷰 — 좋은 평가는 그 물건의 존재를 강화한다'
-      : '틀린 말은 아니다';
+    if (info.kind === 'my_equipment') return '찬양 리뷰 — 좋은 평가는 그 상품의 존재를 강화한다';
+    // 「일반」은 맞은 게 아니라 **상관없는 리뷰를 갖다 붙인 것**이다. 그 사실이 읽혀야 한다.
+    const born = bornOf(d);
+    return (born ? `「${born}」 후기다` : '전생에 쓴 후기다')
+      + ' — 이 상품과는 무관하다. 원산지도 약점도 아니라 배율이 없다.';
   }
 
   function showVerdict(d, zone) {
@@ -845,7 +860,7 @@
     } else if (!zoneAccepts(zone, d)) {
       kind = 'bad';
       label = '대상 아님';
-      note = `이 리뷰는 「${TGT_LABEL[d.target] || d.target}」에 쓰는 글이다. 여기엔 놓을 수 없다.`;
+      note = `이 리뷰는 ${tgtLabel(d.target)} 앞으로만 낼 수 있다. 다른 상품엔 놓이지 않는다.`;
     } else {
       const pv = judgePreview(d, info);
       kind = pv.j;
@@ -951,7 +966,7 @@
     for (const side of ['l', 'r']) {
       const el = side === 'l' ? $('#gearL') : $('#gearR');
       el.innerHTML = cols[side].length
-        ? '<div class="hd">🛠 구성품</div>' + cols[side].map(({ q, i }) => {
+        ? '<div class="hd">🛠 구성품 — 각각 별개 상품이다</div>' + cols[side].map(({ q, i }) => {
             const max = e.def.equipment[i].durability;
             return `<div class="slot drop ${q.destroyed ? 'dead' : ''}" data-eeq="${i}">
               <div class="nm">${esc(q.name)}</div>
@@ -967,7 +982,7 @@
   }
 
   function paintMyGear() {
-    $('#myGear').innerHTML = '<div class="hd">🎒 내 장비 — ★4~5 찬양을 여기에 붙인다</div>' +
+    $('#myGear').innerHTML = '<div class="hd">🎒 내가 산 상품 — ★4~5 찬양 = 버프</div>' +
       st.player.equipment.map((q, i) => `
         <div class="slot drop" data-meq="${i}">
           <div class="nm">${esc(q.def.name)}</div>
@@ -1032,11 +1047,12 @@
     }
     const d = heldDef();
     if (d) {
-      bar.innerHTML = `<span>✍ <b>${esc(d.name)}</b> — 강조된 <b>${esc(TGT_LABEL[d.target] || d.target)}</b> 위에 놓아라`
+      bar.innerHTML = `<span>✍ <b>${esc(d.name)}</b> — 강조된 <b>${esc(tgtLabel(d.target))}</b> 위에 놓아라`
         + ' (끌어다 놓기 또는 클릭)</span><span class="sp"></span><button data-act="unhold">선택 해제</button>';
       return;
     }
-    bar.innerHTML = '<span>🎯 카드를 <b>대상 위로 끌어다 놓으면</b> 제출 — 클릭 → 대상 클릭도 된다</span>'
+    bar.innerHTML = '<span>🎯 <b>여기선 전부 상품이다</b> — 판매자도, 그가 든 물건도, 내 장비도. '
+      + '리뷰를 그 상품 위로 끌어다 놓으면 제출 (클릭 → 상품 클릭도 된다)</span>'
       + '<span class="sp"></span><span><b class="bo">★원산지</b> <b class="bf">●팩트</b> <b class="bx">⚠헛소리</b></span>';
   }
 
@@ -1095,11 +1111,14 @@
       const pv = judgePreview(d);
       const b = JB[pv.j];
       const badge = b ? `<span class="jb ${b[0]}">${b[1]}</span>` : '';
-      const origin = d.origin
-        ? `<div class="corigin">원산지 · ${esc(d.origin.equipment
-            || (D.enemies.find((e) => e.id === d.origin.enemy) || {}).name || d.origin.enemy)}</div>`
-        : '';
+      // 이 리뷰가 태어난 상품 = 상성의 근거. 그 상품이 이번 전투에 있으면 금색으로 못박는다
       const special = d.kind === 'special';
+      const born = bornOf(d);
+      const origin = special
+        ? '<div class="corigin none">📍 원산지 없음 · 진상 화법은 판정을 받지 않는다</div>'
+        : born
+          ? `<div class="corigin${originHere(d) ? ' hit' : ''}">📍 원산지 · ${esc(born)}${originHere(d) ? ' — 여기 있다' : ''}</div>`
+          : '<div class="corigin none">📍 원산지 없음 · 전생에 쓴 리뷰</div>';
       const foot = special
         ? `<span class="tagc">진상 화법${d.oncePerCombat ? ' · 1회' : ''}</span>`
         : `<span class="tagc">#${esc(d.tag)}</span>`;
@@ -1318,7 +1337,7 @@
       setTimeout(() => zone.classList.remove('nope'), 340);
       toast(info && info.kind === 'trash'
         ? '퇴고에는 필력이 1 필요하다'
-        : `「${d.name}」은(는) ${TGT_LABEL[d.target] || d.target}에 쓰는 리뷰다`);
+        : `「${d.name}」은(는) ${tgtLabel(d.target)} 앞으로만 낼 수 있다`);
       return;
     }
     if (info.kind === 'trash') { doTrash(uid, zone); return; }
