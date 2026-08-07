@@ -1,30 +1,41 @@
-// 이세계 리뷰용사 — 플레이어블 프로토타입 (전투 1판, 커머스 패러디 UI)
+// 이세계 리뷰용사 — 플레이어블 프로토타입 v2 (카드 체계 v2 — ADR-011, card-system-v2 §8)
+// UI 흐름: 대상 우선 — 대상 탭(적 본체/구성품/내 장비) → 손패 전 카드에 판정 뱃지·예상 좋아요
+// (원산지 ★ / 팩트 ● / 헛소리 ⚠) → 카드 탭 = 제출. 카드 1장 = 완성 리뷰.
 // 엔진은 packages/core 그대로 사용. UI는 이 파일이 전부 (프레임워크 없음).
 import {
+  applyMult,
   Battle,
   buildCardIndex,
+  JUDGE_GAUGE,
+  JUDGE_MULT,
   mulberry32,
   type CardDef,
   type EnemyDef,
-  type PrefixDef,
+  type Judgement,
+  type ReviewCardDef,
   type SpecialDef,
-  type SuffixDef,
+  type TargetKind,
 } from '../../core/src/index.ts';
 import data from './data.json';
 
-const cards = buildCardIndex(data.cards as CardDef[]);
-const enemies = new Map<string, EnemyDef>((data.enemies as EnemyDef[]).map((e) => [e.id, e]));
-const display = data.display as Record<string, { text: string; flavor: string; footer: string }>;
+const cards = buildCardIndex(data.cards as unknown as CardDef[]);
+const enemies = new Map<string, EnemyDef>((data.enemies as unknown as EnemyDef[]).map((e) => [e.id, e]));
 const PLAYABLE = ['E01', 'E02', 'E03', 'E04', 'E05', 'B01'];
 const THUMB: Record<string, string> = { E01: '👺', E02: '🪓', E03: '🧝', E04: '🥷', E05: '💂', B01: '🕴️' };
 const SELLER: Record<string, string> = { normal: '일반 셀러', elite: '파워 셀러', boss: '본사 직영' };
+const TARGET_LABEL: Record<TargetKind, string> = { enemy: '적 본체', enemy_equipment: '구성품', my_equipment: '내 장비' };
+/** 판정 뱃지 (card-system-v2 §8: 원산지 ★ / 팩트 ● / 헛소리 ⚠) */
+const BADGE: Record<Judgement, string> = { origin: '★ 원산지', fact: '● 팩트', normal: '일반', fumble: '⚠ 헛소리' };
+
+/** 선택된 리뷰 대상 (대상 우선 — index는 구성품/내 장비에서만 의미) */
+interface TargetSel {
+  kind: TargetKind;
+  index: number;
+}
 
 let battle: Battle | null = null;
 let enemyId = '';
-let selPrefix: number | null = null;
-let selSuffix: number | null = null;
-let myEqIdx = 0;
-let enemyEqIdx = 0;
+let sel: TargetSel = { kind: 'enemy', index: 0 };
 let mode: 'play' | 'revise' | 'gift' = 'play';
 let giftSrcUid = 0;
 
@@ -39,9 +50,9 @@ function toast(msg: string): void {
   setTimeout(() => t!.classList.remove('show'), 1600);
 }
 
-function stars(ratio: number): string {
-  const n = Math.max(0, Math.min(5, Math.ceil(ratio * 5)));
-  return '★'.repeat(n) + '☆'.repeat(5 - n);
+function stars(n: number): string {
+  const k = Math.max(0, Math.min(5, n));
+  return '★'.repeat(k) + '☆'.repeat(5 - k);
 }
 
 function def(cardId: string): CardDef { return cards.byId.get(cardId)!; }
@@ -68,14 +79,14 @@ function renderShop(): void {
         <button class="btn-sub">담기</button>
       </div>`;
     }).join('')}
-    <div class="card-panel tiny">프로토타입 v1 — 전투 1판 (GDD v1.1 규칙, packages/core 엔진 그대로) · 새로고침하면 새 시드</div>`;
+    <div class="card-panel tiny">프로토타입 v2 — 대상 우선 단일 카드 플레이 (card-system-v2 §8, packages/core 엔진 그대로) · 새로고침하면 새 시드</div>`;
   app.querySelectorAll<HTMLElement>('[data-shop]').forEach((el) =>
     el.addEventListener('click', () => startBattle(el.dataset.shop!)));
 }
 
 function startBattle(id: string): void {
   enemyId = id;
-  const deck = [...(data.startingDeck as string[]), ...(id === 'B01' ? (data.bossExtra as string[]) : [])];
+  const deck = [...data.startingDeck, ...(id === 'B01' ? data.bossExtra : [])];
   battle = new Battle({
     cards,
     enemy: enemies.get(id)!,
@@ -83,26 +94,88 @@ function startBattle(id: string): void {
     rng: mulberry32((Math.random() * 0xffffffff) >>> 0),
     collectLog: true,
   });
-  selPrefix = selSuffix = null; myEqIdx = 0; enemyEqIdx = 0; mode = 'play';
+  sel = { kind: 'enemy', index: 0 };
+  mode = 'play';
   render();
 }
 
-// ── 전투 화면 ────────────────────────────────────────
+// ── 판정 미리보기 (엔진 submitReview의 판정·산식 재현 — battle.judge 공개 API 사용) ──
 
-function targetInfo(suffix: SuffixDef): { tags: string[]; nulls: string[]; label: string } {
-  const st = battle!.state;
-  if (suffix.target === 'my_equipment') {
-    const eq = st.player.equipment[myEqIdx] ?? st.player.equipment[0]!;
-    return { tags: eq.def.tags, nulls: eq.def.nullTags, label: `내 ${eq.def.name}` };
-  }
-  if (suffix.target === 'enemy_equipment') {
-    const alive = st.enemy.equipment.map((q, i) => ({ q, i })).filter(({ q }) => !q.destroyed);
-    const pick = alive.find(({ i }) => i === enemyEqIdx) ?? alive[0];
-    if (!pick) return { tags: [], nulls: st.enemy.def.nullTags, label: '(남은 구성품 없음)' };
-    return { tags: pick.q.tags, nulls: st.enemy.def.nullTags, label: pick.q.name };
-  }
-  return { tags: st.enemy.def.weaknessTags, nulls: st.enemy.def.nullTags, label: st.enemy.def.name };
+interface Preview {
+  compatible: boolean; // 카드의 target 종류가 선택 대상과 일치하는가
+  missed: boolean; // E04 은신 게이트 — 제출해도 빗나감 (필력·카드만 소모)
+  judgement: Judgement | null;
+  expect: string; // 예상 좋아요/효과 (엔진 좋아요 환산식 GDD §2 재현)
+  gauge: number; // 판정 게이지 증감 (헛소리 −2는 온보딩 무보정 기본값)
 }
+
+function preview(d: ReviewCardDef): Preview {
+  const st = battle!.state;
+  const e = st.enemy;
+  const p = st.player;
+  const none: Preview = { compatible: false, missed: false, judgement: null, expect: '', gauge: 0 };
+  if (d.target !== sel.kind) return none;
+
+  // E04 은신 게이트: 명중 불가 계열은 판정 없이 빗나감 (필력·카드 소모)
+  const gate = e.def.stealthGate;
+  if (e.stealth && gate && (d.target === 'enemy' || d.target === 'enemy_equipment') && !gate.hittableSuits.includes(d.suit)) {
+    return { compatible: true, missed: true, judgement: null, expect: '🌫 빗나감', gauge: 0 };
+  }
+
+  // 대상 태그·무효 태그·원산지 범위 (card-system-v2 §2 — 엔진 submitReview와 동일 분기)
+  let tags: string[];
+  let nulls: string[];
+  let isOrigin = false;
+  if (d.target === 'my_equipment') {
+    const eq = p.equipment[sel.index] ?? p.equipment[0]!;
+    tags = eq.def.tags;
+    nulls = eq.def.nullTags;
+  } else if (d.target === 'enemy_equipment') {
+    const eq = e.equipment[sel.index];
+    if (!eq || eq.destroyed) return none;
+    tags = eq.tags;
+    nulls = e.def.nullTags;
+    isOrigin = d.origin?.equipment !== undefined && d.origin.equipment === eq.name;
+  } else {
+    tags = e.def.weaknessTags;
+    nulls = e.def.nullTags;
+    isOrigin = d.origin?.enemy !== undefined && d.origin.enemy === e.def.id;
+  }
+  const j = battle!.judge(d, tags, nulls, isOrigin); // 원산지 최우선 · 원산지는 무효 태그 무시
+  return { compatible: true, missed: false, judgement: j, expect: expectText(d, j), gauge: j === 'fumble' ? -2 : JUDGE_GAUGE[j] };
+}
+
+/** 예상 좋아요 — 엔진 applyReviewEffect의 좋아요 환산식(GDD §2) 재현. 피해 없는 효과는 수치만 배율 반영 */
+function expectText(d: ReviewCardDef, j: Judgement): string {
+  const st = battle!.state;
+  const e = st.enemy;
+  const p = st.player;
+  const ef = d.effect;
+  const cw = e.def.castingWeakness;
+  const mult = JUDGE_MULT[j] * (cw && e.charging && d.tag === cw.tag ? cw.multiplier : 1); // 판정 × E03 영창 약점
+  const vanity = e.def.suitDamageMult?.[d.suit] ?? 1; // E05 — 의지 피해에만
+  const originAdd = j === 'origin' ? 1 : 0; // 원산지 고정 좋아요 +1 (내림 후 가산)
+  const attach = p.equipment.reduce(
+    (s, eq) => s + eq.attachments.filter((a) => a.kind === 'damage_buff').reduce((x, a) => x + a.value, 0),
+    0,
+  );
+  const willBase = ef.type === 'damage' ? ef.value ?? 0 : ef.damage; // 의지 피해(주효과 또는 동반)
+  if (willBase !== undefined) return `👍 ${applyMult(willBase + attach, mult * vanity) + originAdd + p.storedDamageBonus}`;
+  if (ef.type === 'equipment_damage') return `👍 ${applyMult(ef.value ?? 0, mult) + originAdd} 내구도`;
+  if (ef.type === 'equipment_dot') {
+    const dur = typeof ef.duration === 'number' ? ef.duration : 2;
+    return `도트 👍 ${applyMult(ef.value ?? 0, mult)}×${dur}턴`;
+  }
+  if (ef.type === 'damage_buff') {
+    const eq = p.equipment[sel.index] ?? p.equipment[0]!;
+    if (eq.attachments.filter((a) => a.usesSlot).length >= 2) return '⚠ 부착 슬롯 만석';
+    return `버프 👍 +${applyMult(ef.value ?? 0, mult)}`;
+  }
+  if (ef.type === 'attack_down') return `적 공격 −${applyMult(ef.value ?? 0, mult)}`;
+  return '';
+}
+
+// ── 전투 화면 ────────────────────────────────────────
 
 function intentText(): string {
   const e = battle!.state.enemy;
@@ -111,7 +184,49 @@ function intentText(): string {
   const dmg = a.effects.find((f) => f.op === 'damage')?.value;
   const chg = e.charging ? ` <b>(준비 중 — ${e.charging.remaining}턴 후 발동)</b>` : a.chargeTurns > 0 ? ' (준비형)' : '';
   const icon = a.aType === 'attack' ? '📦' : a.aType === 'gimmick' ? '📢' : a.aType === 'stealth' ? '🌫' : '🛠';
-  return `${icon} 발송 예정: <b>${esc(a.name)}</b>${dmg !== undefined ? ` · 피해 ${dmg}` : ''}${chg}`;
+  return `${icon} 발송 예정: <b>${esc(a.name)}</b>${dmg !== undefined ? ` · 좋아요 ${dmg}` : ''}${chg}`;
+}
+
+function targetLabel(): string {
+  const st = battle!.state;
+  if (sel.kind === 'enemy') return `${st.enemy.def.name} (적 본체)`;
+  if (sel.kind === 'enemy_equipment') return `구성품 · ${st.enemy.equipment[sel.index]?.name ?? '?'}`;
+  return `내 장비 · ${st.player.equipment[sel.index]?.def.name ?? '?'}`;
+}
+
+function cardHtml(uid: number, d: CardDef): string {
+  const p = battle!.state.player;
+  const poor = d.cost > p.energy ? ' nope' : '';
+  if (d.kind === 'special') {
+    const s = d as SpecialDef;
+    return `<div class="pcard special" data-card="${uid}">
+      <span class="cost${poor}">✍${s.cost}</span>
+      <span class="badge troll">진상 · 무판정</span>
+      <b>${esc(s.name)}</b>
+      ${s.text ? `<div class="body">${esc(s.text)}</div>` : ''}
+      ${s.ui ? `<div class="uiline">${esc(s.ui)}</div>` : ''}
+    </div>`;
+  }
+  const r = d as ReviewCardDef;
+  const pv = preview(r);
+  const jc = pv.missed ? 'missed' : pv.judgement ?? '';
+  const badge = !pv.compatible
+    ? `<span class="badge off">대상: ${TARGET_LABEL[r.target]}</span>`
+    : pv.missed
+      ? '<span class="badge missed">🌫 빗나감</span>'
+      : `<span class="badge ${pv.judgement}">${BADGE[pv.judgement!]}</span>`;
+  const expect = pv.compatible && !pv.missed
+    ? `<div class="expect">${esc(pv.expect)}${pv.gauge ? ` · 게이지 ${pv.gauge > 0 ? '+' : ''}${pv.gauge}` : ''}</div>`
+    : pv.missed ? '<div class="expect">필력·카드만 소모됩니다</div>' : '';
+  return `<div class="pcard ${jc} ${pv.compatible ? '' : 'off'}" data-card="${uid}" data-ct="${r.target}">
+    <span class="cost${poor}">✍${r.cost}</span>
+    ${badge}
+    <b>${esc(r.name)}</b>
+    <div class="starline"><span class="stars">${stars(r.stars)}</span> <span class="tag">#${esc(r.tag)}</span></div>
+    ${r.text ? `<div class="body">${esc(r.text)}</div>` : ''}
+    ${r.ui ? `<div class="uiline">${esc(r.ui)}</div>` : ''}
+    ${expect}
+  </div>`;
 }
 
 function render(): void {
@@ -119,18 +234,6 @@ function render(): void {
   const st = battle.state;
   const p = st.player;
   const e = st.enemy;
-  const prefixSel = selPrefix !== null ? p.hand.find((c) => c.uid === selPrefix) : null;
-  const suffixSel = selSuffix !== null ? p.hand.find((c) => c.uid === selSuffix) : null;
-  const pd = prefixSel ? (def(prefixSel.cardId) as PrefixDef) : null;
-  const sd = suffixSel ? (def(suffixSel.cardId) as SuffixDef) : null;
-  const cost = (pd?.cost ?? 0) + (sd?.cost ?? 0);
-  let judgeHtml = '';
-  if (pd && sd) {
-    const t = targetInfo(sd);
-    const j = battle.judge(pd, t.tags, t.nulls);
-    const label = j === 'fact' ? '팩트! ×1.5' : j === 'fumble' ? '헛소리… ×0.5' : '일반 ×1.0';
-    judgeHtml = `<span class="judge ${j}">${label}</span> · 대상: ${esc(t.label)} · 필력 ${cost}`;
-  }
 
   app.innerHTML = `
     <div class="topbar"><span class="logo">만물마켓</span>
@@ -138,20 +241,21 @@ function render(): void {
       <span class="stat">🧠 <b>${p.will}</b>/${p.maxWill} · ✍ <b>${p.energy}</b> · 🪙 ${p.gold}</span></div>
 
     <div class="card-panel">
-      <div style="display:flex;gap:14px;align-items:flex-start">
+      <div class="tgt ${sel.kind === 'enemy' ? 'sel' : ''}" data-tgt="enemy" style="display:flex;gap:14px;align-items:flex-start">
         <div style="font-size:56px">${THUMB[enemyId] ?? '📦'}</div>
         <div style="flex:1">
           <b style="font-size:16px">${esc(e.def.name)}</b> <span class="tiny">${SELLER[e.def.tier]} · 턴 ${st.turn}</span>
-          <div><span class="stars">${stars(e.will / e.maxWill)}</span> <span class="tiny">존재 등급 (의지 ${e.will}/${e.maxWill})</span></div>
+          <div><span class="stars">${stars(Math.ceil((e.will / e.maxWill) * 5))}</span> <span class="tiny">존재 등급 (의지 ${e.will}/${e.maxWill})</span></div>
           <div class="bar hp" style="margin-top:4px"><i style="width:${(e.will / e.maxWill) * 100}%"></i></div>
-          <div style="margin-top:6px">${e.def.nullTags.map((t) => `<span class="chip null">평가 불가: ${t}</span>`).join('') || '<span class="tiny">평가 불가 항목 없음</span>'}</div>
+          <div style="margin-top:6px">${e.def.weaknessTags.map((t) => `<span class="chip">약점 #${t}</span>`).join('')}${e.def.nullTags.map((t) => `<span class="chip null">평가 불가: ${t}</span>`).join('') || ''}</div>
+          <div class="tiny">탭하여 적 본체를 리뷰 대상으로</div>
         </div>
       </div>
       <div class="intent">${e.stealth ? '🌫 <b>판매자가 잠적했습니다</b> — 배송/CS 문의(리뷰)만 도달합니다<br>' : ''}${intentText()}</div>
-      ${e.buffs.length ? `<div class="review-item">📈 판매자 버프: ${e.buffs.map((b) => `공격 +${b.value}${b.protectedBy ? ' (알바 리뷰 — P11로만 저격)' : ''}`).join(', ')}</div>` : ''}
-      ${e.debuffs.map((d) => `<div class="review-item">${d.suspended ? '💬' : '😡'} 내 악평: ${d.kind === 'attack_halve' ? '공격력 −50%' : `공격력 −${d.value}`} <span class="tiny">[${d.suit}]</span>${d.suspended ? ' — <b>사장님 답글로 정지됨</b> (같은 계열 팩트로 재반박 가능)' : ''}</div>`).join('')}
-      <div class="tiny" style="margin-top:8px">구성품 (탭하여 장비 리뷰 대상 지정):</div>
-      ${e.equipment.map((q, i) => `<div class="equip ${q.destroyed ? 'dead' : ''} ${i === enemyEqIdx && !q.destroyed ? 'sel' : ''}" data-eeq="${i}">
+      ${e.buffs.length ? `<div class="review-item">📈 판매자 버프: ${e.buffs.map((b) => `공격 +${b.value}${b.protectedBy ? ` (알바 리뷰 — ${b.counterCard ?? '?'}로만 저격)` : ''}`).join(', ')}</div>` : ''}
+      ${e.debuffs.map((d) => `<div class="review-item">${d.suspended ? '💬' : '😡'} 내 악평: ${d.kind === 'attack_halve' ? '공격력 −50%' : `공격력 −${d.value}`} <span class="tiny">[${d.suit}]</span>${d.suspended ? ' — <b>사장님 답글로 정지됨</b> (같은 계열 팩트/원산지로 재반박 가능)' : ''}</div>`).join('')}
+      <div class="tiny" style="margin-top:8px">구성품 (탭하여 리뷰 대상 지정):</div>
+      ${e.equipment.map((q, i) => `<div class="equip tgt ${q.destroyed ? 'dead' : ''} ${sel.kind === 'enemy_equipment' && sel.index === i && !q.destroyed ? 'sel' : ''}" ${q.destroyed ? '' : `data-tgt="eeq:${i}"`}>
         <b>${esc(q.name)}</b> ${q.destroyed ? '<span class="tiny" style="color:var(--bad)">품절(파괴)</span>' : `<span class="tiny">내구도 ${q.durability}</span>`}
         ${q.dot ? `<span class="tiny">· 도트 −${q.dot.value}(${q.dot.remaining}턴)</span>` : ''}
         ${q.disabledTurns > 0 ? '<span class="tiny">· 반품 접수중(비활성)</span>' : ''}
@@ -163,18 +267,18 @@ function render(): void {
       <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
         <div><b>내 리뷰어 계정</b> <span class="tiny">성향: ${p.disposition}</span>
           <div class="gauge" style="margin-top:4px">${Array.from({ length: 10 }, (_, i) => `<i class="${i < p.gauge ? 'on' : ''}">★</i>`).join('')}</div>
-          <div class="tiny">신뢰도 ${p.gauge}/10 ${p.reaction ? '· 🛡 피해보상 청구 대기중' : ''}${p.storedDamageBonus ? `· 💢 보상 예약 +${p.storedDamageBonus}` : ''}</div></div>
+          <div class="tiny">신뢰도 ${p.gauge}/10 ${p.reaction ? '· 🛡 피해보상 청구 대기중' : ''}${p.storedDamageBonus ? `· 💢 보상 예약 👍 +${p.storedDamageBonus}` : ''}</div></div>
         <div style="display:flex;gap:6px;flex-wrap:wrap">
           ${p.gauge >= 10 && !p.critUsedThisTurn ? `<button class="btn-crit" data-act="crit">🔥 베스트 리뷰 등극</button>` : ''}
           <button class="btn-sub" data-act="revise" ${p.energy < 1 ? 'disabled' : ''}>퇴고 ✍1</button>
           <button class="btn-sub" data-act="end">영업 마감 (턴 종료)</button>
         </div>
       </div>
-      <div class="tiny" style="margin-top:8px">내 장비 (버프 리뷰 대상 지정):</div>
-      ${p.equipment.map((q, i) => `<div class="equip ${i === myEqIdx ? 'sel' : ''}" data-meq="${i}">
+      <div class="tiny" style="margin-top:8px">내 장비 (탭하여 찬양 리뷰 대상 지정):</div>
+      ${p.equipment.map((q, i) => `<div class="equip tgt ${sel.kind === 'my_equipment' && sel.index === i ? 'sel' : ''}" data-tgt="meq:${i}">
         <b>${esc(q.def.name)}</b> ${q.def.tags.map((t) => `<span class="chip">#${t}</span>`).join('')}
         ${q.def.nullTags.map((t) => `<span class="chip null">불가:${t}</span>`).join('')}
-        ${q.attachments.length ? `<span class="tiny">· 부착: ${q.attachments.map((a) => `+${a.value}`).join(', ')}</span>` : ''}
+        ${q.attachments.length ? `<span class="tiny">· 부착: ${q.attachments.map((a) => `👍 +${a.value}`).join(', ')}</span>` : ''}
       </div>`).join('')}
     </div>
 
@@ -182,25 +286,12 @@ function render(): void {
       <div class="log">${st.log.slice(-30).reverse().map((l) => `<div>${esc(l)}</div>`).join('') || '<div>아직 댓글이 없습니다.</div>'}</div></div>
 
     <div class="hand"><div class="hand-inner">
-      ${mode !== 'play' ? `<div class="mode-note">${mode === 'revise' ? '퇴고: 버릴 카드를 선택하세요 (필력 1)' : '무료 나눔: 증정할 카드를 선택하세요'} <button class="btn-sub" data-act="cancelmode">취소</button></div>` : ''}
-      <div class="composer">
-        <div class="preview">${pd || sd
-          ? `<b>${pd ? esc(pd.name) : '〔접두〕'}</b> + <b>${sd ? esc(sd.name) : '〔접미〕'}</b> ${judgeHtml ? '→ ' + judgeHtml : ''}`
-          : '접두 카드와 접미 카드를 골라 리뷰를 완성하세요'}</div>
-        <button class="btn-main" data-act="submit" ${pd && sd && cost <= p.energy ? '' : 'disabled'}>리뷰 제출</button>
-      </div>
+      ${mode !== 'play' ? `<div class="mode-note">${mode === 'revise' ? '퇴고: 버릴 카드를 선택하세요 (필력 1)' : '무료 나눔: 증정할 카드를 선택하세요'} <button class="btn-sub" data-act="cancelmode">취소</button></div> ` : ''}
+      <div class="target-bar">🎯 대상: <b>${esc(targetLabel())}</b> <span class="tiny">— 카드를 탭하면 바로 제출 · 뱃지: ★원산지 ●팩트 ⚠헛소리</span></div>
       <div class="cards-row">
-        ${p.hand.map((c) => {
-          const d = def(c.cardId);
-          const dis = display[c.cardId] ?? { text: '', flavor: '', footer: '' };
-          const sel = c.uid === selPrefix || c.uid === selSuffix ? 'sel' : '';
-          if (d.kind === 'prefix') return `<div class="pcard prefix ${sel}" data-card="${c.uid}"><span class="cost">✍${d.cost}</span><b>${esc(d.name)}</b><div class="tiny">${(d as PrefixDef).tags.map((t) => `#${t}`).join(' ')}</div>${dis.text ? `<div class="foot">${esc(dis.text)}</div>` : ''}</div>`;
-          if (d.kind === 'suffix') return `<div class="pcard ${sel}" data-card="${c.uid}"><span class="cost">✍${d.cost}</span><b>${esc(d.name)}</b><div class="foot">${esc(dis.text || '')}</div></div>`;
-          const s = d as SpecialDef;
-          return `<div class="pcard special ${sel}" data-card="${c.uid}"><span class="cost">✍${s.cost}</span><b>${esc(s.name)}</b><div class="foot">${esc(dis.text || dis.flavor || '')}</div><div class="tiny">진상 · 무판정 ${s.oncePerCombat ? '· 전투당 1회' : ''}</div></div>`;
-        }).join('')}
+        ${p.hand.map((c) => cardHtml(c.uid, def(c.cardId))).join('')}
       </div>
-      <div class="tiny">덱 ${p.deck.length} · 묘지 ${p.discard.length} · 손패 ${p.hand.length}/8 — 접두는 파란 테두리, 진상 카드는 단독 사용(더블탭)</div>
+      <div class="tiny">덱 ${p.deck.length} · 묘지 ${p.discard.length} · 손패 ${p.hand.length}/8 — 흐린 카드는 다른 대상용, 진상 카드는 대상 무관 즉시 사용</div>
     </div></div>
     ${st.result ? overlayHtml(st.result) : ''}`;
 
@@ -234,39 +325,50 @@ function onCardClick(uid: number): void {
   const d = def(card.cardId);
   if (mode === 'revise') { mode = 'play'; tryRun(() => battle!.revise(uid)); return; }
   if (mode === 'gift') { mode = 'play'; tryRun(() => battle!.playSpecial(giftSrcUid, { giftUid: uid })); return; }
-  if (d.kind === 'prefix') { selPrefix = selPrefix === uid ? null : uid; render(); return; }
-  if (d.kind === 'suffix') { selSuffix = selSuffix === uid ? null : uid; render(); return; }
-  // 특수 카드: 한 번 탭 = 선택(정보), 선택 상태에서 다시 탭 = 사용
-  if (selSuffix === uid) {
-    const s = d as SpecialDef;
-    if (s.effect.type === 'gift_card') { mode = 'gift'; giftSrcUid = uid; selSuffix = null; render(); return; }
-    selSuffix = null;
+  if (d.kind === 'special') {
+    // 진상 화법: 무판정·대상 무관 즉시 사용 (X04 증정만 카드 지정 모드 경유)
+    if (d.effect.type === 'gift_card') {
+      if (p.energy < d.cost) { toast('필력 부족'); return; }
+      mode = 'gift'; giftSrcUid = uid; render(); return;
+    }
     tryRun(() => battle!.playSpecial(uid));
     return;
   }
-  selSuffix = uid; selPrefix = null; render();
+  // 리뷰 카드: 대상 우선 — 선택된 대상 종류와 일치해야 제출
+  if (d.target !== sel.kind) { toast(`이 카드의 대상은 「${TARGET_LABEL[d.target]}」 — 대상을 먼저 탭하세요`); return; }
+  if (p.energy < d.cost) { toast('필력 부족'); return; }
+  const opts = sel.kind === 'my_equipment' ? { myEquipmentIndex: sel.index }
+    : sel.kind === 'enemy_equipment' ? { enemyEquipmentIndex: sel.index } : {};
+  tryRun(() => battle!.submitReview(uid, opts));
 }
 
 function tryRun(fn: () => void): void {
-  try { fn(); selPrefix = selSuffix = null; } catch (err) { toast((err as Error).message); }
+  try { fn(); } catch (err) { toast((err as Error).message); }
+  // 선택한 구성품이 파괴되면 대상을 적 본체로 되돌린다
+  if (battle && sel.kind === 'enemy_equipment' && (battle.state.enemy.equipment[sel.index]?.destroyed ?? true)) {
+    sel = { kind: 'enemy', index: 0 };
+  }
   render();
 }
 
 function bindEvents(): void {
   app.querySelectorAll<HTMLElement>('[data-card]').forEach((el) =>
     el.addEventListener('click', () => onCardClick(Number(el.dataset.card))));
-  app.querySelectorAll<HTMLElement>('[data-eeq]').forEach((el) =>
-    el.addEventListener('click', () => { enemyEqIdx = Number(el.dataset.eeq); render(); }));
-  app.querySelectorAll<HTMLElement>('[data-meq]').forEach((el) =>
-    el.addEventListener('click', () => { myEqIdx = Number(el.dataset.meq); render(); }));
-  app.querySelectorAll<HTMLElement>('[data-act]').forEach((el) =>
+  app.querySelectorAll<HTMLElement>('[data-tgt]').forEach((el) =>
     el.addEventListener('click', () => {
+      const t = el.dataset.tgt!;
+      if (t === 'enemy') sel = { kind: 'enemy', index: 0 };
+      else {
+        const [k, i] = t.split(':');
+        sel = { kind: k === 'eeq' ? 'enemy_equipment' : 'my_equipment', index: Number(i) };
+      }
+      render();
+    }));
+  app.querySelectorAll<HTMLElement>('[data-act]').forEach((el) =>
+    el.addEventListener('click', (ev) => {
+      ev.stopPropagation(); // 대상 영역 안의 버튼이 대상 선택을 함께 트리거하지 않게
       const act = el.dataset.act!;
-      if (act === 'submit' && selPrefix !== null && selSuffix !== null) {
-        const suffix = def(battle!.state.player.hand.find((c) => c.uid === selSuffix)!.cardId) as SuffixDef;
-        void suffix;
-        tryRun(() => battle!.submitReview(selPrefix!, selSuffix!, { myEquipmentIndex: myEqIdx, enemyEquipmentIndex: enemyEqIdx }));
-      } else if (act === 'crit') tryRun(() => { battle!.useCritical(); });
+      if (act === 'crit') tryRun(() => { battle!.useCritical(); });
       else if (act === 'end') tryRun(() => battle!.endTurn());
       else if (act === 'revise') { mode = 'revise'; render(); }
       else if (act === 'cancelmode') { mode = 'play'; render(); }
