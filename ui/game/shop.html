@@ -46,6 +46,10 @@ h1{text-align:center;font-size:21px;color:var(--gold);letter-spacing:-.5px;margi
        display:flex;flex-direction:column;gap:3px;font-family:inherit}
 .ditem:hover{border-color:var(--edge-hi)}
 .ditem.sel{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold)}
+.ditem.lock{opacity:.45;cursor:default;filter:grayscale(.5)}
+.ditem.lock:hover{border-color:var(--edge)}
+.lifechip{font-size:9px;font-weight:600;border:1px solid var(--edge-hi);border-radius:3px;
+          padding:1px 5px;color:var(--dim);margin-left:4px;vertical-align:1px}
 .ditem .dn{font-weight:700;font-size:12.5px}
 .ditem .dk{font-size:10.5px;color:var(--dim)}
 .mbtns{display:flex;gap:10px;justify-content:flex-end}
@@ -101,10 +105,11 @@ document.body.insertAdjacentHTML('afterbegin', RH.ui.topbar('map'));
 const $ = (s) => document.querySelector(s);
 const esc = RH.ui.esc;
 const cardById = (id) => RH_DATA.cards.find((c) => c.id === id);
-const KIND_L = { prefix: '접두', suffix: '접미', special: '특수' };
+const KIND_L = { review: '리뷰', special: '진상 화법' };
+const IRRE = new Set(RH_DATA.irremovable || []);   // 생계형 리뷰 — 덱에서 제거 불가 (시작 덱 12장)
 // GDD §2 규칙 7 — UI에서 피해는 예외 없이 「좋아요」. 공유 data.js 표기를 표시 시점에 변환한다.
 const likeify = (s) => String(s || '')
-  .replace(/의지 데미지/g, '좋아요').replace(/데미지/g, '좋아요')
+  .replace(/의지 데미지/g, '좋아요').replace(/의지 피해/g, '좋아요').replace(/데미지/g, '좋아요')
   .replace(/피해량/g, '좋아요 수').replace(/피해/g, '좋아요');
 
 // ── 런 확보. 없으면 미리보기 폴백 (CONTRACT §확인 절차) ──
@@ -118,7 +123,7 @@ $('#chipFloor').textContent = `1막 ${run.floor}층`;
 
 // ── nodeCtx — 재입장 시 진열이 리롤되거나 재고가 부활하지 않게 런에 저장 ──
 function genStock() {
-  const normals = RH_DATA.cards.filter((c) => c.kind !== 'special');
+  const normals = RH_DATA.cards.filter((c) => c.kind === 'review');
   const specials = RH_DATA.cards.filter((c) => c.kind === 'special');
   const pick = (arr, not) => {
     let c; do { c = arr[Math.floor(Math.random() * arr.length)]; } while (not.includes(c.id));
@@ -148,15 +153,16 @@ function persist() {
 
 // ── 렌더 ─────────────────────────────────────────────
 function cardHTML(id) {
-  const c = cardById(id) || { name: id, kind: 'special', cost: '?' };
-  const d = (RH_DATA.display || {})[id] || {};
-  const body = likeify(d.text) || (d.flavor ? `“${d.flavor}”` : '') || '…내용은 써 봐야 안다.';
+  const c = cardById(id) || { name: id, kind: 'special', cost: '?', text: '', ui: '' };
+  const meta = [KIND_L[c.kind] || c.kind];
+  if (c.stars) meta.push('★'.repeat(c.stars));
+  if (c.tag) meta.push('#' + c.tag);
   return `<div class="mini parch">
-    <div class="mhead"><span>${KIND_L[c.kind] || c.kind}${c.suit ? ' · ' + esc(c.suit) : ''}</span>
+    <div class="mhead"><span>${esc(meta.join(' · '))}</span>
       <span class="mcost">✍${c.cost}</span></div>
     <div class="mname">${esc(c.name)}</div>
-    <div class="mtext">${esc(body)}</div>
-    ${d.footer ? `<div class="mfoot">${esc(d.footer)}</div>` : ''}
+    <div class="mtext" style="white-space:pre-line">${esc(c.text || '…내용은 써 봐야 안다.')}</div>
+    ${c.ui ? `<div class="mfoot">${esc(likeify(c.ui))}</div>` : ''}
   </div>`;
 }
 
@@ -233,16 +239,17 @@ function openShred() {
   $('#btnShredOk').disabled = true;
   $('#dgrid').innerHTML = run.deck.map((id, i) => {
     const c = cardById(id) || { name: id, kind: 'special', cost: '?' };
-    return `<button class="ditem" data-i="${i}">
-      <span class="dn">${esc(c.name)}</span>
-      <span class="dk">${KIND_L[c.kind] || c.kind}${c.suit ? ' · ' + esc(c.suit) : ''} · ✍${c.cost}</span>
+    const lock = IRRE.has(id); // 생계형 리뷰(시작 덱)는 파쇄 불가 — 전생의 기록은 갈리지 않는다
+    return `<button class="ditem${lock ? ' lock' : ''}" data-i="${i}" ${lock ? 'disabled' : ''}>
+      <span class="dn">${esc(c.name)}${lock ? ' <span class="lifechip">생계형 리뷰</span>' : ''}</span>
+      <span class="dk">${KIND_L[c.kind] || c.kind}${c.suit ? ' · ' + esc(c.suit) : ''} · ✍${c.cost}${lock ? ' · 제거 불가' : ''}</span>
     </button>`;
   }).join('');
   $('#overlay').classList.add('open');
 }
 $('#dgrid').addEventListener('click', (e) => {
   const b = e.target.closest('.ditem');
-  if (!b) return;
+  if (!b || b.disabled) return;
   document.querySelectorAll('.ditem').forEach((x) => x.classList.remove('sel'));
   b.classList.add('sel');
   shredIdx = +b.dataset.i;
@@ -251,6 +258,7 @@ $('#dgrid').addEventListener('click', (e) => {
 $('#btnShredCancel').addEventListener('click', () => $('#overlay').classList.remove('open'));
 $('#btnShredOk').addEventListener('click', () => {
   if (shredIdx === null || run.gold < 20) return;
+  if (IRRE.has(run.deck[shredIdx])) return;   // 생계형 리뷰 방어 — UI 비활성의 이중 안전장치
   const [removed] = run.deck.splice(shredIdx, 1);
   run.gold -= 20;
   ctx.shredUsed = true;

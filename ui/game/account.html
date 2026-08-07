@@ -37,6 +37,9 @@ td.no{color:#5e564a;font-variant-numeric:tabular-nums;width:34px}
 td .nm{font-weight:700}
 td .kind{font-size:11px;color:var(--dim)}
 .suit{font-size:11px;border-radius:3px;padding:2px 7px;background:#2f2a20;color:#e8d9ae}
+td.starcell{color:var(--gold);letter-spacing:1px;white-space:nowrap;font-size:12px}
+.tagchip{font-size:11px;border-radius:3px;padding:2px 7px;background:#26221a;color:#cbb98a;
+         border:1px solid var(--edge)}
 td.cost{text-align:right;font-weight:800;font-variant-numeric:tabular-nums;width:64px}
 
 /* 해금 트리 자리 — 잠금 */
@@ -73,7 +76,7 @@ td.cost{text-align:right;font-weight:800;font-variant-numeric:tabular-nums;width
   <section class="panel">
     <h2>시작 덱 — 12장</h2>
     <table>
-      <thead><tr><th>#</th><th>카드</th><th>계열</th><th>비용(필력)</th></tr></thead>
+      <thead><tr><th>#</th><th>카드</th><th>★</th><th>태그</th><th>계열</th><th>비용(필력)</th></tr></thead>
       <tbody id="deck"></tbody>
     </table>
   </section>
@@ -150,14 +153,16 @@ td.cost{text-align:right;font-weight:800;font-variant-numeric:tabular-nums;width
     `<div class="tile"><div class="k">${k}</div><div class="v">${v}<small>${u}</small></div></div>`).join('');
 
   // ── 시작 덱 12장 ────────────────────────────────────────
-  const KIND = { prefix: '접두 · 수식', suffix: '접미 · 서술', special: '특수' };
+  const KIND = { review: '리뷰', special: '진상 화법' };
   const byId = Object.fromEntries(RH_DATA.cards.map((c) => [c.id, c]));
   document.getElementById('deck').innerHTML = RH_DATA.startingDeck.map((id, i) => {
     const c = byId[id];
-    if (!c) return `<tr><td class="no">${i + 1}</td><td colspan="3">알 수 없는 카드 ${esc(id)}</td></tr>`;
+    if (!c) return `<tr><td class="no">${i + 1}</td><td colspan="5">알 수 없는 카드 ${esc(id)}</td></tr>`;
     return `<tr>
       <td class="no">${i + 1}</td>
       <td><span class="nm">${esc(c.name)}</span> <span class="kind">${KIND[c.kind] || c.kind}</span></td>
+      <td class="starcell">${'★'.repeat(c.stars || 0)}</td>
+      <td>${c.tag ? `<span class="tagchip">#${esc(c.tag)}</span>` : '<span class="tiny">—</span>'}</td>
       <td>${c.suit ? `<span class="suit">${esc(c.suit)}</span>` : '<span class="tiny">—</span>'}</td>
       <td class="cost">✍ ${c.cost}</td>
     </tr>`;

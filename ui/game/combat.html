@@ -2,7 +2,7 @@
 <title>이세계 리뷰용사 — 전투</title>
 <link rel="stylesheet" href="shared.css">
 <style>
-/* ── 전투 화면 — ui/combat.html 미술 승계, 구동은 RHEngine.Battle ── */
+/* ── 전투 화면 — ui/combat.html 미술 승계, 구동은 RHEngine.Battle (v2: 대상 우선 단일 리뷰) ── */
 .wrap{width:1344px;margin:8px auto 0}
 .screen{width:1344px;height:768px;position:relative;overflow:hidden;
         border:1px solid #2a241c;border-radius:6px;
@@ -45,14 +45,19 @@
 .nulls{display:flex;gap:5px;flex-wrap:wrap;justify-content:center}
 .null{font-size:11px;border:1px solid #7a3a2c;color:#e08b72;border-radius:3px;
       padding:2px 7px;background:rgba(122,58,44,.18)}
+.weak{font-size:11px;border:1px solid #3c6b49;color:#8fce9e;border-radius:3px;
+      padding:2px 7px;background:rgba(79,154,94,.14)}
 .emods{display:flex;gap:5px;flex-wrap:wrap;justify-content:center}
 .emods .m{font-size:10.5px;border:1px solid var(--edge);border-radius:3px;padding:2px 7px;
           background:rgba(0,0,0,.35);color:var(--ink)}
 .emods .m.bad{border-color:#7a3a2c;color:#e08b72}
 .emods .m.good{border-color:#3c6b49;color:#8fce9e}
 
-/* 몬스터 본체 */
-.enemybox{position:absolute;left:680px;top:196px;width:300px;height:296px;z-index:11;cursor:pointer}
+/* 몬스터 본체 — 탭 = 대상 지정 */
+.enemybox{position:absolute;left:680px;top:196px;width:300px;height:296px;z-index:11;
+          cursor:pointer;border-radius:12px}
+.enemybox.sel{outline:2px solid var(--gold);outline-offset:-2px;
+              box-shadow:inset 0 0 40px rgba(224,169,75,.12)}
 .ebody{width:100%;height:100%;display:grid;place-items:center;font-size:148px;line-height:1;
        filter:drop-shadow(0 18px 34px rgba(0,0,0,.85))}
 .ebody img{width:100%;height:100%;object-fit:contain;object-position:bottom center;
@@ -153,41 +158,48 @@
   50%{box-shadow:0 0 18px rgba(224,169,75,.75)}}
 .cbtn.warn{border-color:#a4553c;color:#f0b0a0}
 
-/* 리뷰 작성대(컴포저) — 접두+접미 미리보기 */
-.composer{position:absolute;left:50%;transform:translateX(-50%);bottom:216px;z-index:18;
-          width:690px;background:var(--slab);border:1px solid var(--edge);border-radius:7px;
-          padding:8px 10px;display:flex;align-items:center;gap:10px}
-.composer .prev{flex:1;font-size:12.5px;line-height:1.5;min-height:20px}
-.composer .prev b{color:#f2e6c8}
-.judge{font-weight:800;border-radius:3px;padding:1px 7px;font-size:11.5px}
-.judge.fact{background:rgba(79,154,94,.22);color:#8fce9e;border:1px solid #3c6b49}
-.judge.normal{background:rgba(154,143,125,.18);color:var(--dim);border:1px solid var(--edge)}
-.judge.fumble{background:rgba(194,69,46,.18);color:#e08b72;border:1px solid #7a3a2c}
-.judge.miss{background:rgba(0,0,0,.4);color:#9a8f7d;border:1px dashed var(--edge)}
-.submitbtn{flex:none;padding:10px 18px;font-size:13px;font-weight:800;cursor:pointer;
-           border-radius:6px;color:#ffe9bd;letter-spacing:.3px;
-           background:linear-gradient(#6b4f1e,#4a3612);border:1px solid var(--gold)}
-.submitbtn:hover{filter:brightness(1.18)}
-.submitbtn:disabled{opacity:.4;cursor:default;filter:none}
+/* 대상 바 — v2 대상 우선 흐름 (design/card-system-v2 §8) */
+.tgtbar{position:absolute;left:50%;transform:translateX(-50%);bottom:216px;z-index:18;
+        width:780px;background:var(--slab);border:1px solid var(--edge);border-radius:7px;
+        padding:7px 10px;display:flex;align-items:center;gap:8px;font-size:12px}
+.tgtbar .lab{color:var(--dim);font-size:11px;white-space:nowrap}
+.tbtn{padding:5px 10px;font-size:11.5px;font-weight:700;cursor:pointer;border-radius:5px;
+      color:var(--ink);background:linear-gradient(#3a2f1e,#2a2115);border:1px solid var(--edge);
+      white-space:nowrap;max-width:200px;overflow:hidden;text-overflow:ellipsis}
+.tbtn:hover{filter:brightness(1.18)}
+.tbtn.on{border-color:var(--gold);color:#ffe9bd;box-shadow:0 0 0 1px var(--gold)}
+.tbtn:disabled{opacity:.4;cursor:default;filter:none}
+.tgtbar .hint{margin-left:auto;font-size:10.5px;color:var(--dim);white-space:nowrap}
+.tgtbar .bo{color:var(--gold)} .tgtbar .bf{color:#8fce9e} .tgtbar .bx{color:#e08b72}
 
-/* 손패 — 양피지 카드 */
+/* 손패 — 양피지 카드 (카드 1장 = 완성 리뷰. 본문이 게임의 얼굴) */
 .cards{position:absolute;left:50%;bottom:8px;transform:translateX(-50%);
        display:flex;align-items:flex-end;z-index:16}
-.card{width:134px;height:186px;margin:0 -21px;background:var(--parch);color:var(--inkc);
+.card{width:150px;height:200px;margin:0 -20px;background:var(--parch);color:var(--inkc);
       border:1px solid var(--parch-d);border-radius:9px;padding:8px 9px;cursor:pointer;
       display:flex;flex-direction:column;transition:transform .13s,box-shadow .13s;
       box-shadow:0 8px 22px rgba(0,0,0,.6);position:relative;
       background-image:repeating-linear-gradient(92deg,rgba(120,100,60,.05) 0 2px,transparent 2px 5px)}
 .card:hover{transform:translateY(-30px) scale(1.06);z-index:5;
       box-shadow:0 18px 40px rgba(0,0,0,.8)}
-.card.sel{transform:translateY(-24px);z-index:4;outline:2px solid var(--gold);
-      box-shadow:0 14px 34px rgba(0,0,0,.8)}
-.card.prefix{border-top:4px solid #3d6b9e}
-.card.suffix{border-top:4px solid #8a744d}
+.card.fit{outline:2px solid rgba(224,169,75,.6)}
 .card.special{border-top:4px solid #a3301c}
-.chead{display:flex;align-items:center;gap:5px;font-size:9.5px;color:#7b6a4d}
-.cname{font-weight:800;font-size:12.5px;color:#1c1812;margin:3px 0 4px;line-height:1.25}
-.ctext{font-size:10px;line-height:1.42;color:#3a3229;flex:1;overflow:hidden}
+.chead{display:flex;align-items:center;gap:5px;font-size:9.5px;color:#7b6a4d;min-height:14px}
+.cstars{color:#9a6b12;font-size:10px;letter-spacing:1px}
+/* 뱃지는 왼쪽 — 손패가 오른쪽으로 겹쳐 쌓여 카드 오른편은 다음 카드에 가려진다 */
+.jb{font-weight:800;font-size:9px;border-radius:3px;padding:1px 5px;
+    border:1px solid;white-space:nowrap}
+.jb-origin{color:#9a6b12;border-color:#c9a227;background:rgba(224,169,75,.3)}
+.jb-fact{color:#2f6b3c;border-color:#3c6b49;background:rgba(79,154,94,.18)}
+.jb-fumble{color:#a3301c;border-color:#a3553c;background:rgba(194,69,46,.14)}
+.jb-miss,.jb-void{color:#7b6a4d;border-color:#a08f68;background:rgba(0,0,0,.05)}
+.jb-none{color:#7b6a4d;border-color:#b4a37c}
+.cname{font-weight:800;font-size:12.5px;color:#1c1812;margin:3px 0 3px;line-height:1.25}
+.ctext{font-size:10px;line-height:1.45;color:#3a3229;flex:1;overflow:hidden;
+       white-space:pre-line;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:5}
+.cui{font-size:9.5px;color:#5a4c34;border-top:1px dashed var(--parch-d);
+     padding-top:3px;margin-top:3px;line-height:1.35}
+.cui .exp{color:#8a2f1c;font-weight:800}
 .cfoot{display:flex;align-items:center;gap:4px;margin-top:4px;white-space:nowrap;
        border-top:1px solid var(--parch-d);padding-top:4px;font-size:10px;overflow:hidden}
 .tagc{background:#2f2a20;color:#e8d9ae;border-radius:3px;padding:1px 5px;font-size:9.5px}
@@ -222,7 +234,7 @@
 .fly{position:absolute;z-index:28;pointer-events:none;margin:0;
      transition:transform .3s cubic-bezier(.4,.9,.3,1),opacity .3s ease-in}
 
-/* 판정 도장 */
+/* 판정 도장 4종 + 베스트 리뷰 */
 .stampfx{position:absolute;z-index:31;pointer-events:none;
        transform:translate(-50%,-50%) rotate(-14deg) scale(2.6);opacity:0;
        font-weight:900;font-size:32px;letter-spacing:-1px;white-space:nowrap;
@@ -236,7 +248,7 @@
   70%{opacity:1;transform:translate(-50%,-50%) rotate(-13deg) scale(1)}
   100%{opacity:0;transform:translate(-50%,-50%) rotate(-13deg) scale(1.06)}
 }
-.st-fact{color:#5fbf72} .st-normal{color:#b4a894}
+.st-origin{color:#e0a94b} .st-fact{color:#5fbf72} .st-normal{color:#b4a894}
 .st-fumble{color:#d4553c} .st-miss{color:#8a8272} .st-best{color:#e0a94b}
 
 /* 좋아요 숫자 — 빨간펜 */
@@ -291,11 +303,24 @@
 .obox{width:460px;text-align:center;padding:30px 26px;border-radius:10px;
       background:linear-gradient(160deg,var(--parch),var(--parch-d));color:var(--inkc);
       border:1px solid #8a744d;box-shadow:0 24px 70px rgba(0,0,0,.8)}
+.obox.wide{width:760px;padding:24px 24px}
 .obox .oicon{font-size:46px}
 .obox h2{font-size:21px;margin:10px 0 6px;letter-spacing:-.4px}
 .obox .osub{font-size:12.5px;color:#4a4136;line-height:1.6}
 .obox .ogold{margin-top:12px;font-weight:800;font-size:15px;color:#9a6b12}
 .obox .obtns{margin-top:18px;display:flex;gap:8px;justify-content:center}
+/* 승리 보상 — 이번 전투 대상의 리뷰 등재 (ADR-011 근거 ②) */
+.rwrow{display:flex;gap:10px;justify-content:center;margin-top:12px}
+.rwcard{width:206px;text-align:left;padding:9px 10px;border-radius:8px;cursor:pointer;
+        border:1px solid #8a744d;background:linear-gradient(160deg,var(--parch),var(--parch-d));
+        color:var(--inkc);display:flex;flex-direction:column;gap:4px;font-family:inherit;
+        box-shadow:0 8px 20px rgba(0,0,0,.35);transition:transform .12s;font-size:12px}
+.rwcard:hover{transform:translateY(-4px);outline:2px solid var(--gold)}
+.rwcard .rhead{display:flex;justify-content:space-between;gap:6px;font-size:10px;color:#9a6b12}
+.rwcard .rname{font-weight:800;font-size:13px;color:#1c1812;line-height:1.3}
+.rwcard .rtext{font-size:10px;line-height:1.5;color:#3a3229;white-space:pre-line;
+        display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:4;overflow:hidden}
+.rwcard .rui{font-size:9.5px;color:#5a4c34;border-top:1px dashed var(--parch-d);padding-top:3px}
 .overlay.death .obox{background:none;border:none;box-shadow:none;color:var(--ink)}
 .overlay.death .oicon{animation:stardie 2.2s ease-out forwards}
 @keyframes stardie{0%{opacity:1;text-shadow:0 0 26px rgba(224,169,75,.8)}
@@ -353,7 +378,7 @@
       </div>
 
       <div class="gearcol l" id="gearL"></div>
-      <div class="enemybox" id="enemyBox">
+      <div class="enemybox" id="enemyBox" data-tgt="enemy">
         <div class="stealthnote">🌫 판매자가 잠적했다 — [배송] 계열 리뷰만 도달한다</div>
         <div class="ebody" id="eBody"></div>
       </div>
@@ -363,10 +388,7 @@
       <div class="mygear" id="myGear"></div>
     </div>
 
-    <div class="composer" id="composer">
-      <div class="prev" id="cmpPrev"></div>
-      <button class="submitbtn" id="cmpSubmit" data-act="submit" disabled>리뷰 제출</button>
-    </div>
+    <div class="tgtbar" id="tgtbar"></div>
 
     <div class="hand">
       <div class="pstatus" id="pstatus">
@@ -410,7 +432,8 @@
   const esc = RH.ui.esc;
   // 데이터 표시 문구의 「피해/데미지」를 게임 언어 「좋아요」로 (GDD §2 규칙 7)
   const likeify = (s) => String(s || '')
-    .replace(/의지 데미지/g, '좋아요').replace(/데미지/g, '좋아요').replace(/피해/g, '좋아요');
+    .replace(/의지 데미지/g, '좋아요').replace(/의지 피해/g, '좋아요')
+    .replace(/데미지/g, '좋아요').replace(/피해/g, '좋아요');
 
   // ── 적 결정: 런 노드 우선, 없으면 ?enemy= 디버그 단독 전투 ──
   const qs = new URLSearchParams(location.search);
@@ -437,7 +460,7 @@
   const TIER = { normal: '일반 셀러', elite: '파워 셀러', boss: '본사 직영' };
   const ICO = { attack: '📦', gimmick: '📢', stealth: '🌫', buff: '🛠', steal: '🪙' };
 
-  // ── 전투 생성 (packages/proto/src/main.ts 의 사용법 그대로) ──
+  // ── 전투 생성 (v2 API — packages/sim/src/policies.ts 사용법 준수) ──
   const cards = RHEngine.buildCardIndex(D.cards);
   const deck = (runMode && run.deck && run.deck.length ? run.deck.slice() : D.startingDeck.slice());
   if (enemyDef.tier === 'boss') deck.push(...D.bossExtra);
@@ -457,16 +480,20 @@
     battle.state.player.will = run.will;
     battle.state.player.maxWill = run.maxWill;
   }
+  window.RH_BATTLE = battle; // 개발·E2E 검증용 노출 (debug.js 훅과 같은 결)
 
   const st = battle.state;
   const def = (id) => cards.byId.get(id);
   const scr = $('#screen');
 
-  let selP = null, selS = null, myEq = 0, enEq = 0;
+  // ── v2 상태: 대상(적 본체/구성품/내 장비)이 1축, 카드가 2축 ──
+  let tgt = 'enemy';            // 'enemy' | 'eeq' | 'meq'
+  let myEq = 0, enEq = 0;       // 선택된 내 장비 / 적 구성품 인덱스
   let mode = 'play', giftSrc = 0;
-  let busy = false, resultHandled = false, pendingHref = null;
+  let busy = false, resultHandled = false;
   let retreatArmed = false, retreatTimer = 0;
   let prevEWill = Math.max(0, st.enemy.will);
+  let winDelta = 0, skipReward = false; // 승리 정산 골드 / 디버그 훅의 보상 생략
 
   // ── 유틸 ──
   function toast(msg) {
@@ -487,6 +514,14 @@
     eWill: Math.max(0, st.enemy.will), pWill: Math.max(0, st.player.will),
     gold: st.player.gold, dur: st.enemy.equipment.map((q) => q.durability),
   });
+  const sample = (arr, n) => {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a.slice(0, n);
+  };
 
   // ── 이펙트 (ui/combat.html 승계: 잉크·도장·별점·빨간펜) ──
   function spawn(cls, html, x, y, life) {
@@ -545,20 +580,56 @@
     });
   }
 
-  // ── 판정 미리보기 (proto targetInfo 이식) ──
-  function targetInfo(sd) {
-    if (sd.target === 'my_equipment') {
+  // ── 판정 미리보기 — 엔진 submitReview 와 동일 규칙 (policies.ts evaluate 이식) ──
+  const attachBonus = () => st.player.equipment.reduce(
+    (s, eq) => s + eq.attachments.reduce((x, a) => x + (a.kind === 'damage_buff' ? a.value : 0), 0), 0);
+
+  function judgePreview(d) {
+    if (d.kind !== 'review') return { j: 'none', likes: null };
+    const e = st.enemy, gate = e.def.stealthGate;
+    if (e.stealth && gate && (d.target === 'enemy' || d.target === 'enemy_equipment')
+        && !gate.hittableSuits.includes(d.suit)) return { j: 'miss', likes: null };
+    let tags, nulls, isOrigin = false;
+    if (d.target === 'my_equipment') {
       const eq = st.player.equipment[myEq] || st.player.equipment[0];
-      return { tags: eq.def.tags, nulls: eq.def.nullTags, label: `내 ${eq.def.name}` };
+      tags = eq.def.tags; nulls = eq.def.nullTags;
+    } else if (d.target === 'enemy_equipment') {
+      const alive = e.equipment.map((q, i) => ({ q, i })).filter((x) => !x.q.destroyed);
+      const pick = alive.find((x) => x.i === enEq) || alive[0];
+      if (!pick) return { j: 'void', likes: null };
+      tags = pick.q.tags; nulls = e.def.nullTags;
+      isOrigin = !!d.origin && d.origin.equipment === pick.q.name;
+    } else {
+      tags = e.def.weaknessTags; nulls = e.def.nullTags;
+      isOrigin = !!d.origin && d.origin.enemy === e.def.id;
     }
-    if (sd.target === 'enemy_equipment') {
-      const alive = st.enemy.equipment.map((q, i) => ({ q, i })).filter(({ q }) => !q.destroyed);
-      const pick = alive.find(({ i }) => i === enEq) || alive[0];
-      if (!pick) return { tags: [], nulls: st.enemy.def.nullTags, label: '(남은 구성품 없음)' };
-      return { tags: pick.q.tags, nulls: st.enemy.def.nullTags, label: pick.q.name };
+    const j = battle.judge(d, tags, nulls, isOrigin);
+    // 예상 좋아요 — 좋아요 환산식 (GDD §2): ⌊기본×판정×기타⌋ + 원산지 +1
+    const ef = d.effect;
+    const isEqDmg = ef.type === 'equipment_damage';
+    const base = (ef.type === 'damage' || isEqDmg) ? (ef.value ?? 0) : (ef.damage ?? 0);
+    let likes = null;
+    if (base > 0) {
+      let mult = RHEngine.JUDGE_MULT[j];
+      const cw = e.def.castingWeakness;
+      if (cw && e.charging && d.tag === cw.tag) mult *= cw.multiplier;
+      if (isEqDmg) likes = RHEngine.applyMult(base, mult) + (j === 'origin' ? 1 : 0);
+      else {
+        const vanity = e.def.suitDamageMult?.[d.suit] ?? 1;
+        likes = RHEngine.applyMult(base + attachBonus(), mult * vanity)
+          + (j === 'origin' ? 1 : 0) + (st.player.storedDamageBonus || 0);
+      }
     }
-    return { tags: st.enemy.def.weaknessTags, nulls: st.enemy.def.nullTags, label: st.enemy.def.name };
+    return { j, likes };
   }
+
+  // 판정 뱃지 (design/card-system-v2 §8: 원산지 ★ / 팩트 ● / 헛소리 ⚠ / 일반 무표시)
+  const JB = {
+    origin: ['jb-origin', '★ 원산지'], fact: ['jb-fact', '● 팩트'],
+    fumble: ['jb-fumble', '⚠ 헛소리'], normal: null,
+    miss: ['jb-miss', '빗나감'], void: ['jb-void', '대상 없음'], none: ['jb-none', '무판정'],
+  };
+  const STAMP_L = { origin: '원산지!', fact: '팩트!', normal: '일반', fumble: '헛소리…' };
 
   // ── 그리기 ──
   function paintIntent() {
@@ -591,11 +662,13 @@
     prevEWill = w;
     $('#eBar').style.width = pct + '%';
     $('#eWill').textContent = `의지 ${w} / ${e.maxWill}`;
-    $('#eNulls').innerHTML = e.def.nullTags.map((t) => `<span class="null">평가 불가: ${esc(t)}</span>`).join('')
-      || '<span class="tiny">평가 불가 항목 없음</span>';
+    $('#eNulls').innerHTML =
+      e.def.weaknessTags.map((t) => `<span class="weak">약점: #${esc(t)}</span>`).join('')
+      + (e.def.nullTags.map((t) => `<span class="null">평가 불가: ${esc(t)}</span>`).join('')
+         || '<span class="tiny">평가 불가 항목 없음</span>');
     const mods = [];
     for (const b of e.buffs)
-      mods.push(`<span class="m bad">📈 공격 +${b.value}${b.protectedBy ? ' (알바 리뷰 — P11로만 저격)' : ''}</span>`);
+      mods.push(`<span class="m bad">📈 공격 +${b.value}${b.protectedBy ? ' (알바 리뷰 — 저격 카드로만 제거)' : ''}</span>`);
     if (e.damageReductionNextHit > 0) mods.push(`<span class="m bad">🛡 다음 리뷰 −${e.damageReductionNextHit}</span>`);
     if (e.reflectNextHit > 0) mods.push(`<span class="m bad">🪞 반사 ${e.reflectNextHit}</span>`);
     if (e.stunTurns > 0) mods.push(`<span class="m good">💫 기절 ${e.stunTurns}턴</span>`);
@@ -607,6 +680,7 @@
     }
     $('#eMods').innerHTML = mods.join('');
     $('#enemyBox').classList.toggle('stealth', e.stealth);
+    $('#enemyBox').classList.toggle('sel', tgt === 'enemy');
   }
 
   function paintGear() {
@@ -616,9 +690,9 @@
     for (const side of ['l', 'r']) {
       const el = side === 'l' ? $('#gearL') : $('#gearR');
       el.innerHTML = cols[side].length
-        ? '<div class="hd">🛠 구성품 (탭: 장비 리뷰 대상)</div>' + cols[side].map(({ q, i }) => {
+        ? '<div class="hd">🛠 구성품 (탭: 대상 지정)</div>' + cols[side].map(({ q, i }) => {
             const max = e.def.equipment[i].durability;
-            return `<div class="slot ${q.destroyed ? 'dead' : ''} ${i === enEq && !q.destroyed ? 'sel' : ''}" data-eeq="${i}">
+            return `<div class="slot ${q.destroyed ? 'dead' : ''} ${tgt === 'eeq' && i === enEq && !q.destroyed ? 'sel' : ''}" data-eeq="${i}">
               <div class="nm">${esc(q.name)}</div>
               <div class="tg">${q.tags.map((t) => `<b>#${esc(t)}</b>`).join('')}</div>
               ${q.destroyed
@@ -632,9 +706,9 @@
   }
 
   function paintMyGear() {
-    $('#myGear').innerHTML = '<div class="hd">🎒 내 장비 (탭: 버프 리뷰 대상)</div>' +
+    $('#myGear').innerHTML = '<div class="hd">🎒 내 장비 (탭: 대상 지정 · ★4~5 찬양 = 버프)</div>' +
       st.player.equipment.map((q, i) => `
-        <div class="slot ${i === myEq ? 'sel' : ''}" data-meq="${i}">
+        <div class="slot ${tgt === 'meq' && i === myEq ? 'sel' : ''}" data-meq="${i}">
           <div class="nm">${esc(q.def.name)}</div>
           <div class="tg">${q.def.tags.map((t) => `<b>#${esc(t)}</b>`).join('')}
             ${q.def.nullTags.map((t) => `<b style="background:#3a221c;color:#e0a08b">불가:${esc(t)}</b>`).join('')}</div>
@@ -674,13 +748,34 @@
     let html = '';
     if (p.gauge >= 10 && !p.critUsedThisTurn && !st.result)
       html += '<button class="cbtn crit" data-act="crit">🔥 베스트 리뷰 등극</button>';
-    html += `<button class="cbtn" data-act="revise" ${p.energy < 1 ? 'disabled' : ''}>퇴고 ✍1 (1장 교체)</button>`;
+    html += `<button class="cbtn" data-act="revise" ${p.energy < 1 ? 'disabled' : ''}>퇴고 ✍1 (태그 사냥 — 1장 교체)</button>`;
     if (enemyDef.tier === 'boss')
       html += '<button class="cbtn warn" disabled title="보스전은 도망칠 수 없다">항복 불가 (보스)</button>';
     else
       html += `<button class="cbtn warn" data-act="retreat">${retreatArmed ? '정말 항복? (한 번 더)' : '🏳️ 항복 (+6G 뜯기)'}</button>`;
     html += '<button class="cbtn end" data-act="end">영업 마감 (턴 종료)</button>';
     $('#ctrlBtns').innerHTML = html;
+  }
+
+  // ── 대상 바 (v2: 대상 탭 → 손패 전 카드에 판정 뱃지 → 카드 탭 = 제출) ──
+  function paintTgtbar() {
+    const bar = $('#tgtbar');
+    if (mode === 'revise') {
+      bar.innerHTML = '<span class="lab">📝 <b>퇴고</b></span> 버릴 카드를 탭하라 (필력 1) <button class="tbtn" data-act="cancelmode">취소</button>';
+      return;
+    }
+    if (mode === 'gift') {
+      bar.innerHTML = '<span class="lab">🎁 <b>무료 나눔</b></span> 증정할 카드를 탭하라 (이 런에서 제외) <button class="tbtn" data-act="cancelmode">취소</button>';
+      return;
+    }
+    const alive = st.enemy.equipment.map((q, i) => ({ q, i })).filter((x) => !x.q.destroyed);
+    const eeqPick = alive.find((x) => x.i === enEq) || alive[0];
+    const meq = st.player.equipment[myEq] || st.player.equipment[0];
+    bar.innerHTML = `<span class="lab">🎯 리뷰 대상</span>
+      <button class="tbtn${tgt === 'enemy' ? ' on' : ''}" data-tgt="enemy">본체 · ${esc(st.enemy.def.name)}</button>
+      <button class="tbtn${tgt === 'eeq' ? ' on' : ''}" data-tgt="eeq" ${eeqPick ? '' : 'disabled'}>구성품 · ${eeqPick ? esc(eeqPick.q.name) : '전량 품절'}</button>
+      <button class="tbtn${tgt === 'meq' ? ' on' : ''}" data-tgt="meq">내 장비 · ${esc(meq.def.name)}</button>
+      <span class="hint">카드 탭 = 제출 · <b class="bo">★원산지</b> <b class="bf">●팩트</b> <b class="bx">⚠헛소리</b></span>`;
   }
 
   const SIG_SVG = `<div class="sig"><svg viewBox="0 0 140 38" preserveAspectRatio="none">
@@ -691,74 +786,31 @@
   function paintHand() {
     $('#cards').innerHTML = st.player.hand.map((c) => {
       const d = def(c.cardId);
-      const dis = D.display[c.cardId] || { text: '', flavor: '', footer: '' };
-      const sel = c.uid === selP || c.uid === selS ? ' sel' : '';
-      if (d.kind === 'prefix') {
-        return `<div class="card prefix${sel}" data-card="${c.uid}">
-          <div class="chead">접두 · ${d.suit}</div>
+      const pv = judgePreview(d);
+      const b = JB[pv.j];
+      const badge = b ? `<span class="jb ${b[0]}">${b[1]}</span>` : '';
+      if (d.kind === 'special') {
+        return `<div class="card special" data-card="${c.uid}">
+          <div class="chead">${badge}<span class="cstars">${'★'.repeat(d.stars)}</span></div>
           <div class="cname">${esc(d.name)}</div>
-          <div class="ctext">${esc(likeify(dis.text)) || '<span style="color:#7b6a4d">대상의 리뷰 항목과 태그를 대조한다</span>'}</div>
+          <div class="ctext">${esc(d.text)}</div>
+          <div class="cui">${esc(likeify(d.ui))}</div>
           ${SIG_SVG}
-          <div class="cfoot">${d.tags.map((t) => `<span class="tagc">#${esc(t)}</span>`).join('')}<span class="ccost">✍${d.cost}</span></div>
+          <div class="cfoot"><span class="tagc">진상 화법${d.oncePerCombat ? ' · 전투당 1회' : ''}</span><span class="ccost">✍${d.cost}</span></div>
         </div>`;
       }
-      if (d.kind === 'suffix') {
-        return `<div class="card suffix${sel}" data-card="${c.uid}">
-          <div class="chead">접미 · 문장 맺음</div>
-          <div class="cname">${esc(d.name)}</div>
-          <div class="ctext">${esc(likeify(dis.text))}</div>
-          ${SIG_SVG}
-          <div class="cfoot"><span class="tagc">${d.target === 'my_equipment' ? '내 장비' : d.target === 'enemy_equipment' ? '구성품' : '본체'}</span><span class="ccost">✍${d.cost}</span></div>
-        </div>`;
-      }
-      return `<div class="card special${sel}" data-card="${c.uid}">
-        <div class="chead">진상 · 무판정${d.oncePerCombat ? ' · 전투당 1회' : ''}</div>
+      const fit = (tgt === 'enemy' && d.target === 'enemy')
+        || (tgt === 'eeq' && d.target === 'enemy_equipment')
+        || (tgt === 'meq' && d.target === 'my_equipment');
+      return `<div class="card review${fit ? ' fit' : ''}" data-card="${c.uid}">
+        <div class="chead">${badge}<span class="cstars">${'★'.repeat(d.stars)}</span></div>
         <div class="cname">${esc(d.name)}</div>
-        <div class="ctext">${esc(likeify(dis.text || dis.flavor))}</div>
+        <div class="ctext">${esc(d.text)}</div>
+        <div class="cui">${pv.likes != null ? `<b class="exp">👍 예상 ${pv.likes}</b> · ` : ''}${esc(likeify(d.ui))}</div>
         ${SIG_SVG}
-        <div class="cfoot"><span class="tagc">단독 사용</span><span class="ccost">✍${d.cost}</span></div>
+        <div class="cfoot"><span class="tagc">#${esc(d.tag)}</span><span class="ccost">✍${d.cost}</span></div>
       </div>`;
     }).join('');
-  }
-
-  function paintComposer() {
-    const p = st.player;
-    const prev = $('#cmpPrev'), btn = $('#cmpSubmit');
-    if (mode === 'revise') {
-      prev.innerHTML = '📝 <b>퇴고</b> — 버릴 카드를 탭하라 (필력 1) <button class="cbtn" style="width:auto;display:inline;padding:3px 10px" data-act="cancelmode">취소</button>';
-      btn.disabled = true; return;
-    }
-    if (mode === 'gift') {
-      prev.innerHTML = '🎁 <b>무료 나눔</b> — 증정할 카드를 탭하라 (이 런에서 제외된다) <button class="cbtn" style="width:auto;display:inline;padding:3px 10px" data-act="cancelmode">취소</button>';
-      btn.disabled = true; return;
-    }
-    const pc = selP !== null ? p.hand.find((c) => c.uid === selP) : null;
-    const sc = selS !== null ? p.hand.find((c) => c.uid === selS) : null;
-    const pd = pc ? def(pc.cardId) : null;
-    const sd = sc ? def(sc.cardId) : null;
-    if (sd && sd.kind === 'special') {
-      prev.innerHTML = `<b>${esc(sd.name)}</b> — ${esc(likeify((D.display[sd.id] || {}).text))} · 필력 ${sd.cost} <span class="tiny">(다시 탭하면 사용)</span>`;
-      btn.disabled = true; return;
-    }
-    if (pd && sd) {
-      const t = targetInfo(sd);
-      const cost = pd.cost + sd.cost;
-      let jHtml;
-      const gate = st.enemy.def.stealthGate;
-      if (st.enemy.stealth && gate && sd.target !== 'my_equipment' && !gate.hittableSuits.includes(pd.suit)) {
-        jHtml = '<span class="judge miss">빗나감 — 잠적 중</span>';
-      } else {
-        const j = battle.judge(pd, t.tags, t.nulls);
-        jHtml = j === 'fact' ? '<span class="judge fact">팩트! ×1.5</span>'
-          : j === 'fumble' ? '<span class="judge fumble">헛소리… ×0.5</span>'
-          : '<span class="judge normal">일반 ×1.0</span>';
-      }
-      prev.innerHTML = `<b>${esc(pd.name)}</b> + <b>${esc(sd.name)}</b> → ${jHtml} · 대상: ${esc(t.label)} · 필력 ${cost}`;
-      btn.disabled = cost > p.energy || busy || !!st.result;
-      return;
-    }
-    prev.innerHTML = `<b>${pd ? esc(pd.name) : '〔접두〕'}</b> + <b>${sd ? esc(sd.name) : '〔접미〕'}</b> <span class="tiny">— 접두(파란 띠)와 접미를 골라 한 문장 리뷰를 완성한다</span>`;
-    btn.disabled = true;
   }
 
   function paintLog() {
@@ -770,16 +822,16 @@
 
   function paint() {
     paintIntent(); paintEnemy(); paintGear(); paintMyGear();
-    paintStatus(); paintCtrl(); paintHand(); paintComposer(); paintLog();
+    paintStatus(); paintCtrl(); paintHand(); paintTgtbar(); paintLog();
   }
 
   // ── 액션 ──
   const cardDom = (uid) => document.querySelector(`[data-card="${uid}"]`);
 
-  function zoneForSuffix(sd) {
-    if (sd.target === 'my_equipment')
+  function zoneForCard(d) {
+    if (d.target === 'my_equipment')
       return document.querySelector(`[data-meq="${myEq}"]`) || $('#pstatus');
-    if (sd.target === 'enemy_equipment') {
+    if (d.target === 'enemy_equipment') {
       const el = document.querySelector(`[data-eeq="${enEq}"]:not(.dead)`);
       return el || document.querySelector('[data-eeq]:not(.dead)') || $('#enemyBox');
     }
@@ -789,7 +841,7 @@
   function flyClone(el, zone, delay) {
     const from = rel(el), to = rel(zone);
     const fly = el.cloneNode(true);
-    fly.className = el.className.replace('signing', 'signed').replace('sel', '') + ' fly';
+    fly.className = el.className.replace('signing', 'signed').replace('fit', '') + ' fly';
     fly.style.left = (from.r.left - from.s.left) + 'px';
     fly.style.top = (from.r.top - from.s.top) + 'px';
     fly.style.width = from.r.width + 'px'; fly.style.height = from.r.height + 'px';
@@ -803,36 +855,31 @@
     }, delay || 0);
   }
 
-  function doSubmit() {
-    if (busy || st.result || selP === null || selS === null) return;
-    const pc = st.player.hand.find((c) => c.uid === selP);
-    const sc = st.player.hand.find((c) => c.uid === selS);
-    if (!pc || !sc) return;
-    const pd = def(pc.cardId), sd = def(sc.cardId);
-    const pEl = cardDom(selP), sEl = cardDom(selS);
-    const zone = zoneForSuffix(sd);
+  // 리뷰 카드 탭 = 제출 (v2 — 서명 → 투척 → 도장 연출 유지)
+  function doSubmit(uid) {
+    if (busy || st.result) return;
+    const c = st.player.hand.find((x) => x.uid === uid);
+    if (!c) return;
+    const d = def(c.cardId);
+    const el = cardDom(uid);
+    const zone = zoneForCard(d);
     const to = rel(zone);
     const pre = snap();
     let res;
     try {
-      res = battle.submitReview(selP, selS, { myEquipmentIndex: myEq, enemyEquipmentIndex: enEq });
+      res = battle.submitReview(uid, { myEquipmentIndex: myEq, enemyEquipmentIndex: enEq });
     } catch (err) { toast(err.message); return; }
-    const jLabel = res.missed ? '빗나감' : res.judgement === 'fact' ? '팩트!' : res.judgement === 'fumble' ? '헛소리…' : '일반';
-    st.log.push(`리뷰 제출: ${pd.name} ${sd.name} → ${jLabel}`);
-    selP = selS = null;
+    const jLabel = res.missed ? '빗나감' : STAMP_L[res.judgement];
+    st.log.push(`리뷰 제출: ${d.name} → ${jLabel}`);
     busy = true;
-    // ① 서명이 그어진다 → ② 카드가 날아간다 → ③ 잉크·도장·좋아요
-    sEl.classList.add('signing');
-    pEl.classList.add('sel');
+    el.classList.add('signing');
     setTimeout(() => {
-      flyClone(pEl, zone, 0);
-      flyClone(sEl, zone, 70);
-      pEl.style.opacity = sEl.style.opacity = '.25';
+      flyClone(el, zone, 0);
+      el.style.opacity = '.25';
       setTimeout(() => {
         splat(to.x, to.y);
-        stampFx(res.missed ? 'st-miss' : 'st-' + (res.judgement === 'fact' ? 'fact' : res.judgement === 'fumble' ? 'fumble' : 'normal'),
-          jLabel, to.x, to.y - 54);
-        if (res.judgement === 'fact') shakeFx();
+        stampFx(res.missed ? 'st-miss' : 'st-' + res.judgement, jLabel, to.x, to.y - 54);
+        if (res.judgement === 'origin' || res.judgement === 'fact') shakeFx();
         if (res.judgement === 'fumble' || res.missed) dudFx();
         showDiffs(pre);
         busy = false;
@@ -847,13 +894,12 @@
     if (!c) return;
     const d = def(c.cardId);
     const el = cardDom(uid);
-    const toEnemy = ['equipment_damage', 'delay_enemy_action', 'gift_card', 'damage_per_penalty'].includes(d.effect.type);
+    const toEnemy = ['damage', 'equipment_damage', 'delay_enemy_action', 'gift_card', 'damage_per_penalty'].includes(d.effect.type);
     const zone = toEnemy ? $('#enemyBox') : $('#pstatus');
     const to = rel(zone);
     const pre = snap();
     try { battle.playSpecial(uid); } catch (err) { toast(err.message); return; }
     st.log.push(`진상 부리기: ${d.name}`);
-    selS = null;
     busy = true;
     el.classList.add('signing');
     setTimeout(() => {
@@ -892,7 +938,6 @@
     const pre = snap();
     st.log.push(`── 영업 마감 (턴 ${st.turn})`);
     try { battle.endTurn(); } catch (err) { toast(err.message); paint(); return; }
-    selP = selS = null;
     busy = true;
     $('#intentBar').classList.add('act');
     setTimeout(() => {
@@ -911,32 +956,28 @@
   }
 
   function onCardClick(uid) {
-    const p = st.player;
-    const c = p.hand.find((x) => x.uid === uid);
+    const c = st.player.hand.find((x) => x.uid === uid);
     if (!c) return;
     const d = def(c.cardId);
     if (mode === 'revise') {
       mode = 'play';
-      try { battle.revise(uid); selP = selS = null; } catch (err) { toast(err.message); }
+      try { battle.revise(uid); } catch (err) { toast(err.message); }
       paint(); return;
     }
     if (mode === 'gift') {
       mode = 'play';
-      try { battle.playSpecial(giftSrc, { giftUid: uid }); selP = selS = null; } catch (err) { toast(err.message); }
+      try { battle.playSpecial(giftSrc, { giftUid: uid }); } catch (err) { toast(err.message); }
       paint(); maybeResult(); return;
     }
-    if (d.kind === 'prefix') { selP = selP === uid ? null : uid; paint(); return; }
-    if (d.kind === 'suffix') { selS = selS === uid ? null : uid; paint(); return; }
-    // 진상(특수) — 한 번 탭: 선택, 다시 탭: 사용 (proto 흐름)
-    if (selS === uid) {
-      if (d.effect.type === 'gift_card') { mode = 'gift'; giftSrc = uid; selS = null; paint(); return; }
+    if (d.kind === 'special') {
+      if (d.effect.type === 'gift_card') { mode = 'gift'; giftSrc = uid; paint(); return; }
       doSpecial(uid);
       return;
     }
-    selS = uid; selP = null; paint();
+    doSubmit(uid);
   }
 
-  // ── 종료 처리 (CONTRACT: 런 되써넣기 → completeNode / result 직행) ──
+  // ── 종료 처리 (CONTRACT: 런 되써넣기 → 카드 보상 → completeNode / result 직행) ──
   function writeBackRun() {
     run.suitCounters = st.player.suitCounters;
     run.lastSuit = st.player.lastSuit;
@@ -944,8 +985,17 @@
 
   function goldDelta() { return st.player.gold - (runMode ? run.gold : 0); }
 
+  /** 승리 보상 풀 (ADR-011 근거 ②): 이번 전투 대상들 — 적 본체 origin.enemy 일치
+   *  + 그 적 장비 origin.equipment 일치 — 의 리뷰 중 미보유 카드 */
+  function rewardPool() {
+    if (!runMode) return [];
+    const owned = new Set(run.deck);
+    const eqNames = new Set(enemyDef.equipment.map((q) => q.name));
+    return D.cards.filter((c) => c.kind === 'review' && c.origin && !owned.has(c.id)
+      && (c.origin.enemy === enemyId || (c.origin.equipment && eqNames.has(c.origin.equipment))));
+  }
+
   function showOverlay(o) {
-    pendingHref = o.href || null;
     const ov = $('#overlay');
     ov.className = 'overlay show' + (o.death ? ' death' : '');
     const btns = (o.btns || [{ label: o.btn || '계속', href: o.href }])
@@ -960,6 +1010,28 @@
     </div>`;
   }
 
+  /** 승리 + 카드 보상 오버레이 — 1장 선택(또는 건너뛰기) 후 completeNode */
+  function showWinReward(o) {
+    const rw = (c) => `<button class="rwcard" data-act="reward" data-id="${c.id}">
+      <div class="rhead"><span>${'★'.repeat(c.stars)}</span><span>#${esc(c.tag)} · ✍${c.cost}</span></div>
+      <div class="rname">${esc(c.name)}</div>
+      <div class="rtext">${esc(c.text)}</div>
+      <div class="rui">${esc(likeify(c.ui))}</div>
+    </button>`;
+    const ov = $('#overlay');
+    ov.className = 'overlay show';
+    ov.innerHTML = `<div class="obox wide">
+      <div class="oicon">${o.icon}</div>
+      <h2>리뷰가 게시되었다</h2>
+      <div class="osub">${o.sub}</div>
+      <div class="ogold">${o.goldLine}</div>
+      <div class="osub" style="margin-top:14px"><b>전리품 — 이번 전투 대상의 리뷰를 내 목록에 등재한다</b><br>
+        직접 이긴 상대의 리뷰라 원산지 보너스가 살아 있다. 1장을 고른다.</div>
+      <div class="rwrow">${o.pool.map(rw).join('')}</div>
+      <div class="obtns"><button class="btn ghost" data-act="skipreward">등재 없이 ${o.isBoss ? '정복 후기 작성하기' : '지도로 돌아가기'}</button></div>
+    </div>`;
+  }
+
   function maybeResult() {
     if (!st.result || resultHandled) return;
     resultHandled = true;
@@ -968,28 +1040,36 @@
 
     if (r === 'win') {
       const surrender = st.stats.surrender;
-      let href = null;
+      const isBoss = enemyDef.tier === 'boss';
+      const icon = surrender ? '🏳️' : '🛍️';
+      const sub = surrender
+        ? '전 구성품이 품절되어 판매자가 영업을 포기했다. 위로금 6골드를 뜯어냈다.'
+        : `${esc(enemyDef.name)}의 존재 등급이 바닥났다. ★5 「정복 후기(구매 확정)」 작성 권한 획득.`;
+      const goldLine = `정산: 🪙 +${reward}${surrender ? ' (+위로금 6)' : ''}`;
       if (runMode) {
-        const delta = goldDelta() + reward; // 전투 중 증감(갈취·강탈·항복 위로금) + 승리 보상
+        winDelta = goldDelta() + reward; // 전투 중 증감(갈취·강탈·항복 위로금) + 승리 보상
         run.battlesWon += 1;
         run.will = Math.max(1, st.player.will);
         writeBackRun();
         RH.saveRun(run);
-        href = RH.completeNode({ gold: delta });
+        // 카드 보상: 미보유 대상 리뷰 최대 3장 제시. 디버그 훅(win)·풀 소진 시 생략 → 즉시 정산
+        const pool = skipReward ? [] : sample(rewardPool(), 3);
+        if (pool.length) {
+          showWinReward({ icon, sub, goldLine, pool, isBoss });
+          paint();
+          return;
+        }
+        const href = RH.completeNode({ gold: winDelta });
+        showOverlay({
+          icon, title: '리뷰가 게시되었다', sub, gold: goldLine, href,
+          btns: [{ label: isBoss ? '정복 후기 작성하기' : '지도로 돌아가기', href }],
+        });
+      } else {
+        showOverlay({
+          icon, title: '리뷰가 게시되었다', sub, gold: goldLine, href: null,
+          btns: [{ label: '다시 전투', href: null }, { label: '메인으로', href: 'index.html' }],
+        });
       }
-      const isBoss = enemyDef.tier === 'boss';
-      showOverlay({
-        icon: surrender ? '🏳️' : '🛍️',
-        title: '리뷰가 게시되었다',
-        sub: surrender
-          ? '전 구성품이 품절되어 판매자가 영업을 포기했다. 위로금 6골드를 뜯어냈다.'
-          : `${esc(enemyDef.name)}의 존재 등급이 바닥났다. ★5 「정복 후기(구매 확정)」 작성 권한 획득.`,
-        gold: `정산: 🪙 +${reward}${surrender ? ' (+위로금 6)' : ''}`,
-        href,
-        btns: runMode
-          ? [{ label: isBoss ? '정복 후기 작성하기' : '지도로 돌아가기', href }]
-          : [{ label: '다시 전투', href: null }, { label: '메인으로', href: 'index.html' }],
-      });
     } else if (r === 'lose' || r === 'timeout') {
       let href = null;
       if (runMode) {
@@ -1070,9 +1150,11 @@
         if (h) location.href = h; else location.reload();
         return;
       }
+      // 승리 보상 — st.result 가 선 상태에서 눌리므로 가드보다 먼저 처리한다
+      if (a === 'reward') { location.href = RH.completeNode({ gold: winDelta, deckAdd: actEl.dataset.id }); return; }
+      if (a === 'skipreward') { location.href = RH.completeNode({ gold: winDelta }); return; }
       if (busy || st.result) return;
-      if (a === 'submit') doSubmit();
-      else if (a === 'end') doEndTurn();
+      if (a === 'end') doEndTurn();
       else if (a === 'crit') doCrit();
       else if (a === 'retreat') doRetreat();
       else if (a === 'revise') { mode = 'revise'; paint(); }
@@ -1083,15 +1165,18 @@
     const cardEl = ev.target.closest('[data-card]');
     if (cardEl) { onCardClick(Number(cardEl.dataset.card)); return; }
     const eeq = ev.target.closest('[data-eeq]');
-    if (eeq && !eeq.classList.contains('dead')) { enEq = Number(eeq.dataset.eeq); paint(); return; }
+    if (eeq && !eeq.classList.contains('dead')) { enEq = Number(eeq.dataset.eeq); tgt = 'eeq'; paint(); return; }
     const meq = ev.target.closest('[data-meq]');
-    if (meq) { myEq = Number(meq.dataset.meq); paint(); return; }
+    if (meq) { myEq = Number(meq.dataset.meq); tgt = 'meq'; paint(); return; }
+    const tEl = ev.target.closest('[data-tgt]');
+    if (tEl && !tEl.disabled) { tgt = tEl.dataset.tgt; paint(); return; }
   });
 
-  // ── 디버그 훅 (debug.js 패널의 즉시 승/패) ──
+  // ── 디버그 훅 (debug.js 패널의 즉시 승/패) — win 은 카드 보상 생략, 즉시 정산 ──
   window.RH_DEBUG_HOOKS = {
     win() {
       if (st.result || resultHandled) return;
+      skipReward = true;
       st.enemy.will = 0;
       st.result = 'win';
       st.log.push('(디버그) 즉시 승리');

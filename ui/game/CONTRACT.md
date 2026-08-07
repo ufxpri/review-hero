@@ -49,15 +49,29 @@
 - `RH.meta()` → `{runs, wins, bestFloor, rp, p, expedition[]}` · `RH.penname()` · `RH.sig()` → `{v, box:[660,236], strokes:[[[x,y],…],…]}` — 점은 `{x,y}` 객체가 아니라 **`[x,y]` 배열**이다 (signature.html 저장 형식)
 - `RH.ui.topbar(k)` `RH.ui.stars(n)` `RH.ui.esc(s)`
 
-## 전투 페이지 추가 계약 (combat.html)
+## 전투 페이지 추가 계약 (combat.html) — 카드 체계 v2 (ADR-011)
 
-- `engine.js` 를 추가로 싣고 `RHEngine.Battle` 을 쓴다. 사용법은 **`packages/proto/src/main.ts` 를 정독**해서 따른다 (buildCardIndex, mulberry32, playPrefix/playSuffix 등 실제 API).
+- `engine.js` 를 추가로 싣고 `RHEngine.Battle` 을 쓴다. 사용법은 **`packages/sim/src/policies.ts` 를 정독**해서 따른다 (buildCardIndex, mulberry32, 대상 지정 형식 포함 실제 API).
+- v2 API: 리뷰 카드 1장 = 완성 리뷰. `battle.submitReview(cardUid, {myEquipmentIndex?, enemyEquipmentIndex?})`,
+  특수(진상 화법)는 `battle.playSpecial(uid, {giftUid?})`, 그 외 `revise(uid)` / `useCritical()` / `endTurn()`.
+- 판정 4단 (card-system-v2 §2): **원산지**(대상이 카드 `origin` 과 일치 — ×1.5 +1, 무효 태그 무시, 게이지 +4) >
+  헛소리(무효 태그 ×0.5, −2) > 팩트(약점 태그 ×1.5, +3) > 일반(×1.0) 순 검사. `battle.judge(card, tags, nulls, isOrigin)` 로 미리보기 가능.
+- UI 흐름은 **대상 우선** (card-system-v2 §8): 대상 탭(적 본체/구성품/내 장비) → 손패 전 카드에 판정 뱃지
+  (원산지 ★금색 / 팩트 ● / 헛소리 ⚠ / 일반 무표시, 특수는 「무판정」) + 예상 좋아요 → 카드 탭 = 즉시 제출.
 - 적 결정: `RH.currentNode().enemy`. 런 없이 열리면 `?enemy=E01` 쿼리로 디버그 단독 전투 지원.
 - 플레이어 의지는 런에서 잇는다: Battle 생성 직후 `battle.state.player.will = run.will; battle.state.player.maxWill = run.maxWill;`
 - 성향 연속성: 생성 시 `initialSuitCounters: run.suitCounters, initialLastSuit: run.lastSuit`, 종료 시 되써넣기.
-- 승리: 골드 보상 일반 15 / 정예 24 / 보스 50 (GDD §4.2), `run.battlesWon += 1`, `run.will = 전투 후 의지`, `location.href = RH.completeNode({gold:+n})`.
+- 보스전 덱: `RH_DATA.bossExtra` 를 덱에 추가해 생성한다.
+- 승리: 골드 보상 일반 15 / 정예 24 / 보스 50 (GDD §4.2), `run.battlesWon += 1`, `run.will = 전투 후 의지`.
+- **승리 카드 보상 (ADR-011 근거 ② "이번 전투 대상의 리뷰를 등재")**: 승리 오버레이에서
+  이번 전투 대상들의 리뷰 풀 — `origin.enemy === 적 id` 또는 `origin.equipment ∈ 그 적 장비 이름` — 중
+  **미보유(`run.deck` 에 없는) 카드 최대 3장 제시 → 1장 선택(건너뛰기 가능)** →
+  `location.href = RH.completeNode({gold:+n, deckAdd:cardId})`. 풀이 비면 보상 없이 즉시 정산.
+  **디버그 전투(런 없음)와 `RH_DEBUG_HOOKS.win()` 은 카드 보상을 생략하고 즉시 정산**한다 (통합 E2E 전제).
 - 패배(의지 0): `run.will = 0` 저장 후 `result.html?outcome=death&enemy={id}` 로 이동. **런은 지우지 않는다** — result 가 정산한다.
-- 항복(retreat): 의지 유지 + 6G (GDD §4.2), completeNode 로 복귀.
+- 항복(retreat): 의지 유지 + 6G (GDD §4.2), completeNode 로 복귀. 카드 보상 없음은 X07 이탈(retreat 결과)에도 동일.
+- 카드 제거 노드 공통: `RH_DATA.irremovable`(시작 덱 12장 — 생계형 리뷰)은 shop 파쇄·rest 태우기
+  목록에서 **제거 불가**(회색 + 「생계형 리뷰」 칩)로 표시한다.
 
 ## 확인 절차 (필수)
 

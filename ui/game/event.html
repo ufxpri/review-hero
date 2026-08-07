@@ -165,7 +165,7 @@ const EVENTS = [
 ];
 
 // ── nodeCtx — 노드 재입장 시 이벤트가 리롤되지 않게 첫 렌더 결과를 런에 저장 ──
-const cardPool = RH_DATA.cards.filter((c) => c.kind === 'prefix' || c.kind === 'suffix');
+const cardPool = RH_DATA.cards.filter((c) => c.kind === 'review');
 let ctx = (run.nodeCtx && run.nodeCtx.page === 'event' && run.nodeCtx.nodeId === node.id)
   ? run.nodeCtx : null;
 if (!ctx) {

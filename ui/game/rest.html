@@ -41,6 +41,10 @@ h1{text-align:center;font-size:22px;color:var(--gold);letter-spacing:-.5px;margi
        display:flex;flex-direction:column;gap:3px;font-family:inherit}
 .ditem:hover{border-color:var(--edge-hi)}
 .ditem.sel{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold)}
+.ditem.lock{opacity:.45;cursor:default;filter:grayscale(.5)}
+.ditem.lock:hover{border-color:var(--edge)}
+.lifechip{font-size:9px;font-weight:600;border:1px solid var(--edge-hi);border-radius:3px;
+          padding:1px 5px;color:var(--dim);margin-left:4px;vertical-align:1px}
 .ditem .dn{font-weight:700;font-size:12.5px}
 .ditem .dk{font-size:10.5px;color:var(--dim)}
 .mbtns{display:flex;gap:10px;justify-content:flex-end}
@@ -107,7 +111,8 @@ document.body.insertAdjacentHTML('afterbegin', RH.ui.topbar('map'));
 const $ = (s) => document.querySelector(s);
 const esc = RH.ui.esc;
 const cardById = (id) => RH_DATA.cards.find((c) => c.id === id);
-const KIND_L = { prefix: '접두', suffix: '접미', special: '특수' };
+const KIND_L = { review: '리뷰', special: '진상 화법' };
+const IRRE = new Set(RH_DATA.irremovable || []);   // 생계형 리뷰 — 태울 수 없다 (시작 덱 12장)
 
 // ── 런 확보. 없으면 미리보기 폴백 (CONTRACT §확인 절차) ──
 const realRun = RH.run();
@@ -152,16 +157,17 @@ function openBurn() {
   $('#btnBurnOk').disabled = true;
   $('#dgrid').innerHTML = run.deck.map((id, i) => {
     const c = cardById(id) || { name: id, kind: 'special', cost: '?' };
-    return `<button class="ditem" data-i="${i}">
-      <span class="dn">${esc(c.name)}</span>
-      <span class="dk">${KIND_L[c.kind] || c.kind}${c.suit ? ' · ' + esc(c.suit) : ''} · ✍${c.cost}</span>
+    const lock = IRRE.has(id); // 생계형 리뷰(전생의 시작 덱)는 불태울 수 없다
+    return `<button class="ditem${lock ? ' lock' : ''}" data-i="${i}" ${lock ? 'disabled' : ''}>
+      <span class="dn">${esc(c.name)}${lock ? ' <span class="lifechip">생계형 리뷰</span>' : ''}</span>
+      <span class="dk">${KIND_L[c.kind] || c.kind}${c.suit ? ' · ' + esc(c.suit) : ''} · ✍${c.cost}${lock ? ' · 제거 불가' : ''}</span>
     </button>`;
   }).join('');
   $('#overlay').classList.add('open');
 }
 $('#dgrid').addEventListener('click', (e) => {
   const b = e.target.closest('.ditem');
-  if (!b) return;
+  if (!b || b.disabled) return;
   document.querySelectorAll('.ditem').forEach((x) => x.classList.remove('sel'));
   b.classList.add('sel');
   burnIdx = +b.dataset.i;
@@ -169,7 +175,7 @@ $('#dgrid').addEventListener('click', (e) => {
 });
 $('#btnBurnCancel').addEventListener('click', () => $('#overlay').classList.remove('open'));
 $('#btnBurnOk').addEventListener('click', () => {
-  if (burnIdx === null) return;
+  if (burnIdx === null || IRRE.has(run.deck[burnIdx])) return;   // 생계형 리뷰 이중 방어
   const c = cardById(run.deck[burnIdx]) || { name: run.deck[burnIdx] };
   pendingPatch = { deckRemoveIdx: burnIdx };     // 실제 제거는 completeNode 가 수행
   $('#overlay').classList.remove('open');
