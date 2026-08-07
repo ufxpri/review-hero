@@ -1,98 +1,148 @@
 <meta charset="utf-8">
-<title>이세계 리뷰용사 — 1막 지도</title>
+<title>이세계 리뷰용사 — 배송 조회</title>
 <link rel="stylesheet" href="shared.css">
 <style>
-/* ── 던전 상가 층별 안내도 — 아래(1층)에서 위(6층 지배인실)로 올라간다 ── */
-.wrap{max-width:920px;margin:0 auto;padding:22px 16px 60px}
-
-/* 상단 요약 — 백화점 안내데스크 간판 느낌 */
-.deskhead{display:flex;align-items:center;gap:16px;flex-wrap:wrap;
-  border:1px solid var(--edge-hi);border-radius:8px;padding:14px 18px;margin-bottom:6px;
-  background:linear-gradient(rgba(232,220,192,.07),rgba(232,220,192,.02)),var(--panel)}
-.deskhead .title{display:flex;flex-direction:column;gap:3px}
-.deskhead .title b{font-size:19px;color:var(--gold);letter-spacing:-.4px}
-.deskhead .title span{font-size:11px;color:var(--dim);letter-spacing:.5px}
-.deskhead .stats{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
-.deskhead .stat{display:flex;align-items:center;gap:6px;border:1px solid var(--edge);
-  border-radius:5px;padding:6px 12px;background:rgba(0,0,0,.35);
-  font-size:14px;font-variant-numeric:tabular-nums}
-.deskhead .stat b{font-size:16px;color:var(--ink)}
-.deskhead .stat .lb{font-size:11px;color:var(--dim)}
-.notice{font-size:11px;color:var(--dim);text-align:center;margin:8px 0 18px;letter-spacing:.3px}
-
-/* 층 한 줄 */
-.floor{display:flex;gap:14px;align-items:stretch;border:1px solid var(--edge);
-  border-radius:8px;padding:12px 14px;background:var(--panel);position:relative}
-.floor .fno{flex:none;width:96px;display:flex;flex-direction:column;justify-content:center;
-  gap:4px;border-right:1px dashed var(--edge);padding-right:12px}
-.floor .fno b{font-size:22px;letter-spacing:-.5px;color:var(--ink);font-variant-numeric:tabular-nums}
-.floor .fno span{font-size:10.5px;color:var(--dim);line-height:1.35}
-.floor .nodes{display:flex;gap:10px;flex:1;align-items:stretch}
-
-/* 층 상태 3종 — 지나온 층 / 현재 층 / 잠긴 층 */
-.floor.past{opacity:.5}
-.floor.past .fno b{color:var(--dim)}
-.floor.locked{opacity:.65;filter:grayscale(.55)}
-.floor.current{border-color:var(--gold);
-  box-shadow:0 0 0 1px rgba(224,169,75,.35),0 0 26px rgba(224,169,75,.14)}
-.floor.current .fno b{color:var(--gold)}
-.heremark{position:absolute;left:-11px;top:50%;transform:translateY(-50%);
-  background:var(--gold);color:#1c1408;font-size:10.5px;font-weight:800;border-radius:4px;
-  padding:3px 7px;letter-spacing:.3px;box-shadow:0 2px 10px rgba(0,0,0,.6);
-  writing-mode:vertical-rl;text-orientation:upright}
-
-/* 층 사이 연결선 — 안내도의 에스컬레이터 표시 흉내 */
-.link{height:26px;display:flex;justify-content:center;align-items:center;gap:44px}
-.link i{display:block;width:1px;height:100%;background:var(--edge)}
-.link i.mid{background:var(--edge-hi)}
-.link.done i{opacity:.35}
-
-/* 노드 카드 = 상품 목록 한 칸 */
-.node{flex:1;min-width:0;border:1px solid var(--edge);border-radius:6px;padding:9px 11px;
-  background:linear-gradient(rgba(232,220,192,.06),rgba(232,220,192,.015)),var(--slab);
-  display:flex;flex-direction:column;gap:5px;position:relative;text-align:left;
-  color:var(--ink);font:inherit}
-.node .head{display:flex;align-items:center;gap:7px}
-.node .ico{font-size:17px}
-.node .ty{font-size:12px;font-weight:800;letter-spacing:-.2px}
-.node .badge{margin-left:auto;font-size:10px;border:1px solid var(--edge);border-radius:3px;
-  padding:1px 6px;color:var(--dim);background:rgba(0,0,0,.3)}
-.node .prod{display:flex;flex-direction:column;gap:3px;border-top:1px dashed var(--edge);
-  padding-top:5px}
-.node .nm{font-size:12.5px;font-weight:700;line-height:1.3}
-.node .meta{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--dim);
+/* ── 지도 = 배송 조회 화면 (ADR-024) ──────────────────────────────
+   운송장 하나를 조회한 화면이다. 노드가 경유지, 간선이 배송 경로,
+   현재 위치가 트럭, 최종 목적지가 6층 지배인실. 아래(집화)에서 위(인수)로 간다. */
+body{
+  background:
+    linear-gradient(rgba(18,16,14,.90),rgba(10,9,8,.94)),
+    url("../assets/map-dispatch.png") center/cover no-repeat fixed,
+    var(--bg);
+}
+.wrap{max-width:1060px;margin:0 auto;padding:14px 16px 24px}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
   font-variant-numeric:tabular-nums}
-.node .meta .stars{font-size:12px}
-.node .desc{font-size:11px;color:var(--dim);line-height:1.45;border-top:1px dashed var(--edge);
-  padding-top:5px}
 
-/* 클릭 가능(현재 층) */
-button.node{cursor:pointer}
+/* ── 운송장 ─────────────────────────────────────────────── */
+.waybill{border:1px solid var(--edge-hi);border-radius:7px;padding:0;overflow:hidden;
+  background:linear-gradient(rgba(232,220,192,.05),rgba(232,220,192,.015)),var(--panel)}
+.wb-top{display:flex;align-items:flex-start;gap:18px;flex-wrap:wrap;padding:12px 16px 11px;
+  border-bottom:1px dashed var(--edge)}
+.wb-id .lb{font-size:10px;color:var(--dim);letter-spacing:1.4px;display:block;margin-bottom:3px}
+.wb-id b{font-size:23px;color:var(--gold);letter-spacing:1px;line-height:1.05;display:block}
+.wb-id .sub{font-size:10.5px;color:var(--dim);letter-spacing:.4px}
+.wb-state{margin-left:auto;display:flex;align-items:center;gap:8px}
+.wb-state .now{display:flex;flex-direction:column;align-items:flex-end;gap:2px}
+.wb-state .now b{font-size:15px;color:var(--ink);letter-spacing:-.2px}
+.wb-state .now span{font-size:10.5px;color:var(--dim)}
+.wb-state .seal{border:1px solid var(--red);color:#e39d8b;border-radius:4px;padding:5px 9px;
+  font-size:10.5px;letter-spacing:.4px;line-height:1.25;text-align:center;
+  background:rgba(194,69,46,.10)}
+
+.wb-grid{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px dashed var(--edge)}
+.wb-cell{padding:9px 16px;border-right:1px dashed var(--edge);min-width:0}
+.wb-cell:last-child{border-right:0}
+.wb-cell .k{font-size:10px;color:var(--dim);letter-spacing:1px;margin-bottom:3px}
+.wb-cell .v{font-size:12.5px;color:var(--ink);line-height:1.35;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wb-cell .v em{font-style:normal;color:var(--gold)}
+.wb-cell .v2{font-size:10.5px;color:var(--dim);margin-top:2px}
+
+/* 진행 단계 띠 — 배송 조회의 그 막대 */
+.steps{display:flex;align-items:stretch;padding:9px 16px 10px;gap:0}
+.step{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;position:relative;
+  font-size:10px;color:var(--dim);letter-spacing:-.2px}
+.step::before{content:'';position:absolute;top:5px;left:-50%;width:100%;height:1px;
+  background:var(--edge)}
+.step:first-child::before{display:none}
+.step i{width:11px;height:11px;border-radius:50%;border:1px solid var(--edge);
+  background:#191510;position:relative;z-index:1;font-style:normal;font-size:8px;
+  line-height:9px;text-align:center;color:#191510}
+.step.past{color:#b8a888}
+.step.past i{background:var(--edge-hi);border-color:var(--edge-hi);color:#1c1408}
+.step.past::before{background:var(--edge-hi)}
+.step.on{color:var(--gold);font-weight:800}
+.step.on i{background:var(--gold);border-color:var(--gold);
+  box-shadow:0 0 0 3px rgba(224,169,75,.22)}
+.step.on::before{background:var(--edge-hi)}
+
+/* 서사 한 줄 — 매번 읽히는 자리라 짧게 (worldview §5.3 간결한 평서체) */
+.leak{display:flex;align-items:center;gap:10px;margin:9px 2px 12px;flex-wrap:wrap}
+.leak p{font-size:12px;color:#b5a68c;line-height:1.5;letter-spacing:-.2px}
+.leak .tag{margin-left:auto;font-size:10px;color:var(--dim);border:1px solid var(--edge);
+  border-radius:3px;padding:2px 7px;background:rgba(0,0,0,.35);white-space:nowrap}
+
+/* ── 경로 그래프 ─────────────────────────────────────────── */
+.route{position:relative}
+.route svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:0;
+  overflow:visible}
+.route .row{position:relative;z-index:1;display:flex;align-items:stretch;gap:12px;
+  padding:0 0 15px}
+.route .row:last-child{padding-bottom:0}
+.gut{flex:none;width:112px;display:flex;flex-direction:column;justify-content:center;gap:2px;
+  padding-right:10px;text-align:right}
+.gut b{font-size:15px;color:var(--dim);letter-spacing:-.3px}
+.gut span{font-size:10.5px;color:#6f6656;line-height:1.3}
+.row.here .gut b{color:var(--gold)}
+.row.here .gut span{color:#b5a68c}
+/* .row.here .gut span 규칙에 잡히지 않도록 태그를 달리한다 (i.truck) */
+.gut i.truck{display:block;font-style:normal;margin-top:5px;font-size:10px;font-weight:800;color:#1c1408;
+  background:var(--gold);border-radius:4px;padding:3px 4px;letter-spacing:-.3px;
+  text-align:center;white-space:nowrap;box-shadow:0 2px 10px rgba(0,0,0,.55)}
+.nodes{flex:1;display:flex;gap:12px;min-width:0}
+
+/* 경유지 카드 */
+.node{flex:1;min-width:0;border:1px solid var(--edge);border-radius:6px;padding:8px 11px;
+  background:linear-gradient(rgba(232,220,192,.05),rgba(232,220,192,.01)),var(--slab);
+  display:flex;flex-direction:column;gap:4px;text-align:left;color:var(--ink);font:inherit;
+  position:relative}
+.node .head{display:flex;align-items:center;gap:6px}
+.node .ico{font-size:14px}
+.node .ty{font-size:11.5px;font-weight:800;letter-spacing:-.2px}
+.node .badge{margin-left:auto;font-size:9.5px;border:1px solid var(--edge);border-radius:3px;
+  padding:1px 5px;color:var(--dim);background:rgba(0,0,0,.35);white-space:nowrap}
+.node .nm{font-size:12.5px;font-weight:700;line-height:1.25;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.node .meta{display:flex;align-items:center;gap:7px;font-size:10.5px;color:var(--dim)}
+.node .meta .stars{font-size:11px;letter-spacing:.5px}
+.node .desc{font-size:10.5px;color:var(--dim);line-height:1.4}
+
+.node.done{border-color:#4d6b50;background:rgba(79,154,94,.07)}
+.node.done .badge{color:var(--green);border-color:#4d6b50}
+.node.miss{opacity:.32}
+.node.ahead{opacity:.55;filter:grayscale(.4)}
+button.node{cursor:pointer;border-color:var(--edge-hi);
+  background:linear-gradient(rgba(224,169,75,.10),rgba(224,169,75,.02)),var(--slab);
+  box-shadow:0 0 0 1px rgba(224,169,75,.18),0 6px 22px rgba(0,0,0,.45)}
+button.node .badge{color:var(--gold);border-color:var(--edge-hi)}
 button.node:hover{border-color:var(--gold);transform:translateY(-2px);
-  box-shadow:0 6px 20px rgba(0,0,0,.5),0 0 0 1px rgba(224,169,75,.5);
-  transition:transform .1s,box-shadow .1s}
+  box-shadow:0 0 0 1px rgba(224,169,75,.55),0 9px 26px rgba(0,0,0,.6)}
 button.node:hover .enter{opacity:1}
-.enter{position:absolute;right:9px;bottom:8px;font-size:10.5px;font-weight:800;
-  color:var(--gold);opacity:.55}
-.node.done{opacity:.55}
-.node.done .badge{color:var(--green);border-color:var(--green)}
-.node.lockcard .badge{color:var(--dim)}
+.enter{position:absolute;right:9px;bottom:7px;font-size:10px;font-weight:800;
+  color:var(--gold);opacity:.5}
 
-/* 6층 보스 칸 — 지배인실 */
-.floor.bossfloor{background:linear-gradient(rgba(194,69,46,.08),rgba(0,0,0,0)),var(--panel)}
-.floor.bossfloor .fno span{color:#e08b72}
-.node.boss{border-color:#7a3a2c;background:linear-gradient(rgba(194,69,46,.12),rgba(0,0,0,.1)),var(--slab)}
-.node.boss .ty{color:#e08b72}
-.node.boss .nm{font-size:14px;color:#f0c9a0}
-button.node.boss:hover{border-color:var(--red);
-  box-shadow:0 6px 20px rgba(0,0,0,.5),0 0 0 1px rgba(194,69,46,.6)}
+/* 최종 목적지 — 6층 지배인실은 늘 보인다 */
+.row.dest .node{border-color:#7a3a2c;
+  background:linear-gradient(rgba(194,69,46,.13),rgba(0,0,0,.1)),var(--slab)}
+.row.dest .node .ty{color:#e08b72}
+.row.dest .node .nm{font-size:13.5px;color:#f0c9a0}
+.row.dest button.node:hover{border-color:var(--red);
+  box-shadow:0 0 0 1px rgba(194,69,46,.6),0 9px 26px rgba(0,0,0,.6)}
+.row.dest .gut b{color:#e08b72}
+
+/* 출발지 표식 */
+.origin{position:relative;z-index:1;display:flex;align-items:center;gap:10px;margin-top:2px}
+.origin .gut{padding-right:10px}
+.origin .pin{width:9px;height:9px;border-radius:50%;background:var(--edge-hi);
+  box-shadow:0 0 0 3px rgba(195,154,82,.18)}
+.origin .txt{font-size:10.5px;color:var(--dim)}
+
+/* 간선 */
+.route path{fill:none;stroke-linecap:round}
+.route path.e-done{stroke:#c39a52;stroke-width:2}
+.route path.e-active{stroke:var(--gold);stroke-width:2.4;
+  filter:drop-shadow(0 0 5px rgba(224,169,75,.5))}
+.route path.e-ahead{stroke:#5b5041;stroke-width:1.3;stroke-dasharray:4 5}
+.route path.e-miss{stroke:#3d372d;stroke-width:1;stroke-dasharray:2 6}
 
 /* 런 없음 폴백 */
-.norun{max-width:460px;margin:110px auto 0;text-align:center;display:flex;
+.norun{max-width:470px;margin:100px auto 0;text-align:center;display:flex;
   flex-direction:column;gap:14px;padding:30px 26px}
-.norun .ico{font-size:40px}
+.norun .ico{font-size:38px}
 .norun h2{font-size:17px}
-.norun p{font-size:12.5px;color:var(--dim);line-height:1.6}
+.norun p{font-size:12.5px;color:var(--dim);line-height:1.65}
 .norun .btns{display:flex;gap:10px;justify-content:center;margin-top:6px}
 </style>
 <script src="data.js"></script>
@@ -112,10 +162,10 @@ const esc = RH.ui.esc;
 if (!run) {
   document.body.insertAdjacentHTML('beforeend', `
     <div class="norun panel">
-      <div class="ico">🗺️</div>
-      <h2>진행 중인 원정이 없습니다</h2>
-      <p>던전 상가는 원정 중에만 입장할 수 있습니다.<br>
-         새 원정을 시작하면 1막 안내도가 발급됩니다.</p>
+      <div class="ico">📦</div>
+      <h2>조회할 운송장이 없습니다</h2>
+      <p>배송 조회는 원정 중에만 열람할 수 있습니다.<br>
+         새 원정을 시작하면 1막 운송장이 발급됩니다.</p>
       <div class="btns">
         <button class="btn primary" id="btnNew">새 원정 시작</button>
         <a class="btn ghost" href="index.html">메인으로</a>
@@ -126,102 +176,184 @@ if (!run) {
     location.reload();
   });
 } else {
-  renderMap(run);
+  renderTracking(run);
 }
 
-function renderMap(run) {
+function renderTracking(run) {
   const EN = Object.fromEntries(RH_DATA.enemies.map((e) => [e.id, e]));
   // 상품 별점 — 노드 종류 기준(위험할수록 「프리미엄」). E03 처럼 정예급 적이
   // 일반 전투 풀에 섞여 나와도 노드 표기는 일관되게 유지한다.
   const TYPE_STARS = { battle: 2, elite: 3, boss: 5 };
-  const FLOOR_DESC = {
-    1: '입점 매장', 2: '전문 매장', 3: '전문 매장', 4: '전문 매장',
-    5: '휴게·편의 시설', 6: '지배인실 — 관계자 외 출입 금지',
-  };
+  // 층 = 배송 단계. 물류 용어로 읽히게 두되 층 번호를 지우지는 않는다.
+  const STAGE = ['집화 처리', '간선 상차', '중간 분류', '간선 하차', '배송 준비', '인수 예정'];
+  const STAGE_SUB = { 6: '지배인실' };
   const NODE_DESC = {
-    event: '무슨 일이 벌어질지 모르는 매장입니다.',
-    shop: '리뷰용사 전용 취급점. 카드·소모품 판매.',
-    rest: '휴게 공간 — 의지를 회복할 수 있습니다.',
+    event: '확인되지 않은 취급 구간',
+    shop: '취급점 — 카드·소모품',
+    rest: '휴게 시설 — 의지 회복',
   };
 
-  const nodeCard = (node, floorState) => {
-    const isCombat = node.type === 'battle' || node.type === 'elite' || node.type === 'boss';
-    const enemy = isCombat ? EN[node.enemy] : null;
-    const clickable = floorState === 'current';
+  const floors = run.map.floors;
+  const visitedOf = (f) => (floors[f - 1] || []).find((n) => n.visited) || null;
+  const orderNo = `RH-${run.act}A-${String(run.seed % 10000).padStart(4, '0')}`;
+  const statusNow = run.floor >= 6 ? '배송지 도착' : '배송 중';
+  const statusSub = `1막 ${run.floor}/6 구간 · ${STAGE[run.floor - 1]}`;
+
+  // ── 운송장 ──
+  const stepsHtml = STAGE.map((s, i) => {
+    const f = i + 1;
+    const cls = f < run.floor ? 'past' : f === run.floor ? 'on' : '';
+    return `<div class="step ${cls}"><i>${f < run.floor ? '✓' : ''}</i><span>${f}F ${s}</span></div>`;
+  }).join('');
+
+  const waybill = `
+    <div class="waybill">
+      <div class="wb-top">
+        <div class="wb-id">
+          <span class="lb">운송장 번호</span>
+          <b class="mono">${orderNo}</b>
+          <span class="sub">만물마켓 물류 · 1막 구간 조회</span>
+        </div>
+        <div class="wb-state">
+          <div class="now"><b>${statusNow}</b><span>${esc(statusSub)}</span></div>
+          <div class="seal">무단<br>조회</div>
+        </div>
+      </div>
+      <div class="wb-grid">
+        <div class="wb-cell"><div class="k">보내는 사람</div>
+          <div class="v">발송인 미표기</div>
+          <div class="v2">물류 담당 직인만 찍혀 있다</div></div>
+        <div class="wb-cell"><div class="k">받는 사람</div>
+          <div class="v"><em>본사 직영 · 답글 없는 사장</em></div>
+          <div class="v2">6F 지배인실 — 관계자 외 출입 금지</div></div>
+        <div class="wb-cell"><div class="k">품목</div>
+          <div class="v">보급품 · 내용 미상</div>
+          <div class="v2">파손 주의 · 개봉 시 반품 불가</div></div>
+        <div class="wb-cell"><div class="k">조회자</div>
+          <div class="v">${esc(RH.penname() || '미등록')}</div>
+          <div class="v2">🧠 ${run.will}/${run.maxWill} · 🪙 ${run.gold} · 🃏 ${run.deck.length}장</div></div>
+      </div>
+      <div class="steps">${stepsHtml}</div>
+    </div>
+    <div class="leak">
+      <p>이 경로를 흘린 것은 물류 담당이다. 남의 운송장이고, 나는 이 택배와 같은 길로 6층까지 올라간다.</p>
+      <span class="tag">열람 기록 남지 않음</span>
+    </div>`;
+
+  // ── 경유지 카드 ──
+  const nodeCard = (node, state) => {
+    const enemy = EN[node.enemy];
+    const clickable = state === 'sel';
     const tag = clickable ? 'button' : 'div';
+    const badge = { done: '통과 ✓', miss: '미경유', ahead: '예정', sel: '선택 가능' }[state];
 
-    let badge = '';
-    if (floorState === 'past') badge = node.visited ? '이용 완료' : '지나침';
-    if (floorState === 'locked') badge = '🔒 준비 중';
-    if (floorState === 'current') badge = '영업 중';
+    const body = enemy
+      ? `<div class="nm">${esc(enemy.name)}</div>
+         <div class="meta">${RH.ui.stars(TYPE_STARS[node.type] ?? 2)}
+           <span>🧠 의지 ${enemy.will}</span></div>`
+      : `<div class="desc">${esc(NODE_DESC[node.type] || '')}</div>`;
 
-    let body = '';
-    if (enemy) {
-      body = `<div class="prod">
-        <div class="nm">${esc(enemy.name)}</div>
-        <div class="meta">${RH.ui.stars(TYPE_STARS[node.type] ?? 2)}
-          <span>🧠 의지 ${enemy.will}</span></div>
-      </div>`;
-    } else {
-      body = `<div class="desc">${esc(NODE_DESC[node.type] || '')}</div>`;
-    }
-
-    const cls = ['node', node.type === 'boss' ? 'boss' : '',
-      floorState === 'past' && node.visited ? 'done' : '',
-      floorState === 'locked' ? 'lockcard' : ''].filter(Boolean).join(' ');
-
-    return `<${tag} class="${cls}" ${clickable ? `data-node="${node.id}"` : ''}>
+    return `<${tag} class="node ${state}" data-nid="${node.id}"
+        ${clickable ? `data-go="${node.id}"` : ''}>
       <div class="head"><span class="ico">${RH.NODE_ICON[node.type]}</span>
         <span class="ty">${RH.NODE_LABEL[node.type]}</span>
-        ${badge ? `<span class="badge">${badge}</span>` : ''}</div>
+        <span class="badge">${badge}</span></div>
       ${body}
-      ${clickable ? '<span class="enter">입장 ▸</span>' : ''}
+      ${clickable ? '<span class="enter">경유 ▸</span>' : ''}
     </${tag}>`;
   };
 
-  // 위(6층)부터 아래(1층)로 쌓는다 — 안내도처럼 위층이 위에 온다
+  // 위(6F 목적지)에서 아래(1F 집화)로 쌓는다 — 조회 화면은 최신 단계가 위다
+  const open = RH.reachable(run); // 직전 경유지에서 이어지는 곳만 선택 가능 (ADR-024)
   const rows = [];
   for (let f = 6; f >= 1; f--) {
-    const nodes = run.map.floors[f - 1] || [];
-    const state = f < run.floor ? 'past' : f === run.floor ? 'current' : 'locked';
-    rows.push(`<div class="floor ${state} ${f === 6 ? 'bossfloor' : ''}" data-floor="${f}">
-      ${state === 'current' ? '<span class="heremark">현재위치</span>' : ''}
-      <div class="fno"><b>${f}F</b><span>${FLOOR_DESC[f]}</span></div>
-      <div class="nodes">${nodes.map((n) => nodeCard(n, state)).join('')}</div>
+    const nodes = floors[f - 1] || [];
+    const rowCls = ['row', f === run.floor ? 'here' : '', f === 6 ? 'dest' : ''].filter(Boolean).join(' ');
+    const cards = nodes.map((n) => {
+      let state;
+      if (f < run.floor) state = n.visited ? 'done' : 'miss';
+      else if (f === run.floor) state = open.includes(n.id) ? 'sel' : 'miss'; // 경로 밖은 못 간다
+      else state = 'ahead';
+      return nodeCard(n, state);
+    }).join('');
+    rows.push(`<div class="${rowCls}" data-floor="${f}">
+      <div class="gut"><b>${f}F</b><span>${STAGE[f - 1]}${STAGE_SUB[f] ? `<br>${STAGE_SUB[f]}` : ''}</span>
+        ${f === run.floor ? '<i class="truck">🚚 현재 위치</i>' : ''}</div>
+      <div class="nodes">${cards}</div>
     </div>`);
-    if (f > 1) rows.push(`<div class="link ${f <= run.floor ? '' : 'done'}"><i></i><i class="mid"></i><i></i></div>`);
   }
 
   document.body.insertAdjacentHTML('beforeend', `
     <div class="wrap">
-      <div class="deskhead panel">
-        <div class="title"><b>던전 상가 층별 안내도</b>
-          <span>1막 — DUNGEON MALL FLOOR GUIDE</span></div>
-        <div class="stats">
-          <span class="stat"><span class="lb">현재</span><b>1막 ${run.floor}층</b></span>
-          <span class="stat">🧠<b>${run.will}</b><span class="lb">/ ${run.maxWill} 의지</span></span>
-          <span class="stat">🪙<b>${run.gold}</b><span class="lb">골드</span></span>
-          <span class="stat">🃏<b>${run.deck.length}</b><span class="lb">장</span></span>
+      ${waybill}
+      <div class="route" id="route">
+        <svg id="edges" aria-hidden="true"></svg>
+        ${rows.join('')}
+        <div class="origin" id="origin">
+          <div class="gut"><b style="font-size:11px">발송</b></div>
+          <span class="pin"></span>
+          <span class="txt">집화 접수 — 이 지점부터 추적이 시작된다</span>
         </div>
       </div>
-      <p class="notice">※ 현재 층의 매장 한 곳을 골라 입장하십시오. 입장 후에는 되돌아올 수 없습니다.
-        불만 사항은 리뷰(좋아요 감점)로 남겨 주십시오.</p>
-      ${rows.join('')}
     </div>`);
 
-  document.querySelectorAll('button.node[data-node]').forEach((el) => {
-    el.addEventListener('click', () => RH.enterNode(el.dataset.node));
+  document.querySelectorAll('button.node[data-go]').forEach((el) => {
+    el.addEventListener('click', () => RH.enterNode(el.dataset.go));
   });
 
-  // 현재 층이 화면에 들어오게 스크롤 (6층이 위라 초반 런은 아래쪽에 있다).
-  // 리로드 시 브라우저의 스크롤 복원이 위치를 되돌리므로 load 후 한 번 더 잡는다.
-  history.scrollRestoration = 'manual';
-  const cur = document.querySelector('.floor.current');
-  if (cur) {
-    const focusCur = () => cur.scrollIntoView({ block: 'center' });
-    focusCur();
-    window.addEventListener('load', () => requestAnimationFrame(focusCur));
+  // ── 간선(배송 경로) — DOM 배치를 측정해 SVG로 잇는다 ──
+  const route = document.getElementById('route');
+  const svg = document.getElementById('edges');
+  const originPin = document.querySelector('#origin .pin');
+
+  function drawEdges() {
+    const box = route.getBoundingClientRect();
+    svg.setAttribute('viewBox', `0 0 ${box.width} ${box.height}`);
+    const anchor = (el, side) => {
+      const r = el.getBoundingClientRect();
+      return { x: r.left - box.left + r.width / 2,
+               y: (side === 'top' ? r.top : r.bottom) - box.top };
+    };
+    const nodeEl = (id) => route.querySelector(`.node[data-nid="${id}"]`);
+
+    // 아래 층(from) → 위 층(to). f=0 은 출발지 표식.
+    const paths = [];
+    for (let f = 0; f <= 5; f++) {
+      const froms = f === 0 ? [{ el: originPin, visited: true, next: null }]
+        : (floors[f - 1] || []).map((n) => ({ el: nodeEl(n.id), visited: !!n.visited, next: n.next || null }));
+      const tos = (floors[f] || []).map((n) => ({ el: nodeEl(n.id), visited: !!n.visited, id: n.id }));
+      const toFloor = f + 1;
+      for (const a of froms) {
+        if (!a.el) continue;
+        for (const b of tos) {
+          if (!b.el) continue;
+          // 실제 경로만 그린다 — next 가 없는 구 세이브는 전결합으로 폴백
+          if (a.next && !a.next.includes(b.id)) continue;
+          let cls;
+          if (a.visited && b.visited) cls = 'e-done';
+          else if (a.visited && toFloor === run.floor) cls = 'e-active';
+          else if (toFloor > run.floor) cls = 'e-ahead';
+          else cls = 'e-miss';
+          const p1 = anchor(a.el, 'top');
+          const p2 = anchor(b.el, 'bottom');
+          const dy = Math.abs(p1.y - p2.y) * 0.55;
+          paths.push(`<path class="${cls}" d="M${p1.x.toFixed(1)} ${p1.y.toFixed(1)}`
+            + ` C${p1.x.toFixed(1)} ${(p1.y - dy).toFixed(1)},`
+            + ` ${p2.x.toFixed(1)} ${(p2.y + dy).toFixed(1)},`
+            + ` ${p2.x.toFixed(1)} ${p2.y.toFixed(1)}"/>`);
+        }
+      }
+    }
+    // 이미 지나온 경로가 위에 오도록 순서를 잡는다
+    const order = { 'e-miss': 0, 'e-ahead': 1, 'e-done': 2, 'e-active': 3 };
+    paths.sort((x, y) => order[x.match(/e-\w+/)[0]] - order[y.match(/e-\w+/)[0]]);
+    svg.innerHTML = paths.join('');
   }
+
+  drawEdges();
+  window.addEventListener('load', drawEdges);
+  window.addEventListener('resize', drawEdges);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(drawEdges);
 }
 </script>
 <script src="debug.js"></script>

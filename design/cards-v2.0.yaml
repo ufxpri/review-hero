@@ -1,14 +1,21 @@
 # ============================================================================
 # 이세계 리뷰용사 — 카드 데이터 v2.0 (정본)
-# 근거: card-system-v2.md (대상 → 리뷰 / 단일 초점 / 원산지 보너스)
+# 근거: card-system-v2.md (대상 → 리뷰 / 단일 초점 / 원산지 보너스) · ADR-023(대상 균형·방어 축)
 # 대체: cards-v1.0.yaml (조합형. v1은 이력 보존용으로 유지)
 # 용어: worldview-v1.0.md §6 사전 준수 — 필력·의지·신뢰도·만물대장
-# 총 60장 = 전생 12 + 적 19 + 구성품 20 + 진상 화법 9
+# 총 66장 = 전생 12 + 적 본체 9 + 적 구성품 18 + 내 장비 18 + 진상 화법 9
 # ⚠ 밸런스 미검증: 모든 수치는 잠정값. 재시뮬(밸런스 라운드 1-v2)로 확정한다.
 # ============================================================================
 #
+# ── 대상 분포 (ADR-023 ③) ───────────────────────────────────
+#   enemy            30 = 전생 12 + 적 본체 9 + 진상 화법 9
+#   enemy_equipment  18 = 구성품 6종 × 3
+#   my_equipment     18 = 내 장비 3종 × 5 + 범용 찬양 3
+#   ★4~5(찬양·버프)는 my_equipment 18장과 정확히 일치한다 —
+#   「별점만 보고 공격인지 버프인지 안다」(card-system-v2 §6)가 데이터에서 쌍방향으로 성립한다.
+#
 # ── 스키마 ──────────────────────────────────────────────────
-#   id: string          # Z(전생) / 적·구성품별 접두 / X(진상 화법)
+#   id: string          # Z(전생) / 적·구성품별 접두 / S·H·F(내 장비) / X(진상 화법)
 #   name: string        # 카드명 (UI 표기)
 #   origin:             # 원산지. 없으면 원산지 판정 영구 미발동
 #     enemy: string     #   적 id. 적 본체 대상 제출 시 일치 판정
@@ -32,12 +39,20 @@
 #   일반    그 외                  ×1.0,           게이지  0
 #   헛소리  tag ∈ null_tags       ×0.5,           게이지 −2
 #   배율은 effect.value에 곱한다(내림, 최소 1 — GDD §2-1).
+#   구성품 대상: 판정 태그는 그 구성품의 tags, 무효 태그는 적 본체의 null_tags를 따른다.
+#   내 장비 대상: 판정 태그·무효 태그는 그 장비의 것을 따른다(원산지는 영구 미발동).
 #
-# ── effect type (v1에서 승계, 시뮬레이터 구현 대상) ────────
+# ── effect type ────────────────────────────────────────────
 #   damage / equipment_damage / equipment_dot / disable_equipment /
 #   weaken_next_action / stun / remove_enemy_buff / attack_down / damage_buff /
-#   draw / energy_next_turn / heal / gauge / delay_enemy_action / create_card /
-#   gift_card / store_damage_taken / reaction_counter / retreat / damage_per_penalty
+#   defense_buff / draw / energy_next_turn / heal / gauge / delay_enemy_action /
+#   create_card / gift_card / store_damage_taken / reaction_counter / retreat /
+#   damage_per_penalty
+#
+#   defense_buff (ADR-023 ①): 내 장비에 방어를 부여한다. target은 반드시 my_equipment.
+#   방어는 피해를 흡수하며 소모되고 남은 양은 전투 내내 유지된다. 판정 배율을 받는다.
+#   ⚠ 방어량은 §5 피해 기준선보다 한 단계 낮게 잡았다 — 소모형이라 한 번 쌓으면
+#     여러 턴에 걸쳐 값을 하기 때문이다. 확정은 밸런스 라운드 1(v2).
 # ============================================================================
 
 
@@ -252,7 +267,9 @@ past_life:
 
 
 # ============================================================================
-# 적 본체 리뷰 (T01~T06) — 19장
+# 적 본체 리뷰 (T01~T06) — 9장 · target: enemy
+# 물건이 아니라 「사람」을 겨냥한 리뷰만 여기 남는다 — 자세·포효·영창·포즈·응대.
+# 물건에 대한 불만은 그 물건(구성품)을 대상으로 옮겼다 (ADR-023 ③).
 # ============================================================================
 enemy_reviews:
 
@@ -273,71 +290,7 @@ enemy_reviews:
     effect: { type: damage, value: 5 }
     ui: "의지 피해 5"
 
-  - id: G02
-    name: "바가지"
-    origin: { enemy: E01 }
-    suit: 감성
-    tag: 개연성
-    cost: 2
-    stars: 1
-    rarity: common
-    target: enemy
-    text: |
-      같은 물건을 옆 골목에서 삼분의 일 가격에 봤습니다.
-      정품 인증서를 보여주시길래 봤더니
-      그 인증서도 짝퉁이었습니다.
-    effect: { type: damage, value: 7 }
-    ui: "의지 피해 7"
-
-  - id: G03
-    name: "사람은 착해요"
-    origin: { enemy: E01 }
-    suit: 감성
-    tag: 감성
-    cost: 1
-    stars: 3
-    rarity: common
-    target: enemy
-    text: |
-      사기는 치는데 웃으면서 칩니다.
-      화를 낼 타이밍을 놓쳤습니다.
-      집에 와서 생각하니 화가 납니다.
-    effect: { type: damage, value: 3, heal: 4 }
-    ui: "의지 피해 3, 내 의지 4 회복"
-
   # ── T02 오크 중량 전사 (E02) ──────────────────────────────
-  - id: O01
-    name: "자세가 무너져 있어요"
-    origin: { enemy: E02 }
-    suit: 품질
-    tag: 무게
-    cost: 1
-    stars: 2
-    rarity: common
-    target: enemy
-    text: |
-      본인도 무게를 못 버티고 있습니다.
-      한쪽 어깨가 눈에 띄게 내려가 있어요.
-      싸우기 전에 병원부터 가시는 게 어떨까요.
-    effect: { type: damage, value: 6 }
-    ui: "의지 피해 6"
-
-  - id: O02
-    name: "예비동작이 너무 길어요"
-    origin: { enemy: E02 }
-    suit: 배송
-    tag: 속도
-    cost: 2
-    stars: 1
-    rarity: common
-    target: enemy
-    text: |
-      내려찍기 예비동작이 두 박자입니다.
-      그동안 저는 물을 한 모금 마시고 왔습니다.
-      다녀와도 아직 안 내려와 있었습니다.
-    effect: { type: delay_enemy_action, value: 1, damage: 5 }
-    ui: "의지 피해 5, 적의 다음 행동 1턴 지연"
-
   - id: O03
     name: "포효가 시끄러워요"
     origin: { enemy: E02 }
@@ -355,38 +308,6 @@ enemy_reviews:
     ui: "의지 피해 5, 적 버프 1개 제거"
 
   # ── T03 엘프 이펙트 마법사 (E03) ──────────────────────────
-  - id: L01
-    name: "영창이 너무 길어요"
-    origin: { enemy: E03 }
-    suit: 배송
-    tag: 속도
-    cost: 2
-    stars: 1
-    rarity: common
-    target: enemy
-    text: |
-      파이어볼 하나에 영창이 여덟 박자입니다.
-      그 사이에 저는 세 대 맞았습니다.
-      스킵 기능은 유료인가요.
-    effect: { type: delay_enemy_action, value: 1, damage: 5 }
-    ui: "의지 피해 5, 적의 다음 행동 1턴 지연"
-
-  - id: L02
-    name: "연비가 최악"
-    origin: { enemy: E03 }
-    suit: 성능
-    tag: 연비
-    cost: 1
-    stars: 1
-    rarity: common
-    target: enemy
-    text: |
-      마법 세 번 쓰고 앉아서 쉽니다.
-      전투가 아니라 인터벌 트레이닝을 보는 것 같습니다.
-      중간에 응원을 해야 하나 고민했습니다.
-    effect: { type: damage, value: 7 }
-    ui: "의지 피해 7"
-
   - id: L03
     name: "이펙트만 화려함"
     origin: { enemy: E03 }
@@ -436,22 +357,6 @@ enemy_reviews:
     effect: { type: weaken_next_action, value: -40, damage: 5 }
     ui: "의지 피해 5, 적의 다음 행동 위력 −40%"
 
-  - id: D03
-    name: "빠르긴 빨라요"
-    origin: { enemy: E04 }
-    suit: 배송
-    tag: 속도
-    cost: 1
-    stars: 4
-    rarity: common
-    target: my_equipment
-    text: |
-      빠른 건 인정합니다. 진짜 빠릅니다.
-      그 속도로 제 지갑도 가져가셨지만
-      속도만큼은 별 넷 드리겠습니다.
-    effect: { type: damage_buff, value: 3 }
-    ui: "내 장비 부착 — 내 리뷰 피해 +3"
-
   # ── T05 나르시시스트 기사 (E05) ───────────────────────────
   - id: N01
     name: "거울을 보느라 안 싸워요"
@@ -484,22 +389,6 @@ enemy_reviews:
       제일 중요한 시간인 것 같았습니다.
     effect: { type: remove_enemy_buff, value: 1, damage: 5 }
     ui: "의지 피해 5, 적 버프 1개 제거"
-
-  - id: N03
-    name: "얼굴은 잘생겼어요"
-    origin: { enemy: E05 }
-    suit: 감성
-    tag: 디자인
-    cost: 2
-    stars: 4
-    rarity: rare
-    target: my_equipment
-    text: |
-      잘생긴 건 맞습니다. 인정합니다.
-      인정했으니까
-      이제 그만 물어보세요.
-    effect: { type: damage_buff, value: 4 }
-    ui: "내 장비 부착 — 내 리뷰 피해 +4"
 
   # ── T06 던전 지배인 「답글 없는 사장」 (B01) ───────────────
   - id: B01c
@@ -534,45 +423,21 @@ enemy_reviews:
     effect: { type: remove_enemy_buff, value: 2, gauge: 2 }
     ui: "적 버프 2개 제거, 신뢰도 +2"   # B01 페이즈2 「알바 리뷰」 저격
 
-  - id: B03c
-    name: "담당자가 계속 바뀝니다"
-    origin: { enemy: B01 }
-    suit: 배송
-    tag: 응대
-    cost: 2
-    stars: 1
-    rarity: rare
-    target: enemy
-    text: |
-      처음부터 다시 설명하기를 네 번 했습니다.
-      다섯 번째 담당자분, 안녕하세요.
-      제 이름은 아직 모르시겠죠.
-    effect: { type: weaken_next_action, value: -40, damage: 6 }
-    ui: "의지 피해 6, 적의 다음 행동 위력 −40%"
-
-  - id: B04c
-    name: "한정 수량이라면서요"
-    origin: { enemy: B01 }
-    suit: 감성
-    tag: 개연성
-    cost: 3
-    stars: 1
-    rarity: legendary
-    target: enemy
-    text: |
-      "한정 수량"이라더니 삼 년째 팔고 계십니다.
-      한정의 정의를 다시 알려주세요.
-      사전을 새로 쓰셔야 할 것 같습니다.
-    effect: { type: damage, value: 12 }
-    ui: "의지 피해 12"
-
 
 # ============================================================================
-# 구성품 리뷰 (T07~T12) — 20장
+# 장비 리뷰 — 적 구성품 18장(T07~T12) + 내 장비 18장(T17~T19)
+# ⚠ 섹션 키가 `equipment_reviews` 하나인 것은 로더가 고정 4개 섹션만 읽기 때문이다
+#   (packages/sim/src/data.ts). 대상 구분은 카드의 target 필드가 정본이다.
 # ============================================================================
 equipment_reviews:
 
-  # ── T07 짝퉁 단검 (고블린 구성품) ─────────────────────────
+  # ==========================================================================
+  # 적 구성품 (T07~T12) — 18장 · target: enemy_equipment
+  # 전부 origin.equipment 보유 → 그 구성품 앞에서 원산지가 터진다.
+  # 효과 type이 damage인 카드는 「구성품을 리뷰해서 주인의 의지를 깎는다」는 뜻이다.
+  # ==========================================================================
+
+  # ── T07 짝퉁 단검 (고블린 구성품 · #마감 #내구도) ──────────
   - id: Q01
     name: "손잡이 3주"
     origin: { enemy: E01, equipment: 짝퉁 단검 }
@@ -581,29 +446,13 @@ equipment_reviews:
     cost: 1
     stars: 1
     rarity: common
-    target: enemy
+    target: enemy_equipment
     text: |
       삼 주 만에 손잡이가 빠졌습니다.
       접착제로 붙였더니 이번엔 날이 빠지네요.
       분리형이라고 광고를 하시지 그러셨어요.
     effect: { type: damage, value: 7 }
     ui: "의지 피해 7"
-
-  - id: Q02
-    name: "정품 아니죠?"
-    origin: { enemy: E01, equipment: 짝퉁 단검 }
-    suit: 품질
-    tag: 마감          # 지적 대상이 "스티커를 붙인 솜씨" — 개연성보다 마감이 맞다
-    cost: 2
-    stars: 1
-    rarity: common
-    target: enemy
-    text: |
-      정품 인증 스티커가 붙어 있는데
-      스티커가 삐뚤어져 있습니다.
-      정품은 스티커도 똑바로 붙입니다.
-    effect: { type: damage, value: 8 }
-    ui: "의지 피해 8"
 
   - id: Q03
     name: "날이 안 서 있어요"
@@ -621,7 +470,23 @@ equipment_reviews:
     effect: { type: equipment_damage, value: 8 }
     ui: "구성품 내구도 −8"
 
-  # ── T08 초대형 둔기 (오크 구성품) ─────────────────────────
+  - id: G02
+    name: "바가지"
+    origin: { enemy: E01, equipment: 짝퉁 단검 }
+    suit: 감성
+    tag: 개연성
+    cost: 2
+    stars: 1
+    rarity: common
+    target: enemy_equipment
+    text: |
+      같은 물건을 옆 골목에서 삼분의 일 가격에 봤습니다.
+      정품 인증서를 보여주시길래 봤더니
+      그 인증서도 짝퉁이었습니다.
+    effect: { type: damage, value: 7 }
+    ui: "의지 피해 7"
+
+  # ── T08 초대형 둔기 (오크 구성품 · #무게 #내구도) ──────────
   - id: W01
     name: "손목 나감"
     origin: { enemy: E02, equipment: 초대형 둔기 }
@@ -630,7 +495,7 @@ equipment_reviews:
     cost: 1
     stars: 1
     rarity: common
-    target: enemy
+    target: enemy_equipment
     text: |
       위력은 확실한데 손목이 나갑니다.
       데드리프트 삼 년 하고 오세요.
@@ -646,7 +511,7 @@ equipment_reviews:
     cost: 2
     stars: 2
     rarity: common
-    target: enemy
+    target: enemy_equipment
     text: |
       무게중심이 앞에 쏠려 있어서
       휘두르면 제가 따라갑니다.
@@ -662,7 +527,7 @@ equipment_reviews:
     cost: 2
     stars: 1
     rarity: rare
-    target: enemy
+    target: enemy_equipment
     text: |
       성인 남성 둘이 들었는데 안 들립니다.
       판매자분은 "한 손으로 쓰는 무기"라고 하셨습니다.
@@ -670,7 +535,7 @@ equipment_reviews:
     effect: { type: stun, value: 1 }
     ui: "기절 1턴"
 
-  # ── T09 과장된 지팡이 (엘프 구성품) ───────────────────────
+  # ── T09 과장된 지팡이 (엘프 구성품 · #이펙트 #연비) ────────
   - id: M01
     name: "관상용"
     origin: { enemy: E03, equipment: 과장된 지팡이 }
@@ -679,29 +544,13 @@ equipment_reviews:
     cost: 1
     stars: 2
     rarity: common
-    target: enemy
+    target: enemy_equipment
     text: |
       이펙트는 진짜 예쁩니다. 근데 그게 답니다.
       관상용으로는 별 다섯 개 드리고 싶은데
       무기라서 하나 드립니다.
     effect: { type: damage, value: 6 }
     ui: "의지 피해 6"
-
-  - id: M02
-    name: "마나 순삭"
-    origin: { enemy: E03, equipment: 과장된 지팡이 }
-    suit: 성능
-    tag: 연비
-    cost: 2
-    stars: 1
-    rarity: common
-    target: enemy
-    text: |
-      마나가 순삭입니다. 세 번 쓰면 바닥입니다.
-      마법사가 아니라 충전기가 필요합니다.
-      본체보다 유지비가 더 나옵니다.
-    effect: { type: damage, value: 8 }
-    ui: "의지 피해 8"
 
   - id: M03
     name: "장식이 걸리적거려요"
@@ -719,16 +568,32 @@ equipment_reviews:
     effect: { type: equipment_dot, value: 3, duration: 3 }
     ui: "구성품 내구도 매턴 −3 (3턴)"
 
-  # ── T10 삐걱거리는 쌍단검 (도적 구성품) ───────────────────
+  - id: L02
+    name: "연비가 최악"
+    origin: { enemy: E03, equipment: 과장된 지팡이 }
+    suit: 성능
+    tag: 연비
+    cost: 1
+    stars: 1
+    rarity: common
+    target: enemy_equipment
+    text: |
+      이걸 들고 마법을 세 번 쓰면 앉아서 쉬어야 합니다.
+      전투가 아니라 인터벌 트레이닝을 보는 것 같습니다.
+      중간에 응원을 해야 하나 고민했습니다.
+    effect: { type: damage, value: 7 }
+    ui: "의지 피해 7"
+
+  # ── T10 삐걱거리는 쌍단검 (도적 구성품 · #속도 #마감) ──────
   - id: C01c
     name: "한 짝만 왔어요"
     origin: { enemy: E04, equipment: 삐걱거리는 쌍단검 }
     suit: 배송
     tag: 구성품
     cost: 1
-    stars: 1
+    stars: 2
     rarity: common
-    target: enemy
+    target: enemy_equipment
     text: |
       한 짝만 왔습니다.
       나머지 한 짝은 순차 배송이라는데
@@ -744,7 +609,7 @@ equipment_reviews:
     cost: 2
     stars: 2
     rarity: common
-    target: enemy
+    target: enemy_equipment
     text: |
       빠른 건 인정합니다.
       근데 움직일 때마다 삐걱거려서 기습이 안 됩니다.
@@ -758,7 +623,7 @@ equipment_reviews:
     suit: 품질
     tag: 내구도
     cost: 2
-    stars: 1
+    stars: 2
     rarity: common
     target: enemy_equipment
     text: |
@@ -768,23 +633,7 @@ equipment_reviews:
     effect: { type: equipment_damage, value: 7 }
     ui: "구성품 내구도 −7"
 
-  # ── T11 도금 갑옷 (기사 구성품) ───────────────────────────
-  - id: A01
-    name: "사진은 잘 나와요"
-    origin: { enemy: E05, equipment: 도금 갑옷 }
-    suit: 감성
-    tag: 디자인
-    cost: 1
-    stars: 4
-    rarity: common
-    target: my_equipment
-    text: |
-      광택 미쳤습니다.
-      방어력은 모르겠고 일단 사진이 잘 나옵니다.
-      그거면 됐다고 생각하기로 했습니다.
-    effect: { type: damage_buff, value: 2, draw: 1 }
-    ui: "내 장비 부착 — 내 리뷰 피해 +2, 카드 1장 드로우"
-
+  # ── T11 도금 갑옷 (기사 구성품 · #디자인 #감성) ────────────
   - id: A02
     name: "도금이 벗겨져요"
     origin: { enemy: E05, equipment: 도금 갑옷 }
@@ -809,7 +658,7 @@ equipment_reviews:
     cost: 2
     stars: 1
     rarity: common
-    target: enemy
+    target: enemy_equipment
     text: |
       장식이 많아서 무겁기만 하고 방어는 안 됩니다.
       예쁜 쇳덩이를 입고 다니는 셈입니다.
@@ -823,9 +672,9 @@ equipment_reviews:
     suit: 감성
     tag: 개연성
     cost: 2
-    stars: 1
+    stars: 3          # ★3 미지근 — 상태는 인정하고 이력만 의심한다. 부가 이득(게이지)형 (§6)
     rarity: rare
-    target: enemy
+    target: enemy_equipment
     text: |
       일 년 쓰셨다는데 흠집이 하나도 없습니다.
       실전에서 안 쓰셨거나,
@@ -833,7 +682,7 @@ equipment_reviews:
     effect: { type: damage, value: 7, gauge: 2 }
     ui: "의지 피해 7, 신뢰도 +2"
 
-  # ── T12 노예 계약서 낫 (보스 구성품) ──────────────────────
+  # ── T12 노예 계약서 낫 (보스 구성품 · #응대 #개연성) ───────
   - id: K01
     name: "환불 조항이 없어요"
     origin: { enemy: B01, equipment: 노예 계약서 낫 }
@@ -842,29 +691,13 @@ equipment_reviews:
     cost: 2
     stars: 1
     rarity: rare
-    target: enemy
+    target: enemy_equipment
     text: |
       계약서를 끝까지 다 읽었는데
       환불 조항이 없습니다.
       없는 게 아니라 안 만드신 거죠.
     effect: { type: attack_down, value: 3, duration: combat }
     ui: "적 공격력 −3 (전투 지속)"
-
-  - id: K02
-    name: "글씨가 너무 작아요"
-    origin: { enemy: B01, equipment: 노예 계약서 낫 }
-    suit: 감성
-    tag: 개연성
-    cost: 2
-    stars: 1
-    rarity: common
-    target: enemy
-    text: |
-      중요한 내용이 전부 깨알같이 적혀 있습니다.
-      돋보기로 읽었더니
-      "돋보기는 제공하지 않습니다"라고 적혀 있었습니다.
-    effect: { type: damage, value: 7 }
-    ui: "의지 피해 7"
 
   - id: K03
     name: "제 월급을 베어갔어요"
@@ -874,7 +707,7 @@ equipment_reviews:
     cost: 3
     stars: 1
     rarity: legendary
-    target: enemy
+    target: enemy_equipment
     text: |
       낫은 잘 듭니다. 제 월급을 베어갔거든요.
       성능은 별 다섯입니다.
@@ -890,13 +723,302 @@ equipment_reviews:
     cost: 2
     stars: 1
     rarity: rare
-    target: enemy
+    target: enemy_equipment
     text: |
       해지하려니 자동 갱신 사흘 전까지만 가능하답니다.
       오늘이 이틀 전입니다.
       알고 계셨죠.
     effect: { type: weaken_next_action, value: -50, damage: 5 }
     ui: "의지 피해 5, 적의 다음 행동 위력 −50%"
+
+  # ==========================================================================
+  # 내 장비 찬양 리뷰 (T17~T19) — 18장 · target: my_equipment · ★4~5
+  # 좋은 평가는 존재를 강화한다(worldview §1.1) — 내 장비에 별을 박으면 실제로 세진다.
+  # origin 없음: 내 장비는 원산지 판정 대상이 아니다(엔진이 my_equipment를 항상 비원산지로 본다).
+  # 판정은 「그 장비의 리뷰 항목」과 대조한다 — 어느 장비에 붙일지가 곧 판정 선택이다:
+  #   이세계 보급형 롱소드  tags [마감]          / 평가 불가 [연비]
+  #   물려받은 가죽 갑옷    tags [내구도, 무게]  / 평가 불가 [이펙트]
+  #   위조 인증 목걸이      tags [감성]          / 평가 불가 [출력]
+  # ==========================================================================
+
+  # ── T17 이세계 보급형 롱소드 (#마감 · 평가 불가 #연비) ─────
+  - id: S01
+    name: "가성비 최고입니다"
+    suit: 품질
+    tag: 마감          # 롱소드에 붙이면 팩트
+    cost: 1
+    stars: 4
+    rarity: common
+    target: my_equipment
+    text: |
+      보급형이라길래 기대를 안 했는데 마감이 깔끔합니다.
+      날 붙인 자리에 접착제 자국 하나 없습니다.
+      이 가격에 이 정도면 저는 할 말이 없습니다.
+    effect: { type: defense_buff, value: 4 }
+    ui: "내 장비 방어 +4"
+
+  - id: S02
+    name: "이가 안 나갑니다"
+    suit: 품질
+    tag: 내구도        # 롱소드엔 일반, 가죽 갑옷에 붙이면 팩트
+    cost: 2
+    stars: 5
+    rarity: common
+    target: my_equipment
+    text: |
+      돌벽에 세 번 부딪혔는데 이가 안 나갔습니다.
+      같은 날 받은 분은 벌써 바꾸셨다던데
+      저는 아직 바꿀 이유를 못 찾았습니다.
+    effect: { type: defense_buff, value: 6 }
+    ui: "내 장비 방어 +6"
+
+  - id: S03
+    name: "기름칠을 안 해도 됩니다"
+    suit: 성능
+    tag: 연비          # 롱소드의 평가 불가 항목 — 제 장비를 칭찬하다 헛소리가 난다
+    cost: 1
+    stars: 4
+    rarity: common
+    target: my_equipment
+    text: |
+      관리비가 안 듭니다. 기름칠을 잊고 두 주를 뒀는데 멀쩡합니다.
+      손이 많이 가는 물건은 결국 서랍에 들어가는데
+      이건 계속 들고 다니게 됩니다.
+    effect: { type: defense_buff, value: 4 }
+    ui: "내 장비 방어 +4"
+
+  - id: S04
+    name: "손에 길이 듭니다"
+    suit: 품질
+    tag: 마감
+    cost: 2
+    stars: 5
+    rarity: rare
+    target: my_equipment
+    text: |
+      쓸수록 손잡이가 제 손 모양대로 길이 듭니다.
+      처음엔 미끄러웠는데 지금은 놓으려고 해도 안 놓입니다.
+      보급형이 맞나 싶어서 각인을 몇 번이나 다시 봤습니다.
+    effect: { type: defense_buff, value: 7 }
+    ui: "내 장비 방어 +7"
+
+  - id: S05
+    name: "보급형이라 다행입니다"
+    suit: 감성
+    tag: 디자인        # 어느 장비에 붙여도 일반
+    cost: 1
+    stars: 4
+    rarity: common
+    target: my_equipment
+    text: |
+      장식이 하나도 없어서 좋습니다.
+      화려한 걸 들고 다니면 노려지는데 이건 아무도 안 쳐다봅니다.
+      디자인 점수는 그래서 만점 드립니다.
+    effect: { type: defense_buff, value: 3, draw: 1 }
+    ui: "내 장비 방어 +3, 카드 1장 드로우"
+
+  # ── T18 물려받은 가죽 갑옷 (#내구도 #무게 · 평가 불가 #이펙트) ──
+  - id: H01
+    name: "전 주인께 감사합니다"
+    suit: 품질
+    tag: 내구도        # 가죽 갑옷에 붙이면 팩트
+    cost: 2
+    stars: 5
+    rarity: rare
+    target: my_equipment
+    text: |
+      물려받은 건데 갈라진 데가 한 군데도 없습니다.
+      전 주인이 누구신지는 끝내 못 들었지만 관리를 잘하셨습니다.
+      저도 다음 사람 생각해서 기름 먹이고 있습니다.
+    effect: { type: defense_buff, value: 7 }
+    ui: "내 장비 방어 +7"
+
+  - id: H02
+    name: "가벼워서 놀랐습니다"
+    suit: 품질
+    tag: 무게          # 가죽 갑옷에 붙이면 팩트
+    cost: 1
+    stars: 4
+    rarity: common
+    target: my_equipment
+    text: |
+      입었는데 입은 줄을 모르겠습니다.
+      철갑 입은 분들이랑 같이 뛰어봤는데 제가 먼저 도착했습니다.
+      어깨가 안 아픕니다. 저한테는 이게 제일 중요합니다.
+    effect: { type: defense_buff, value: 4 }
+    ui: "내 장비 방어 +4"
+
+  - id: H03
+    name: "비를 맞아도 안 늘어납니다"
+    suit: 품질
+    tag: 내구도
+    cost: 2
+    stars: 4
+    rarity: common
+    target: my_equipment
+    text: |
+      사흘 내리 비를 맞았는데 모양이 그대로입니다.
+      말리면 줄어들까 봐 걱정했는데 그것도 없었습니다.
+      가죽은 이게 제일 무섭다던데 이건 아니었습니다.
+    effect: { type: defense_buff, value: 6 }
+    ui: "내 장비 방어 +6"
+
+  - id: H04
+    name: "냄새가 좋습니다"
+    suit: 감성
+    tag: 감성          # 가죽 갑옷엔 일반, 목걸이에 붙이면 팩트
+    cost: 1
+    stars: 4
+    rarity: common
+    target: my_equipment
+    text: |
+      낡은 가죽 냄새가 납니다. 싫은 냄새가 아닙니다.
+      입을 때마다 오래 버틴 것 옆에 서 있는 기분이 듭니다.
+      설명이 잘 안 되는데 이것 때문에 계속 입습니다.
+    effect: { type: defense_buff, value: 4 }
+    ui: "내 장비 방어 +4"
+
+  - id: H05
+    name: "이펙트가 하나도 안 납니다"
+    suit: 성능
+    tag: 이펙트        # 가죽 갑옷의 평가 불가 항목 — 칭찬인데 헛소리가 난다
+    cost: 1
+    stars: 4
+    rarity: common
+    target: my_equipment
+    text: |
+      빛도 안 나고 소리도 안 납니다.
+      요즘 장비는 다들 번쩍거리던데 이건 조용합니다.
+      저는 조용한 쪽이 좋아서 별 넷 드립니다.
+    effect: { type: defense_buff, value: 4 }
+    ui: "내 장비 방어 +4"
+
+  # ── T19 위조 인증 목걸이 (#감성 · 평가 불가 #출력) ─────────
+  - id: F01
+    name: "가짜인 걸 알고 씁니다"
+    suit: 감성
+    tag: 감성          # 목걸이에 붙이면 팩트
+    cost: 2
+    stars: 5
+    rarity: rare
+    target: my_equipment
+    text: |
+      인증이 위조라는 건 알고 샀습니다.
+      그런데 목에 걸면 어깨가 펴집니다. 그러면 된 거 아닌가요.
+      진짜였으면 이 값에 못 샀습니다.
+    effect: { type: defense_buff, value: 7 }
+    ui: "내 장비 방어 +7"
+
+  - id: F02
+    name: "인증번호가 조회되지 않습니다"
+    suit: 감성
+    tag: 개연성        # 어느 장비에 붙여도 일반
+    cost: 1
+    stars: 4
+    rarity: common
+    target: my_equipment
+    text: |
+      뒷면 번호를 조회했더니 없는 번호라고 나옵니다.
+      판매자분은 조회 서버가 느린 거라고 하셨습니다.
+      삼 주째 느립니다. 그래도 예뻐서 계속 걸고 있습니다.
+    effect: { type: defense_buff, value: 3, draw: 1 }
+    ui: "내 장비 방어 +3, 카드 1장 드로우"
+
+  - id: F03
+    name: "목에 닿는 느낌이 좋습니다"
+    suit: 감성
+    tag: 감성
+    cost: 1
+    stars: 4
+    rarity: common
+    target: my_equipment
+    text: |
+      금속인데 차갑지가 않습니다.
+      자기 전에 빼는 걸 잊고 그냥 자는 날이 더 많습니다.
+      불편했으면 진작 뺐을 겁니다.
+    effect: { type: defense_buff, value: 4 }
+    ui: "내 장비 방어 +4"
+
+  - id: F04
+    name: "출력이 올라간 것 같습니다"
+    suit: 성능
+    tag: 출력          # 목걸이의 평가 불가 항목 — 기분은 성능이 아니라는 판정
+    cost: 1
+    stars: 4
+    rarity: common
+    target: my_equipment
+    text: |
+      이걸 걸고 나서 한 대를 더 칠 수 있게 됐습니다.
+      기분 탓일 수도 있는데 기분도 성능 아닌가요.
+      어쨌든 저는 올라갔다고 믿고 쓰고 있습니다.
+    effect: { type: defense_buff, value: 4 }
+    ui: "내 장비 방어 +4"
+
+  - id: F05
+    name: "이거 단종되면 저 어떡하죠"
+    suit: 감성
+    tag: 감성
+    cost: 3
+    stars: 5
+    rarity: legendary
+    target: my_equipment
+    text: |
+      같은 걸 하나 더 사두려고 했더니 이제 안 만든답니다.
+      지금 걸고 있는 이게 마지막인 셈입니다.
+      줄이 끊어지는 상상을 하면 잠이 안 옵니다. 별 다섯 드립니다.
+    effect: { type: defense_buff, value: 10 }
+    ui: "내 장비 방어 +10"
+
+  # ── 범용 찬양 (적에게서 얻었지만 대상 장비를 가리지 않는다) ──
+  # 태그가 내 장비 3종 어디에도 안 걸려 항상 일반 판정이다. 대신 효과가 방어가 아니라
+  # 피해 증폭이라 방어 축과 슬롯을 나눠 쓴다(부착 슬롯 2칸 — GDD §3.9).
+  - id: D03
+    name: "빠르긴 빨라요"
+    origin: { enemy: E04 }
+    suit: 배송
+    tag: 속도
+    cost: 1
+    stars: 4
+    rarity: common
+    target: my_equipment
+    text: |
+      빠른 건 인정합니다. 진짜 빠릅니다.
+      그 속도로 제 지갑도 가져가셨지만
+      속도만큼은 별 넷 드리겠습니다.
+    effect: { type: damage_buff, value: 3 }
+    ui: "내 장비 부착 — 내 리뷰 피해 +3"
+
+  - id: N03
+    name: "얼굴은 잘생겼어요"
+    origin: { enemy: E05 }
+    suit: 감성
+    tag: 디자인
+    cost: 2
+    stars: 4
+    rarity: rare
+    target: my_equipment
+    text: |
+      잘생긴 건 맞습니다. 인정합니다.
+      인정했으니까
+      이제 그만 물어보세요.
+    effect: { type: damage_buff, value: 4 }
+    ui: "내 장비 부착 — 내 리뷰 피해 +4"
+
+  - id: A01
+    name: "사진은 잘 나와요"
+    origin: { enemy: E05, equipment: 도금 갑옷 }
+    suit: 감성
+    tag: 디자인
+    cost: 1
+    stars: 4
+    rarity: common
+    target: my_equipment
+    text: |
+      광택 미쳤습니다.
+      방어력은 모르겠고 일단 사진이 잘 나옵니다.
+      그거면 됐다고 생각하기로 했습니다.
+    effect: { type: damage_buff, value: 2, draw: 1 }
+    ui: "내 장비 부착 — 내 리뷰 피해 +2, 카드 1장 드로우"
 
 
 # ============================================================================

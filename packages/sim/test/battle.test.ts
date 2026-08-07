@@ -4,10 +4,28 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import { Battle, mulberry32, type BattleConfig } from '../../core/src/index.ts';
+import { Battle, mulberry32, type BattleConfig, type CardIndex, type ReviewCardDef } from '../../core/src/index.ts';
 import { loadAll, loadCards } from '../src/data.ts';
 
 const data = loadAll();
+
+/**
+ * ADR-023 ① 검증용 합성 카드 — cards-v2.0.yaml 재구성(약 66장) 전이라 실데이터에 defense_buff가 없다.
+ * 카드 데이터가 들어오면 실카드로 교체할 것.
+ * 시작 장비: [0] 롱소드 #마감 (무효 #연비) / [1] 가죽 갑옷 #내구도 #무게 / [2] 목걸이 #감성
+ */
+const TEST_CARDS: ReviewCardDef[] = [
+  { kind: 'review', id: 'T_DEF6', name: '테스트 찬양(방어 6)', suit: '품질', tag: '마감', cost: 1, stars: 5, rarity: 'rare', target: 'my_equipment', effect: { type: 'defense_buff', value: 6 }, layer: 1 },
+  { kind: 'review', id: 'T_DEF2', name: '테스트 찬양(방어 2)', suit: '품질', tag: '마감', cost: 1, stars: 4, rarity: 'common', target: 'my_equipment', effect: { type: 'defense_buff', value: 2 }, layer: 1 },
+  { kind: 'review', id: 'T_DEFN', name: '테스트 찬양(무효 태그)', suit: '성능', tag: '연비', cost: 1, stars: 4, rarity: 'common', target: 'my_equipment', effect: { type: 'defense_buff', value: 6 }, layer: 1 },
+];
+
+const TEST_INDEX: CardIndex = {
+  byId: new Map([...data.cards.byId, ...TEST_CARDS.map((c) => [c.id, c] as const)]),
+  allIds: [...data.cards.allIds, ...TEST_CARDS.map((c) => c.id)],
+};
+
+const defenseTotal = (b: Battle): number => b.state.player.equipment.reduce((s, q) => s + q.defense, 0);
 
 /** noShuffle 덱으로 시작 손패를 고정한다 (handIds 순서대로 드로우) */
 function makeBattle(enemyId: string, handIds: string[], opts: Partial<BattleConfig> = {}): Battle {
@@ -433,6 +451,8 @@ function assertPreviewMatches(b: Battle, cardUid: number, opts = {}): void {
   const willBefore = b.state.enemy.will;
   const gaugeBefore = b.state.player.gauge;
   const eqBefore = b.state.enemy.equipment.map((q) => q.durability);
+  const defBefore = defenseTotal(b);
+  const healedBefore = b.state.stats.willHealed; // 클램프 후 실제 회복량 (의지 증감으로 재면 반사 피격에 오염됨)
   const r = b.submitReview(cardUid, opts);
 
   assert.equal(pv.judgement, r.judgement, '판정 불일치');
@@ -442,9 +462,12 @@ function assertPreviewMatches(b: Battle, cardUid: number, opts = {}): void {
   } else if (pv.likesKind === 'equipment') {
     const dealt = eqBefore.reduce((s, d, i) => s + (d - b.state.enemy.equipment[i]!.durability), 0);
     assert.equal(dealt, pv.likes, '내구도 좋아요 불일치');
+  } else if (pv.likesKind === 'defense') {
+    assert.equal(defenseTotal(b) - defBefore, pv.likes, '방어 부여량 불일치'); // ADR-023 ①
   }
   if (!r.missed) {
     assert.equal(b.state.player.gauge - gaugeBefore, pv.gauge, '게이지 불일치');
+    assert.equal(b.state.stats.willHealed - healedBefore, pv.heal, '회복 불일치'); // ADR-023 ②
   }
 }
 
@@ -474,5 +497,144 @@ test('previewSubmit: 은신 빗나감·무판정 카드를 blocked 로 알린다
   const pv = b.previewSubmit(uid(b, 'Z01'));
   assert.equal(pv.blocked, 'miss');
   assert.equal(pv.likes, null);
+  assert.equal(pv.heal, 0); // 빗나감 = 판정 없음 = 회복 없음 (ADR-023 ②)
   assert.equal(b.previewSubmit(uid(b, 'X01')).blocked, 'not_review'); // 진상 화법 = 무판정
+});
+
+// ── ADR-023 ①: 방어 축 (찬양 리뷰 → 내 장비 방어) ─────
+
+test('ADR-023 ①: defense_buff는 판정 배율을 받는다 (팩트 ×1.5 / 일반 ×1.0 / 헛소리 ×0.5)', () => {
+  const fact = makeBattle('E01', ['T_DEF6'], { cards: TEST_INDEX });
+  fact.submitReview(uid(fact, 'T_DEF6'), { myEquipmentIndex: 0 }); // 롱소드[마감] vs #마감 → 팩트
+  assert.equal(fact.state.player.equipment[0]!.defense, 9); // floor(6×1.5)
+  assert.equal(fact.state.stats.defenseGained, 9);
+
+  const normal = makeBattle('E01', ['T_DEF6'], { cards: TEST_INDEX });
+  normal.submitReview(uid(normal, 'T_DEF6'), { myEquipmentIndex: 1 }); // 갑옷[내구도,무게] → 일반
+  assert.equal(normal.state.player.equipment[1]!.defense, 6);
+
+  const fumble = makeBattle('E01', ['T_DEFN'], { cards: TEST_INDEX });
+  fumble.submitReview(uid(fumble, 'T_DEFN'), { myEquipmentIndex: 0 }); // 롱소드 무효 태그[연비] → 헛소리
+  assert.equal(fumble.state.player.equipment[0]!.defense, 3); // floor(6×0.5)
+});
+
+test('ADR-023 ①: 방어는 부착 슬롯을 쓰지 않는다 (damage_buff 2칸 만석이어도 부여 가능)', () => {
+  const b = makeBattle('E01', ['D03', 'A01', 'T_DEF6'], { cards: TEST_INDEX });
+  b.submitReview(uid(b, 'D03'), { myEquipmentIndex: 0 });
+  b.submitReview(uid(b, 'A01'), { myEquipmentIndex: 0 });
+  const eq = b.state.player.equipment[0]!;
+  assert.equal(eq.attachments.filter((a) => a.usesSlot).length, 2); // 슬롯 만석 (GDD §3.9)
+  b.endTurn(); // 필력 회복 (stab 5)
+  b.submitReview(uid(b, 'T_DEF6'), { myEquipmentIndex: 0 });
+  assert.equal(eq.defense, 9); // 슬롯과 무관하게 누적
+  assert.equal(eq.attachments.filter((a) => a.usesSlot).length, 2);
+});
+
+test('ADR-023 ①: 부분 흡수 — 방어로 막고 남은 만큼만 의지가 깎인다', () => {
+  const b = makeBattle('E01', ['T_DEF2'], { cards: TEST_INDEX });
+  b.submitReview(uid(b, 'T_DEF2'), { myEquipmentIndex: 0 }); // 팩트 → 방어 3
+  assert.equal(defenseTotal(b), 3);
+  b.endTurn(); // stab 5 → 3 흡수, 2만 의지로
+  assert.equal(b.state.player.will, 28);
+  assert.equal(defenseTotal(b), 0);
+  assert.equal(b.state.stats.defenseAbsorbed, 3);
+});
+
+test('ADR-023 ①: 흡수분은 "이번 턴 받은 피해"에 포함되지 않는다 (X05 예약 산정)', () => {
+  const b = makeBattle('E01', ['T_DEF2', 'X05', 'Z06'], { cards: TEST_INDEX });
+  b.submitReview(uid(b, 'T_DEF2'), { myEquipmentIndex: 0 }); // 방어 3
+  b.playSpecial(uid(b, 'X05')); // 이번 턴 받은 피해량 예약
+  b.endTurn(); // stab 5 → 방어 3 흡수, 의지 2만 감소 → 예약 확정은 2
+  assert.equal(b.state.player.will, 28);
+  assert.equal(b.state.player.storedDamageBonus, 2); // 5가 아니다
+});
+
+test('ADR-023 ①: 전량 흡수 — 의지 무손실, 잔량은 다음 턴에도 유지된다(턴 리셋 없음)', () => {
+  const b = makeBattle('E01', ['T_DEF6'], { cards: TEST_INDEX });
+  b.submitReview(uid(b, 'T_DEF6'), { myEquipmentIndex: 0 }); // 팩트 → 방어 9
+  b.endTurn(); // stab 5 → 전량 흡수
+  assert.equal(b.state.player.will, 30);
+  assert.equal(defenseTotal(b), 4); // 잔량 유지 (다음 턴에 리셋되지 않는다)
+  b.endTurn(); // stab 5 → 4 흡수 + 1 의지
+  assert.equal(b.state.player.will, 29);
+  assert.equal(defenseTotal(b), 0);
+  assert.equal(b.state.stats.defenseAbsorbed, 9);
+});
+
+test('ADR-023 ①: 여러 장비의 방어는 슬롯 선언 순으로 소모된다', () => {
+  const b = makeBattle('E01', [], { cards: TEST_INDEX });
+  b.state.player.equipment[0]!.defense = 2;
+  b.state.player.equipment[1]!.defense = 4;
+  b.endTurn(); // stab 5 → 슬롯0에서 2, 슬롯1에서 3
+  assert.equal(b.state.player.equipment[0]!.defense, 0);
+  assert.equal(b.state.player.equipment[1]!.defense, 1);
+  assert.equal(b.state.player.will, 30);
+});
+
+// ── ADR-023 ②: 호응 회복 ──────────────────────────────
+
+test('ADR-023 ②: 판정 회복 4단계 — 원산지 +2 / 팩트 +1 / 일반 0 / 헛소리 0', () => {
+  const cases: [string, string, number][] = [
+    ['Q01', 'origin', 2], // origin E01
+    ['Z06', 'fact', 1], // #마감 ∈ E01 약점
+    ['W01', 'normal', 0], // #무게 — E01과 무관
+    ['Z01', 'fumble', 0], // #연비 ∈ E01 무효
+  ];
+  for (const [cardId, judgement, heal] of cases) {
+    const b = makeBattle('E01', [cardId]);
+    b.state.player.will = 20;
+    const r = b.submitReview(uid(b, cardId));
+    assert.equal(r.judgement, judgement, `${cardId} 판정`);
+    assert.equal(b.state.player.will, 20 + heal, `${cardId} 회복량`);
+    assert.equal(b.state.stats.willHealed, heal);
+  }
+});
+
+test('ADR-023 ②: 회복은 maxWill 상한 — 초과분은 버려지고 계측도 실제 증가분만', () => {
+  const b = makeBattle('E01', ['Q01']);
+  b.state.player.will = 29; // 원산지 +2 → 30에서 멈춘다
+  const pv = b.previewSubmit(uid(b, 'Q01'));
+  assert.equal(pv.heal, 1); // 클램프 반영한 실제 증가분 (2가 아니다)
+  b.submitReview(uid(b, 'Q01'));
+  assert.equal(b.state.player.will, 30);
+  assert.equal(b.state.stats.willHealed, 1);
+
+  const full = makeBattle('E01', ['Z06']); // 만피 팩트 → 회복 0
+  assert.equal(full.previewSubmit(uid(full, 'Z06')).heal, 0);
+  full.submitReview(uid(full, 'Z06'));
+  assert.equal(full.state.stats.willHealed, 0);
+});
+
+test('ADR-023 ②: 빗나감(은신 게이트)은 회복 0', () => {
+  const b = makeBattle('E04', ['D01']); // D01 = 배송(origin E04) — 명중 계열
+  b.state.player.will = 20;
+  b.state.enemy.stealth = true;
+  b.state.player.hand.push({ uid: 999, cardId: 'Z06' }); // 품질 계열 → 은신 중 빗나감
+  const miss = b.submitReview(999);
+  assert.equal(miss.missed, true);
+  assert.equal(b.state.player.will, 20); // 판정 없음 → 회복 없음
+  assert.equal(b.state.stats.willHealed, 0);
+  b.submitReview(uid(b, 'D01')); // 원산지 명중 → +2
+  assert.equal(b.state.player.will, 22);
+});
+
+test('previewSubmit: 방어·회복 예상치도 실제 결과와 일치', () => {
+  const def = makeBattle('E01', ['T_DEF6'], { cards: TEST_INDEX });
+  def.state.player.will = 25; // 팩트 판정 → 방어 9 + 회복 1
+  const pv = def.previewSubmit(uid(def, 'T_DEF6'), { myEquipmentIndex: 0 });
+  assert.equal(pv.likesKind, 'defense');
+  assert.equal(pv.likes, 9);
+  assert.equal(pv.heal, 1);
+  assertPreviewMatches(def, uid(def, 'T_DEF6'), { myEquipmentIndex: 0 });
+
+  // 판정별 회복 — 한 전투에서 연속 제출하면 적이 먼저 죽으므로 전투를 분리한다
+  const wounded = (cardId: string): Battle => {
+    const b = makeBattle('E01', [cardId]);
+    b.state.player.will = 20; // 회복 여지를 만든다 (만피면 클램프로 전부 0)
+    return b;
+  };
+  assertPreviewMatches(wounded('Q01'), 1); // 원산지 +2
+  assertPreviewMatches(wounded('Z06'), 1); // 팩트 +1
+  assertPreviewMatches(wounded('W01'), 1); // 일반 0
+  assertPreviewMatches(wounded('Z01'), 1); // 헛소리 0
 });

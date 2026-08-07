@@ -684,6 +684,86 @@ Quiet, safe, and small against a very large dark space.
 No text, no letters, no signage, no ui.
 ```
 
+## 5.2 지도 = 배송 조회 화면 배경 플레이트 (S11 · 1344×768 고정)
+
+> 지도는 택배 배송 추적 화면이다(ADR-024). 운송장 정보·경로 그래프·노드 카드가 **화면 전면을
+> 덮으므로** 전투 배경(§5.1)과 규칙이 다르다 — 중앙을 비우는 것이 아니라 **전면이 고르게 어둡고
+> 저대비**여야 한다. 세 가지가 규칙이다:
+> **① 밝은 핫스팟·강한 초점을 만들지 않는다**(값을 어두운 절반에 묶어 둔다)
+> **② 구조는 정면 벽면 하나로 단순하게 — 원근이 깊으면 그래프 선과 충돌한다**
+> **③ 인물·생물은 한 명도 넣지 않는다.**
+>
+> 함정: 따뜻한 악센트만 지정하면 화면 전체가 세피아 단색으로 흐른다. **한랭 키라이트와 온색 등불을
+> 문장으로 명시적으로 대립**시킨다(`Cool and warm in clear opposition`). 네거티브를 과하게 쌓으면
+> 격자·선반 같은 구조물 자체가 지워지므로 인물 계열만 추가한다:
+> `person, people, character, creature, figure, portrait, statue`
+>
+> 채택본 (juggernautXL · 1344x768 · 30스텝 · CFG 6.0): BG07→`ui/assets/map-dispatch.png`
+
+### BG07 배송 상황판 · 물류 접수 창구 벽면 (S11 지도 배경)
+
+```
+Wide 16:9 dark fantasy environment plate, digital matte painting for a video game, detailed
+painterly concept art with visible brushwork — a painting, not a photograph.
+Subject: the consignment wall of the freight guild inside an underground dungeon mall, seen
+straight on. A colossal floor-to-ceiling rack of hundreds of identical small square wooden
+pigeonhole slots fills almost the whole frame and runs off past the left and right edges, its
+top dissolving into soot and darkness above; every cell is packed with folded blank parchment
+slips, rolled dockets and roped bundles of consignment paper, plain uncarved brass ring-tags
+hanging on nails between the cells. Carved black stone piers rise between the sections of
+racking, with tall iron rolling ladders leaning against them. A low scarred timber counter runs
+along the base of the rack with ink pots, a wooden stamp block and a coil of twine on it; a
+narrow strip of worn flagstone shows only at the very bottom edge of the frame.
+The racking is the whole subject and fills the frame from top to bottom — no blackboard, no
+slate panel, no single large object breaking it up.
+Lighting: cold pale blue-grey light rakes flat across the whole wall from the left and sets the
+overall colour cast — the frame reads cool, never sepia, never warm overall. Two tiny guttering
+orange oil-lamp points burn far apart near the right edge as isolated warm accents against that
+cold field. Cool and warm in clear opposition, never blended, and the cold dominates.
+Desaturated palette: cold blue-grey, damp black stone, weathered timber brown, tarnished brass,
+sackcloth beige.
+Completely empty — no people, no creatures, no figures anywhere.
+Deliberately low contrast, all values held in the darker half, no bright hotspot and no
+strong focal point anywhere in the frame — one quiet even dark field of repeating texture,
+the outer border falling away into deep shadow.
+Camera square on to the wall at standing eye level, wide flat lens, very shallow depth, almost
+no perspective recession, faint dust haze.
+Underground and ancient — no sky, no daylight, no modern building.
+Muted and atmospheric, intended to sit far behind dense interface text.
+No text, no letters, no numbers, no signage, no ui.
+```
+
+### BG08 화물 터미널 · 분류 구역 벽면 (S11 지도 배경 대안)
+
+```
+Wide 16:9 dark fantasy environment plate, digital matte painting for a video game, detailed
+painterly concept art with visible brushwork — a painting, not a photograph.
+Subject: the sorting frontage of the freight terminal beneath an underground dungeon mall, seen
+straight on. A long unbroken row of identical loading bays is cut into massive hand-hewn stone
+piers and fills almost the whole frame, running off past the left and right edges, the vaulted
+stonework above dissolving into soot and darkness; every bay is sealed by a rusted iron
+roll-down grille drawn fully closed, with a blank uncarved stone plaque set above each lintel
+and a heavy padlocked hasp at its base. Between the bays hang grids of iron pegboard strung
+with taut waxed routing cord and rows of blank brass tally tags. Roped crates, banded barrels
+and lashed sackcloth bales are stacked waist-high against the grilles; torn packing straw and
+a narrow strip of worn flagstone show only at the very bottom edge of the frame.
+Lighting: cold pale blue-grey light falls flat across the whole frontage and sets the overall
+colour cast — the frame reads cool, never sepia, never warm overall. Two tiny guttering orange
+lamp points burn far apart at the outer edges as isolated warm accents against that cold field.
+Cool and warm in clear opposition, never blended, and the cold dominates.
+Desaturated palette: iron grey, cold blue shadow, oxidised rust, weathered timber brown,
+sackcloth beige.
+Completely empty — no people, no creatures, no figures anywhere.
+Deliberately low contrast, all values held in the darker half, no bright hotspot and no strong
+focal point anywhere in the frame — one quiet even dark band of repeating structure, the outer
+border falling away into deep shadow.
+Camera square on at standing eye level, wide flat lens, very shallow depth, almost no
+perspective recession, dust hanging in the air.
+Underground and ancient — no sky, no daylight, no modern building, no garage.
+Muted and atmospheric, intended to sit far behind dense interface text.
+No text, no letters, no numbers, no signage, no ui.
+```
+
 ---
 
 ### B05 맵 배경 (S11 · 9:16)

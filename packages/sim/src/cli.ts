@@ -2,6 +2,16 @@
 // 사용: npx tsx packages/sim/src/cli.ts --enemy B01 --policy standard --runs 1000 --seed 42 [--json]
 //       [--deck Z01,G01,...] [--deck-preset boss1] [--layer N] [--disposition-suit 계열]
 //       [--will N]  ← 적 의지 오버라이드 (재시뮬 전용, YAML은 불변)
+//       [--rule <경로>=<값>]…  [--rules '<JSON>']  ← 밸런스 수치 A/B (ADR-025)
+//       [--help]
+//
+// 밸런스 A/B (ADR-025): 코드를 고치지 않고 rules 를 주입해 같은 시드로 대조한다.
+//   npx tsx packages/sim/src/cli.ts --enemy B01 --runs 200 --seed 42                       # 기준
+//   npx tsx packages/sim/src/cli.ts --enemy B01 --runs 200 --seed 42 --rule judge.mult.normal=0.75
+//   ... --rule judge.gauge.fact=4 --rule critical.factBomberDamage=24                       # 여러 번 가능
+//   ... --rules '{"player":{"will":24},"gauge":{"max":8}}'                                  # 통째로 주입
+// 경로는 rules.ts 의 RulesConfig 구조 그대로다(구획.필드 또는 구획.표.키). 값은 JSON 으로 읽고
+// 실패하면 숫자로 읽는다. --rules 를 먼저 깔고 --rule 이 그 위를 덮는다.
 //
 // 결과 해석 주의:
 // - 판정 4단계(원산지/팩트/일반/헛소리 — card-system-v2 §2). 판정 비율은 "실현(achieved)"이며
@@ -12,7 +22,7 @@
 // - deadlock(리뷰 제출 0회 패배)은 v1 접두 교착의 잔재 계측 — v2는 손패 전장이 제출 가능해
 //   구조적으로 0이어야 한다 (0이 아니면 회귀 신호).
 // - 최소 런 수 가이드: 승률 ±2%p 판별에는 약 2,500판 필요(Wilson 95% CI 참조).
-import { Battle, mulberry32, type Suit } from '../../core/src/index.ts';
+import { Battle, DEFAULT_RULES, mergeRules, mulberry32, type RulesOverride, type Suit } from '../../core/src/index.ts';
 import { loadAll } from './data.ts';
 import { newTelemetry, playTurn, POLICIES, type PolicyName, type PolicyTelemetry } from './policies.ts';
 
@@ -27,6 +37,59 @@ interface Args {
   deck?: string[];
   deckPreset?: string;
   will?: number; // 적 의지 오버라이드 (R11 재시뮬용)
+  rules?: RulesOverride; // 밸런스 수치 오버라이드 (ADR-025 — A/B용)
+}
+
+/** DECK_PRESETS 가 아래에서 선언되므로 상수가 아니라 함수로 둔다 */
+const help = (): string => `전투 시뮬레이터 (packages/sim)
+
+  --enemy <id>              적 id (기본 E01)
+  --policy <이름>           standard | skilled | reckless (기본 standard)
+  --runs <N>                반복 판수 (기본 1000. 승률 ±2%p 판별에는 약 2,500판)
+  --seed <N>                루트 시드 (기본 42)
+  --layer <N>               카드 레이어 상한 (기본 1)
+  --deck <id,id,...>        덱 직접 지정
+  --deck-preset <이름>      덱 프리셋 (${Object.keys(DECK_PRESETS).join(', ')})
+  --disposition-suit <계열> 성향 스냅샷 주입 (품질|성능|배송|감성)
+  --will <N>                적 의지 오버라이드 (YAML 불변, 메모리 사본만)
+  --rule <경로>=<값>        밸런스 수치 1개 오버라이드. 여러 번 지정 가능 (ADR-025)
+  --rules '<JSON>'          밸런스 수치를 통째로 오버라이드 (--rule 이 이 위를 덮는다)
+  --json                    요약을 JSON 으로 출력
+  --help                    이 도움말
+
+밸런스 A/B — 코드를 고치지 않고 같은 시드로 대조한다:
+  ... --enemy B01 --runs 200 --seed 42
+  ... --enemy B01 --runs 200 --seed 42 --rule judge.mult.normal=0.75
+  ... --rule judge.gauge.fact=4 --rule critical.factBomberDamage=24
+  ... --rules '{"player":{"will":24},"gauge":{"max":8}}'
+경로는 rules.ts 의 RulesConfig 구조 그대로다 (구획.필드 또는 구획.표.키).`;
+
+/** `judge.mult.normal=0.75` 한 줄을 RulesOverride 에 심는다 (2단계까지 — RulesConfig 의 깊이) */
+function applyRulePath(over: Record<string, Record<string, unknown>>, spec: string): void {
+  const eq = spec.indexOf('=');
+  if (eq < 0) throw new Error(`--rule 형식은 경로=값 이다: ${spec}`);
+  const path = spec.slice(0, eq).split('.');
+  const raw = spec.slice(eq + 1);
+  let value: unknown;
+  try {
+    value = JSON.parse(raw);
+  } catch {
+    const n = Number(raw);
+    if (Number.isNaN(n)) throw new Error(`--rule 값을 읽을 수 없다: ${raw}`);
+    value = n;
+  }
+  const [section, key, sub] = path;
+  const known = Object.keys(DEFAULT_RULES);
+  if (!section || !key || !known.includes(section)) {
+    throw new Error(`알 수 없는 rules 경로: ${path.join('.')} (구획: ${known.join(', ')})`);
+  }
+  over[section] ??= {};
+  if (sub === undefined) {
+    over[section]![key] = value;
+  } else {
+    const table = (over[section]![key] ??= {}) as Record<string, unknown>;
+    table[sub] = value;
+  }
 }
 
 // 덱 프리셋 — TBD(에스컬레이션 대상): GDD §3.6 v1.1의 「표준 검증 덱」 정의(B01 = P11/P15/S02)는
@@ -41,9 +104,18 @@ const DECK_PRESETS: Record<string, (startingDeck: string[]) => string[]> = {
 
 function parseArgs(argv: string[]): Args {
   const args: Args = { enemy: 'E01', policy: 'standard', runs: 1000, seed: 42, json: false, layer: 1 };
+  const over: Record<string, Record<string, unknown>> = {};
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i]!;
-    if (a === '--enemy') args.enemy = argv[++i]!;
+    if (a === '--help' || a === '-h') {
+      console.log(help());
+      process.exit(0);
+    } else if (a === '--rules') {
+      // 통째 주입 — 구획 단위로 깔고, 뒤이은 --rule 이 그 위를 덮는다
+      const json = JSON.parse(argv[++i]!) as Record<string, Record<string, unknown>>;
+      for (const [k, v] of Object.entries(json)) over[k] = { ...(over[k] ?? {}), ...v };
+    } else if (a === '--rule') applyRulePath(over, argv[++i]!);
+    else if (a === '--enemy') args.enemy = argv[++i]!;
     else if (a === '--policy') args.policy = argv[++i] as PolicyName;
     else if (a === '--runs') args.runs = parseInt(argv[++i]!, 10);
     else if (a === '--seed') args.seed = parseInt(argv[++i]!, 10);
@@ -58,6 +130,7 @@ function parseArgs(argv: string[]): Args {
       args.counters = { [suit]: 1 } as Partial<Record<Suit, number>>;
     }
   }
+  if (Object.keys(over).length > 0) args.rules = over as RulesOverride;
   if (!POLICIES[args.policy]) throw new Error(`알 수 없는 정책: ${args.policy} (standard|skilled|reckless)`);
   if (args.deckPreset && !DECK_PRESETS[args.deckPreset]) {
     throw new Error(`알 수 없는 덱 프리셋: ${args.deckPreset} (${Object.keys(DECK_PRESETS).join(', ')})`);
@@ -117,6 +190,8 @@ function main(): void {
   const rootRng = mulberry32(args.seed);
   const records: RunRecord[] = [];
   const telemetry: PolicyTelemetry = newTelemetry();
+  // 통계 산출도 엔진과 같은 수치를 봐야 한다 (판정 순증·최대 의지 표기) — ADR-025
+  const rules = mergeRules(DEFAULT_RULES, args.rules);
 
   for (let r = 0; r < args.runs; r++) {
     // 공통난수(CRN) 대조를 위해 엔진용·정책용 rng 스트림을 같은 런 시드에서 분기 —
@@ -131,6 +206,7 @@ function main(): void {
       rng: battleRng,
       layer: args.layer,
       initialSuitCounters: args.counters,
+      rules: args.rules,
     });
     let guard = 200;
     while (!battle.state.result && guard-- > 0) playTurn(battle, data.cards, args.policy, policyRng, telemetry);

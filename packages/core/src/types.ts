@@ -43,6 +43,9 @@ export const DISPOSITION_SUIT: Record<Disposition, Suit> = {
 
 export type Rarity = 'basic' | 'common' | 'rare' | 'legendary';
 
+/** 태그 판정 4단계 (card-system-v2 §2) — 원산지가 최우선이며 무효 태그를 무시한다 */
+export type Judgement = 'origin' | 'fact' | 'normal' | 'fumble';
+
 export type TargetKind = 'enemy' | 'enemy_equipment' | 'my_equipment';
 
 /** 원산지 (card-system-v2 §2). 없으면 원산지 판정 영구 미발동 (Z##·X##·P해금 카드) */
@@ -54,7 +57,13 @@ export interface OriginDef {
 }
 
 export interface EffectDef {
+  /**
+   * 효과 종류. 리뷰 카드 실사용: damage / equipment_damage / equipment_dot / stun /
+   * delay_enemy_action / weaken_next_action / remove_enemy_buff / attack_down /
+   * damage_buff / **defense_buff**(ADR-023 ① — 내 장비에 방어 부여, target: my_equipment)
+   */
   type: string;
+  /** defense_buff에서는 「부여할 방어량」 (판정 배율 적용 대상 — battle.ts applyReviewEffect 주석) */
   value?: number;
   duration?: number | 'combat';
   // ── 동반 효과 (v2 복합 효과 — 판정 배율 적용 범위는 battle.ts 주석 참조) ──

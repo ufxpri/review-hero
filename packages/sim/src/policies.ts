@@ -16,7 +16,6 @@
 import {
   Battle,
   DISPOSITION_SUIT,
-  JUDGE_MULT,
   type CardIndex,
   type Judgement,
   type ReviewCardDef,
@@ -69,6 +68,9 @@ function evaluate(battle: Battle, uid: number, def: ReviewCardDef): PlayOption |
   const st = battle.state;
   const e = st.enemy;
   const gate = e.def.stealthGate;
+  // 정책도 전투에 확정된 rules 를 읽는다 (ADR-025) — 시뮬 A/B 에서 엔진만 바뀌고 정책이 옛 배율로
+  // 카드를 고르면 오버라이드 효과가 흐려진다
+  const rules = battle.activeRules;
 
   // E04 은신 게이트: 명중 불가 계열은 빗나감 — 제출하지 않는다
   if (e.stealth && gate && (def.target === 'enemy' || def.target === 'enemy_equipment') && !gate.hittableSuits.includes(def.suit)) {
@@ -91,7 +93,8 @@ function evaluate(battle: Battle, uid: number, def: ReviewCardDef): PlayOption |
     let best: { idx: number; j: Judgement } | null = null;
     for (let i = 0; i < st.player.equipment.length; i++) {
       const eq = st.player.equipment[i]!;
-      if (def.effect.type === 'damage_buff' && eq.attachments.filter((a) => a.usesSlot).length >= 2) continue;
+      // damage_buff만 부착 슬롯(2칸) 제약 — defense_buff는 슬롯 미사용 수치 누적이라 만석 개념이 없다 (ADR-023 ①)
+      if (def.effect.type === 'damage_buff' && eq.attachments.filter((a) => a.usesSlot).length >= rules.player.attachSlots) continue;
       const j = judgeAgainst(eq.def.tags, eq.def.nullTags, false);
       if (!best || JUDGE_RANK[j] > JUDGE_RANK[best.j]) best = { idx: i, j };
     }
@@ -120,7 +123,10 @@ function evaluate(battle: Battle, uid: number, def: ReviewCardDef): PlayOption |
   const ef = def.effect;
   const base = ef.type === 'damage' || ef.type === 'equipment_damage' ? (ef.value ?? 0) : (ef.damage ?? 0);
   const vanity = e.def.suitDamageMult?.[def.suit] ?? 1;
-  const score = Math.floor(base * JUDGE_MULT[judgement] * vanity) + (judgement === 'origin' ? 1 : 0);
+  let score = Math.floor(base * rules.judge.mult[judgement] * vanity) + (judgement === 'origin' ? rules.judge.originFixedAdd : 0);
+  // 방어(ADR-023 ①)는 딜이 아니지만 "막은 만큼 = 안 맞은 좋아요"라 피해 등가로 환산해 정렬에 태운다.
+  // 정렬은 판정 우선이라 같은 판정 안에서만 경합한다. (v2 카드 데이터에 defense_buff가 들어오면 재검토 대상)
+  if (ef.type === 'defense_buff') score += Math.floor((ef.value ?? 0) * rules.judge.mult[judgement]);
 
   return { uid, def, judgement, myEquipmentIndex, enemyEquipmentIndex, score };
 }
@@ -128,6 +134,7 @@ function evaluate(battle: Battle, uid: number, def: ReviewCardDef): PlayOption |
 /** 한 플레이어 턴을 정책대로 진행하고 endTurn까지 수행한다 */
 export function playTurn(battle: Battle, cards: CardIndex, name: PolicyName, rng: Rng, telemetry?: PolicyTelemetry): void {
   const params = POLICIES[name];
+  const rules = battle.activeRules; // 정책의 문턱값도 엔진과 같은 rules 를 본다 (ADR-025)
   let safety = 20;
   let critRolled = false; // critProb 롤은 턴당 1회 (루프 반복마다 재롤하면 억지 정책의 0.7이 사실상 1.0이 됨)
 
@@ -141,7 +148,7 @@ export function playTurn(battle: Battle, cards: CardIndex, name: PolicyName, rng
     const gate = st.enemy.def.stealthGate;
     const critBlockedByStealth =
       st.enemy.stealth && !!gate && p.disposition !== '바이럴 앞잡이' && !gate.hittableSuits.includes(DISPOSITION_SUIT[p.disposition]);
-    if (p.gauge >= 10 && !p.critUsedThisTurn && !critRolled && !critBlockedByStealth) {
+    if (p.gauge >= rules.gauge.max && !p.critUsedThisTurn && !critRolled && !critBlockedByStealth) {
       critRolled = true;
       if (rng() < params.critProb) {
         battle.useCritical();
@@ -153,9 +160,9 @@ export function playTurn(battle: Battle, cards: CardIndex, name: PolicyName, rng
     const reviews = hand.filter((c): c is { uid: number; def: ReviewCardDef } => c.def.kind === 'review');
     const specials = hand.filter((c): c is { uid: number; def: SpecialDef } => c.def.kind === 'special');
 
-    // X08 별점 구걸(+3): 게이지 여유 있으면 사용 (전 정책 — 순수 이득)
+    // X08 별점 구걸: 초과 소실 없이 다 받을 수 있으면 사용 (전 정책 — 순수 이득)
     const x08 = specials.find((c) => c.def.id === 'X08');
-    if (x08 && p.energy >= x08.def.cost && p.gauge <= 7) {
+    if (x08 && p.energy >= x08.def.cost && p.gauge <= rules.gauge.max - (x08.def.effect.value ?? 0)) {
       battle.playSpecial(x08.uid);
       continue;
     }
@@ -199,12 +206,12 @@ export function playTurn(battle: Battle, cards: CardIndex, name: PolicyName, rng
       if (st.enemy.stealth && st.enemy.def.stealthGate) break;
       // X03: 낼 카드가 없으면 무작위 카드 생성 시도
       const x03 = specials.find((c) => c.def.id === 'X03');
-      if (x03 && p.energy >= x03.def.cost && p.hand.length < 8 && options.length === 0) {
+      if (x03 && p.energy >= x03.def.cost && p.hand.length < rules.player.handMax && options.length === 0) {
         battle.playSpecial(x03.uid);
         continue;
       }
       // 퇴고 (v2: 태그 사냥 — card-system-v2 §7): 헛소리/불용 카드를 버리고 교체
-      if (p.energy >= 1 && p.hand.length > 0 && p.deck.length + p.discard.length > 0) {
+      if (p.energy >= rules.player.reviseCost && p.hand.length > 0 && p.deck.length + p.discard.length > 0) {
         const fumbleOpt = options.find((o) => o.judgement === 'fumble');
         const target = fumbleOpt ?? hand[0];
         if (target) {
