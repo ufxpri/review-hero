@@ -26,3 +26,7 @@ assets/generated/
 ui/assets/
 ui/combat.html
 ui/prologue.html
+
+# 게임 페이지 생성 산출물 (tools/ui/build_game.mjs 로 재생성)
+ui/game/engine.js
+ui/game/data.js

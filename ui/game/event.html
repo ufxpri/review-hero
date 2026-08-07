@@ -1,0 +1,210 @@
+<meta charset="utf-8">
+<title>이세계 리뷰용사 — 이벤트</title>
+<link rel="stylesheet" href="shared.css">
+<style>
+/* 이벤트 노드 — 폐허에서 마주친 한 장면. 이야기책 한 페이지처럼 좁은 세로 흐름 */
+.wrap{max-width:680px;margin:30px auto 80px;padding:0 16px}
+.nodehead{display:flex;justify-content:center;gap:8px;margin-bottom:20px}
+.scene-ico{text-align:center;font-size:48px;margin-bottom:8px;
+           filter:drop-shadow(0 8px 20px rgba(0,0,0,.75))}
+h1{text-align:center;font-size:22px;color:var(--gold);letter-spacing:-.5px;margin-bottom:16px}
+.story{padding:20px 22px;font-size:13.5px;line-height:1.9;margin-bottom:20px;
+       box-shadow:0 12px 32px rgba(0,0,0,.55);
+       background-image:repeating-linear-gradient(92deg,rgba(120,100,60,.06) 0 2px,transparent 2px 5px),
+                        linear-gradient(160deg,var(--parch),var(--parch-d))}
+.story p+p{margin-top:10px}
+.story .say{display:block;margin-top:10px;padding-left:10px;border-left:3px solid #8a744d;
+            font-weight:700}
+.choices{display:flex;flex-direction:column;gap:10px}
+.choice{display:flex;align-items:center;gap:12px;text-align:left;padding:14px 18px;width:100%}
+.choice .fx{margin-left:auto;font-size:12px;color:var(--gold);font-weight:600;white-space:nowrap}
+.choice:disabled .fx{color:var(--dim)}
+#result{display:none;margin-top:4px}
+#result .rtext{padding:18px 20px;font-size:13.5px;line-height:1.9;margin-bottom:14px;
+       background-image:repeating-linear-gradient(92deg,rgba(120,100,60,.06) 0 2px,transparent 2px 5px),
+                        linear-gradient(160deg,var(--parch),var(--parch-d))}
+#result .rtext p+p{margin-top:10px}
+#result .rfx{text-align:center;font-size:13px;color:var(--gold);font-weight:700;margin-bottom:16px}
+#result .go{display:flex;justify-content:center}
+.fallback{margin-top:26px;text-align:center}
+</style>
+<script src="data.js"></script>
+<script src="state.js"></script>
+<body>
+<div class="wrap">
+  <div class="nodehead">
+    <span class="chip">❓ 이벤트</span>
+    <span class="chip" id="chipFloor"></span>
+    <span class="chip red" id="chipPreview" style="display:none">런 없음 — 미리보기</span>
+  </div>
+  <div class="scene-ico" id="evIco"></div>
+  <h1 id="evTitle"></h1>
+  <div class="story parch" id="evStory"></div>
+  <div class="choices" id="choices"></div>
+  <div class="panel" id="result">
+    <div class="rtext parch" id="rText"></div>
+    <div class="rfx" id="rFx"></div>
+    <div class="go"><button class="btn primary" id="btnGo">지도로</button></div>
+  </div>
+  <div class="fallback" id="fallback" style="display:none">
+    <a class="btn ghost" href="index.html">메인으로</a>
+  </div>
+</div>
+
+<script>
+document.body.insertAdjacentHTML('afterbegin', RH.ui.topbar('map'));
+const $ = (s) => document.querySelector(s);
+const esc = RH.ui.esc;
+const cardById = (id) => RH_DATA.cards.find((c) => c.id === id);
+
+// ── 런 확보. 없거나 현재 노드가 없으면 미리보기 폴백 (CONTRACT §확인 절차) ──
+const realRun = RH.run();
+const realNode = RH.currentNode();
+const preview = !realRun || !realNode;
+const run = realRun || { gold: 32, will: 21, maxWill: 30, floor: 3, deck: RH_DATA.startingDeck.slice() };
+const node = realNode || { id: 'preview' };
+if (preview) { $('#chipPreview').style.display = ''; $('#fallback').style.display = ''; }
+$('#chipFloor').textContent = `1막 ${run.floor}층`;
+
+// ── 이벤트 3종 — 커머스가 무너진 세계의 길거리 풍경 ─────────
+const EVENTS = [
+  {
+    ico: '🎁', title: '수상한 협찬 상자',
+    story: `
+      <p>무너진 상가 골목, 발끝에 리본 묶인 상자 하나가 놓여 있다.
+         이 폐허에서 유일하게 포장이 말끔한 물건이다.</p>
+      <p>뚜껑에는 또박또박한 손글씨가 적혀 있다.</p>
+      <span class="say">「먼저 써 보시고 솔직한 후기 부탁드립니다 ^^ (되도록 긍정적으로)」</span>
+      <p>원정대 수칙 제1조가 머릿속을 스친다.
+         <b>「대가를 받고 쓴 리뷰는 리뷰가 아니다. 그것은 광고이고, 광고가 이 세계를 이렇게 만들었다.」</b></p>
+      <p>…그래도 상자 틈으로 비치는 금화는 진짜다.</p>`,
+    choices: [
+      {
+        label: '상자를 받는다', fx: '🪙 골드 +25',
+        result: () => ({
+          text: `<p>주위를 두 번 살피고 상자를 챙겼다. 안에는 금화 25닢,
+                 그리고 「추후 협업 제안」이라 적힌 명함 한 장.</p>
+                 <p>명함은 읽지 않고 삼켰다. 증거는 없다. 양심에만 남았다.</p>`,
+          fx: '🪙 골드 +25', patch: { gold: 25 },
+        }),
+      },
+      {
+        label: '못 본 척 지나간다', fx: '아무 일 없음',
+        result: () => ({
+          text: `<p>상자를 지나쳐 걸었다. 등 뒤에서 뚜껑이 스르르 닫히는 소리가 들렸다.</p>
+                 <p>오늘 일지에 쓸 한 줄이 생겼다. 「나는 아직 리뷰어다.」</p>`,
+          fx: '변화 없음', patch: {},
+        }),
+      },
+    ],
+  },
+  {
+    ico: '📜', title: '길에서 주운 리뷰 초안',
+    story: `
+      <p>부서진 진열대 밑에 구겨진 양피지 한 장이 끼여 있다.
+         펼쳐 보니 누군가 쓰다 만 리뷰 초안이다.</p>
+      <p>별점 칸은 비어 있고, 문장은 중간에서 끊겨 있다. 마지막 획에 힘이 없다 —
+         쓰다가 무슨 일이 있었던 모양이다.</p>
+      <p>만물대장에 오르지 못한 미완성 리뷰는, 마침표를 찍어 줄 사람을 만날 때까지
+         힘을 잃지 않는다고 한다.</p>`,
+    choices: [
+      {
+        label: '이어서 완성한다', fx: '📋 무작위 카드 1장',
+        result: () => {
+          const c = cardById(ctx.cardId) || { name: ctx.cardId };
+          return {
+            text: `<p>끊긴 문장을 이어 붙이고 마침표를 찍었다.
+                   양피지가 가볍게 떨리더니 손바닥에 스며들었다.</p>
+                   <p>어딘가의 누군가가 남긴 문장이 내 것이 되었다. — 「${esc(c.name)}」</p>`,
+            fx: `📋 「${esc(c.name)}」 덱에 추가`, patch: { deckAdd: ctx.cardId },
+          };
+        },
+      },
+      {
+        label: '도로 밀어 넣는다', fx: '아무 일 없음',
+        result: () => ({
+          text: `<p>남의 초고에는 손을 대지 않는 법이다.
+                 양피지를 진열대 밑으로 도로 밀어 넣었다.</p>
+                 <p>주인이 돌아온다면, 마침표는 그가 찍을 것이다.</p>`,
+          fx: '변화 없음', patch: {},
+        }),
+      },
+    ],
+  },
+  {
+    ico: '🥫', title: '노숙 원정대원의 부탁',
+    story: `
+      <p>상가 처마 밑에 원정대 망토를 뒤집어쓴 사람이 웅크리고 있다.
+         망토의 원정대 문장은 반쯤 뜯겨 나갔다.</p>
+      <span class="say">「환불받으러 들어왔다가… 여비까지 환불당했습니다.」</span>
+      <p>그가 내민 깡통 옆면에는 서툰 글씨가 적혀 있다.
+         「후원 1건당 진심 어린 감사 후기를 작성해 드립니다」</p>`,
+    choices: [
+      {
+        label: '10골드를 깡통에 넣는다', fx: '🪙 -10 · 🧠 의지 +8',
+        need: (r) => r.gold >= 10, needMsg: '골드 부족',
+        result: () => ({
+          text: `<p>금화 열 닢을 깡통에 넣었다. 그는 약속대로 그 자리에서 감사 후기를 읊기
+                 시작했다 — 내 걸음걸이, 망토 매무새, 눈빛의 결의까지 전부
+                 별 다섯 개짜리 문장으로.</p>
+                 <p>낯간지럽지만, 이상하게 힘이 난다.</p>`,
+          fx: '🪙 골드 -10 · 🧠 의지 +8', patch: { gold: -10, will: 8 },
+        }),
+      },
+      {
+        label: '무시한다', fx: '아무 일 없음',
+        result: () => ({
+          text: `<p>못 본 척 지나쳤다. 등 뒤에서 「별점… 1점…」 하는 중얼거림이 들렸다.</p>
+                 <p>괜찮다. 원정대원끼리는 서로를 평가할 수 없다는 규정이 있다.
+                 아마, 있을 것이다.</p>`,
+          fx: '변화 없음', patch: {},
+        }),
+      },
+    ],
+  },
+];
+
+// ── nodeCtx — 노드 재입장 시 이벤트가 리롤되지 않게 첫 렌더 결과를 런에 저장 ──
+const cardPool = RH_DATA.cards.filter((c) => c.kind === 'prefix' || c.kind === 'suffix');
+let ctx = (run.nodeCtx && run.nodeCtx.page === 'event' && run.nodeCtx.nodeId === node.id)
+  ? run.nodeCtx : null;
+if (!ctx) {
+  ctx = {
+    page: 'event', nodeId: node.id,
+    ev: Math.floor(Math.random() * EVENTS.length),
+    cardId: cardPool[Math.floor(Math.random() * cardPool.length)].id,
+  };
+  if (!preview) { run.nodeCtx = ctx; RH.saveRun(run); }
+}
+const EV = EVENTS[ctx.ev];
+
+// ── 렌더 ─────────────────────────────────────────────
+$('#evIco').textContent = EV.ico;
+$('#evTitle').textContent = EV.title;
+$('#evStory').innerHTML = EV.story;
+$('#choices').innerHTML = EV.choices.map((c, i) => {
+  const blocked = c.need && !c.need(run);
+  return `<button class="btn choice" data-c="${i}" ${blocked ? 'disabled' : ''}>
+    ${c.label}<span class="fx">${blocked ? esc(c.needMsg) + ' — ' : ''}${c.fx}</span></button>`;
+}).join('');
+
+let pendingPatch = null;
+$('#choices').addEventListener('click', (e) => {
+  const b = e.target.closest('.choice');
+  if (!b || b.disabled) return;
+  const r = EV.choices[+b.dataset.c].result();
+  pendingPatch = r.patch || {};
+  $('#choices').style.display = 'none';
+  $('#rText').innerHTML = r.text;
+  $('#rFx').textContent = r.fx;
+  $('#result').style.display = 'block';
+});
+
+$('#btnGo').addEventListener('click', () => {
+  if (preview) { location.href = realRun ? 'map.html' : 'index.html'; return; }
+  delete run.nodeCtx; RH.saveRun(run);           // 다음 노드에서 새 문맥을 굴리도록 정리
+  location.href = RH.completeNode(pendingPatch || {});
+});
+</script>
+<script src="debug.js"></script>
+</body>

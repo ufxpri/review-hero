@@ -1,0 +1,153 @@
+<meta charset="utf-8">
+<title>이세계 리뷰용사 — 설정</title>
+<link rel="stylesheet" href="shared.css">
+<style>
+.wrap{max-width:680px;margin:26px auto;padding:0 18px;display:flex;flex-direction:column;gap:14px}
+h1{font-size:19px;letter-spacing:-.4px}
+h1 small{font-size:12px;font-weight:400;color:var(--dim);margin-left:8px}
+
+/* 설정 행 — 왼쪽 설명, 오른쪽 조작 */
+.row{display:flex;align-items:center;gap:14px;padding:11px 2px}
+.row + .row{border-top:1px solid rgba(107,86,54,.3)}
+.row .lbl{flex:1}
+.row .lbl b{display:block;font-size:14px}
+.row .lbl .d{display:block;font-size:11.5px;color:var(--dim);margin-top:3px;line-height:1.5}
+
+/* 3단 선택 (텍스트 속도) */
+.seg{display:flex;border:1px solid var(--edge);border-radius:5px;overflow:hidden}
+.seg button{padding:8px 14px;font-size:12.5px;background:rgba(0,0,0,.35);color:var(--dim);
+            border:none;cursor:pointer;font-family:inherit}
+.seg button + button{border-left:1px solid var(--edge)}
+.seg button.on{background:linear-gradient(#6b4f1e,#4a3612);color:#ffe9bd;font-weight:700}
+.seg button:hover:not(.on){color:var(--ink)}
+
+/* 켬/끔 토글 */
+.tog{width:76px;padding:8px 0;font-size:12.5px;border-radius:5px;cursor:pointer;
+     font-family:inherit;font-weight:700;
+     border:1px solid var(--edge);background:rgba(0,0,0,.35);color:var(--dim)}
+.tog.on{border-color:var(--gold);background:linear-gradient(#6b4f1e,#4a3612);color:#ffe9bd}
+
+/* 데이터 관리 — 위험 버튼 */
+.danger-row .btn{min-width:150px}
+.note{font-size:11.5px;color:#6f675a;line-height:1.7}
+</style>
+<script src="data.js"></script>
+<script src="state.js"></script>
+<body>
+<script>document.body.insertAdjacentHTML('afterbegin', RH.ui.topbar('settings'));</script>
+
+<div class="wrap">
+  <h1>설정 <small>변경 즉시 저장됩니다</small></h1>
+
+  <section class="panel">
+    <h2>화면·연출</h2>
+    <div class="row">
+      <div class="lbl"><b>텍스트 속도</b>
+        <span class="d">대사와 연출이 출력되는 속도입니다.</span></div>
+      <div class="seg" id="speed">
+        <button data-v="1">1 · 차분히</button>
+        <button data-v="2">2 · 빠르게</button>
+        <button data-v="3">3 · 바로바로</button>
+      </div>
+    </div>
+    <div class="row">
+      <div class="lbl"><b>화면 흔들림</b>
+        <span class="d">팩트·원산지 판정이 꽂힐 때 화면이 흔들립니다. 어지러우면 끄세요.</span></div>
+      <button class="tog" id="shake"></button>
+    </div>
+    <div class="row">
+      <div class="lbl"><b>디버그 패널</b>
+        <span class="d">개발용 패널(우하단 🐞, 단축키 `)을 켜고 끕니다.</span></div>
+      <button class="tog" id="debug"></button>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>리뷰어</h2>
+    <div class="row">
+      <div class="lbl"><b>필명·서명</b>
+        <span class="d" id="penline"></span></div>
+      <a class="btn ghost" href="../signature.html">필명·서명 다시 만들기</a>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>데이터 관리</h2>
+    <div class="row danger-row">
+      <div class="lbl"><b>진행 중 런 삭제</b>
+        <span class="d" id="runline"></span></div>
+      <button class="btn danger" id="delrun">런 삭제</button>
+    </div>
+    <div class="row danger-row">
+      <div class="lbl"><b>계정(메타) 초기화</b>
+        <span class="d">누적 통계·명성 RP·적립금 P·원정대 기록을 지웁니다. 필명과 서명은 남습니다.</span></div>
+      <button class="btn danger" id="wipemeta">메타 초기화</button>
+    </div>
+    <div class="row danger-row">
+      <div class="lbl"><b>전체 초기화</b>
+        <span class="d">필명·서명·런·계정까지 이 게임의 저장 데이터 전부를 지웁니다. 되돌릴 수 없습니다.</span></div>
+      <button class="btn danger" id="wipeall">전부 지우기</button>
+    </div>
+  </section>
+
+  <p class="note">저장은 이 기기의 브라우저에만 남습니다(localStorage). 서버 계정 연동은 온라인 레이어에서 붙습니다.</p>
+</div>
+
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+
+  function render() {
+    const s = RH.settings();
+    document.querySelectorAll('#speed button').forEach((b) =>
+      b.classList.toggle('on', Number(b.dataset.v) === s.textSpeed));
+    $('shake').textContent = s.shake ? '켬' : '끔';
+    $('shake').classList.toggle('on', s.shake);
+    $('debug').textContent = s.debug ? '켬' : '끔';
+    $('debug').classList.toggle('on', s.debug);
+
+    const pen = RH.penname();
+    $('penline').textContent = pen
+      ? `현재 필명: ${pen} — 다시 만들면 이전 서명은 덮어씁니다.`
+      : '아직 등록된 필명이 없습니다.';
+
+    const run = RH.run();
+    $('runline').textContent = run
+      ? `1막 ${run.floor}층 진행 중인 원정을 지웁니다. 계정 기록은 남습니다.`
+      : '진행 중인 원정이 없습니다.';
+    $('delrun').disabled = !run;
+  }
+
+  const patch = (fn) => { const s = RH.settings(); fn(s); RH.saveSettings(s); render(); };
+
+  document.querySelector('#speed').addEventListener('click', (e) => {
+    const b = e.target.closest('button[data-v]');
+    if (b) patch((s) => { s.textSpeed = Number(b.dataset.v); });
+  });
+  $('shake').addEventListener('click', () => patch((s) => { s.shake = !s.shake; }));
+  // 디버그는 패널 자체를 즉시 없애거나 띄우기 위해 저장 후 페이지를 다시 연다
+  $('debug').addEventListener('click', () => {
+    const s = RH.settings(); s.debug = !s.debug; RH.saveSettings(s); location.reload();
+  });
+
+  $('delrun').addEventListener('click', () => {
+    if (!RH.run()) return;
+    if (!confirm('진행 중인 원정이 사라집니다.\n정말 삭제할까요?')) return;
+    RH.clearRun(); render();
+  });
+  $('wipemeta').addEventListener('click', () => {
+    if (!confirm('누적 통계와 원정대 기록이 전부 사라집니다.\n계정(메타)을 초기화할까요?')) return;
+    localStorage.removeItem(RH.K.meta); render();
+  });
+  $('wipeall').addEventListener('click', () => {
+    if (!confirm('필명·서명을 포함한 모든 저장 데이터가 사라집니다.\n정말 전부 지울까요?')) return;
+    Object.keys(localStorage).filter((k) => k.startsWith('reviewhero.'))
+      .forEach((k) => localStorage.removeItem(k));
+    location.href = 'index.html';
+  });
+
+  render();
+})();
+</script>
+<script src="debug.js"></script>
+</body>

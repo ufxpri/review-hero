@@ -1,0 +1,71 @@
+/* 이세계 리뷰용사 — 게임 공통 스타일. 토큰은 ui/combat.html 미술 방향을 승계한다. */
+:root{
+  --bg:#12100e; --panel:rgba(20,18,15,.88); --edge:#6b5636; --edge-hi:#c39a52;
+  --ink:#efe7d8; --dim:#9a8f7d; --gold:#e0a94b; --red:#c2452e; --green:#4f9a5e;
+  --slab:rgba(9,8,7,.8);
+  --parch:#e8dcc0; --parch-d:#cbb98f; --inkc:#2b2119;
+  font-family:Pretendard,"Apple SD Gothic Neo","Noto Sans KR",system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);min-height:100vh;font-size:14px}
+
+/* ── 상단바 — RH.ui.topbar() 가 뿌리는 마크업과 짝 ───────────── */
+.topbar{display:flex;align-items:center;gap:18px;height:46px;padding:0 16px;
+        background:var(--slab);border-bottom:1px solid var(--edge)}
+.topbar .logo{font-weight:800;letter-spacing:-.4px;color:var(--gold);text-decoration:none}
+.topbar .stat{display:flex;align-items:center;gap:6px;font-variant-numeric:tabular-nums;color:var(--ink)}
+.topbar .stat b{font-weight:700}
+.topbar nav{margin-left:auto;display:flex;gap:6px}
+.topbar nav a{color:var(--dim);text-decoration:none;font-size:12px;padding:4px 10px;
+              border:1px solid transparent;border-radius:4px}
+.topbar nav a:hover{color:var(--ink);border-color:var(--edge)}
+.topbar nav a.active{color:var(--gold);border-color:var(--edge)}
+
+/* ── 공통 부품 ──────────────────────────────────────────── */
+.panel{background:var(--panel);border:1px solid var(--edge);border-radius:6px;padding:14px}
+.panel h2{font-size:15px;color:var(--gold);margin-bottom:10px;letter-spacing:-.3px}
+.chip{border:1px solid var(--edge);border-radius:4px;padding:3px 9px;
+      background:rgba(0,0,0,.35);font-size:12px;color:var(--dim);display:inline-block}
+.btn{display:inline-block;cursor:pointer;border:1px solid var(--edge-hi);border-radius:5px;
+     background:linear-gradient(#3a2f1e,#2a2115);color:var(--ink);padding:9px 18px;
+     font-size:14px;font-weight:700;letter-spacing:-.2px;text-decoration:none;text-align:center}
+.btn:hover{filter:brightness(1.18)}
+.btn:disabled,.btn.off{opacity:.4;cursor:default;filter:none}
+.btn.primary{border-color:var(--gold);background:linear-gradient(#6b4f1e,#4a3612);color:#ffe9bd}
+.btn.danger{border-color:var(--red);color:#f0b0a0}
+.btn.ghost{background:none;border-color:var(--edge);color:var(--dim);font-weight:400}
+.stars{color:var(--gold);letter-spacing:1.5px}
+.stars .off{color:#4a4136}
+.bar{height:14px;border:1px solid var(--edge);border-radius:3px;overflow:hidden;
+     background:rgba(0,0,0,.55);position:relative}
+.bar i{display:block;height:100%;background:linear-gradient(#c2452e,#8e2f1f)}
+.bar.g i{background:linear-gradient(#5aa96a,#3c7a49)}
+.tiny{font-size:11px;color:var(--dim)}
+.gold{color:var(--gold)}
+.red{color:var(--red)}
+.green{color:var(--green)}
+
+/* 양피지(리뷰 카드) 질감 — 카드·리뷰 표시에 공용.
+   ⚠ background 축약형이라 페이지에서 background-image 를 다시 선언하면 그라디언트가
+   통째로 덮인다. 질감을 얹으려면 그라디언트를 포함해 한 목록으로 재선언할 것. */
+.parch{background:linear-gradient(160deg,var(--parch),var(--parch-d));color:var(--inkc);
+       border:1px solid #8a744d;border-radius:5px}
+
+/* ── 디버그 패널 (debug.js) ─────────────────────────────── */
+#rh-debug-fab{position:fixed;right:14px;bottom:14px;z-index:900;width:40px;height:40px;
+  border-radius:50%;border:1px solid var(--edge-hi);background:var(--slab);color:var(--gold);
+  font-size:18px;cursor:pointer;opacity:.55}
+#rh-debug-fab:hover{opacity:1}
+#rh-debug{position:fixed;right:14px;bottom:62px;z-index:900;width:250px;max-height:70vh;
+  overflow:auto;background:var(--slab);border:1px solid var(--edge-hi);border-radius:8px;
+  padding:12px;display:none;backdrop-filter:blur(3px)}
+#rh-debug.open{display:block}
+#rh-debug h3{font-size:12px;color:var(--red);margin-bottom:8px;letter-spacing:.5px}
+#rh-debug .sec{font-size:10px;color:var(--dim);margin:10px 0 4px;letter-spacing:.5px}
+#rh-debug button,#rh-debug select{width:100%;margin-bottom:4px;padding:6px 8px;font-size:12px;
+  background:#211b13;border:1px solid var(--edge);border-radius:4px;color:var(--ink);
+  cursor:pointer;text-align:left}
+#rh-debug button:hover{border-color:var(--edge-hi)}
+#rh-debug button:disabled{opacity:.35;cursor:default}
+#rh-debug .kv{font-size:11px;color:var(--dim);font-variant-numeric:tabular-nums;margin-bottom:2px}
+#rh-debug .kv b{color:var(--ink)}

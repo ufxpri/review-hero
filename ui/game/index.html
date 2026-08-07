@@ -1,0 +1,106 @@
+<meta charset="utf-8">
+<title>이세계 리뷰용사 — 메인</title>
+<link rel="stylesheet" href="shared.css">
+<style>
+/* 타이틀 화면 — 게임에서 유일하게 topbar 없는 전체화면 페이지 (CONTRACT §공통 뼈대의 예외) */
+body{overflow:hidden}
+.title{position:relative;min-height:100vh;display:flex;flex-direction:column;
+       align-items:center;justify-content:center;
+       background:radial-gradient(120% 100% at 50% 0%,#211b13,#0a0806)}
+.grain{position:absolute;inset:0;pointer-events:none;opacity:.05;
+       background-image:repeating-linear-gradient(0deg,#fff 0 1px,transparent 1px 3px),
+                        repeating-linear-gradient(90deg,#fff 0 1px,transparent 1px 4px)}
+.vig{position:absolute;inset:0;pointer-events:none;
+     background:radial-gradient(92% 74% at 50% 40%,transparent 42%,rgba(0,0,0,.62))}
+
+/* 로고 — 이미지 없이 CSS 타이포로 */
+.brand{position:relative;text-align:center;margin-bottom:44px}
+.deco{font-size:13px;color:var(--dim);margin-bottom:16px}
+.deco .st{color:var(--gold);letter-spacing:2px;font-size:14px}
+.deco b{color:var(--ink)}
+h1{font-size:88px;font-weight:900;letter-spacing:-3.5px;line-height:1.04;
+   background:linear-gradient(178deg,#f8ecc9 28%,#e0a94b 60%,#8f6b2a 98%);
+   -webkit-background-clip:text;background-clip:text;color:transparent;
+   filter:drop-shadow(0 4px 0 rgba(0,0,0,.6)) drop-shadow(0 12px 30px rgba(224,169,75,.16))}
+/* 부제 = 도장. 커머스 세계관답게 뾰족한 판타지 대신 인주 냄새로 */
+.stamp{display:inline-block;margin-top:22px;transform:rotate(-2.4deg);
+       border:3px double #c2452e;border-radius:6px;color:#e0876c;
+       padding:6px 18px 6px 24px;font-size:17px;font-weight:800;letter-spacing:6px;
+       background:rgba(122,58,44,.12);text-shadow:0 1px 0 rgba(0,0,0,.4)}
+
+/* 메뉴 */
+.menu{position:relative;display:flex;flex-direction:column;gap:10px;width:312px}
+.menu .btn{padding:13px 18px;font-size:15px}
+.menu .btn .sub{display:block;font-size:11px;font-weight:400;color:#cdb98b;
+                margin-top:4px;letter-spacing:0}
+.menu .btn.ghost .sub{color:var(--dim)}
+.row3{display:flex;gap:8px}
+.row3 .btn{flex:1;padding:10px 0;font-size:13px}
+
+/* 하단 — 필명과 빌드 표기 */
+.foot{position:absolute;left:0;right:0;bottom:0;display:flex;align-items:center;gap:10px;
+      padding:14px 20px;font-size:12px;color:var(--dim)}
+.foot .pen{border:1px solid var(--edge);border-radius:4px;padding:4px 10px;
+           background:rgba(0,0,0,.35)}
+.foot .pen b{color:var(--gold);font-weight:700}
+.foot .ver{margin-left:auto;margin-right:52px; /* 디버그 🐞 버튼과 겹치지 않게 */
+           color:#5e564a;font-variant-numeric:tabular-nums}
+</style>
+<script src="data.js"></script>
+<script src="state.js"></script>
+<body>
+<div class="title">
+  <div class="grain"></div>
+  <div class="vig"></div>
+
+  <header class="brand">
+    <p class="deco"><span class="st">★★★★★</span> <b>4.9</b> · 누적 리뷰 1,048,576개 · 만물마켓 공식</p>
+    <h1>이세계 리뷰용사</h1>
+    <span class="stamp">리뷰가 무기다</span>
+  </header>
+
+  <nav class="menu" id="menu"></nav>
+
+  <footer class="foot">
+    <span class="pen" id="pen"></span>
+    <span class="ver">dev 빌드</span>
+  </footer>
+</div>
+
+<script>
+(() => {
+  const run = RH.run();
+  const pen = RH.penname();
+  const esc = RH.ui.esc;
+
+  // ── 메뉴 — 이어하기는 진행 중인 런이 있을 때만 ──────────────
+  let html = '';
+  if (run) {
+    html += `<a class="btn primary" href="map.html">이어하기
+               <span class="sub">1막 ${run.floor}층 · 🧠 ${run.will}/${run.maxWill} · 🪙 ${run.gold}</span></a>`;
+  }
+  html += `<button class="btn${run ? '' : ' primary'}" id="newrun">새 원정
+             <span class="sub">${pen ? '만물대장을 들고 던전으로' : '리뷰어 등록부터 시작합니다'}</span></button>`;
+  html += `<div class="row3">
+             <a class="btn ghost" href="board.html">원정대 명단</a>
+             <a class="btn ghost" href="account.html">계정</a>
+             <a class="btn ghost" href="settings.html">설정</a>
+           </div>`;
+  document.getElementById('menu').innerHTML = html;
+
+  // ── 새 원정 — 필명 없으면 프롤로그(리뷰어 등록)부터 ─────────
+  document.getElementById('newrun').addEventListener('click', () => {
+    if (!RH.penname()) { location.href = '../prologue.html'; return; }
+    if (RH.run() && !confirm('진행 중인 원정이 사라집니다.\n새 원정을 떠날까요?')) return;
+    RH.newRun();
+    location.href = 'map.html';
+  });
+
+  // ── 하단 필명 ───────────────────────────────────────────
+  document.getElementById('pen').innerHTML = pen
+    ? `✍ <b>${esc(pen)}</b> 님의 만물대장`
+    : '✍ 미등록 리뷰어 — 첫 원정에서 등록합니다';
+})();
+</script>
+<script src="debug.js"></script>
+</body>

@@ -1,0 +1,160 @@
+<meta charset="utf-8">
+<title>이세계 리뷰용사 — 원정대 명단</title>
+<link rel="stylesheet" href="shared.css">
+<style>
+/* board.html — 환불원정대 명단. NPC 선배 대원(전원 사망·두절) + 내 지난 런을 합쳐 랭킹으로. */
+.wrap{width:100%;max-width:960px;margin:24px auto 80px;padding:0 16px;
+      display:flex;flex-direction:column;gap:14px}
+
+/* ── 명단 소개 ── */
+.intro{display:flex;align-items:flex-start;gap:16px}
+.intro .txt{flex:1}
+.intro h1{font-size:20px;color:var(--gold);letter-spacing:-.4px;margin-bottom:7px}
+.intro p{color:var(--dim);font-size:13px;line-height:1.8}
+.intro p b{color:var(--ink)}
+.intro .chips{display:flex;flex-direction:column;gap:6px;align-items:flex-end;white-space:nowrap}
+.intro .chips .chip b{color:var(--gold)}
+
+/* ── 랭킹 표 ── */
+.roster{padding:6px 10px 10px}
+.rhead,.row{display:grid;align-items:center;gap:10px;
+  grid-template-columns:40px 158px 96px 104px 1fr 62px 88px;padding:9px 8px}
+.rhead{font-size:10.5px;color:var(--dim);letter-spacing:1px;
+  border-bottom:1px solid var(--edge);padding-bottom:7px}
+.row{border-bottom:1px solid rgba(107,86,54,.28);border-radius:6px}
+.row:last-child{border-bottom:none}
+.row.me{border:1px solid var(--gold);background:rgba(224,169,75,.07);
+  box-shadow:inset 0 0 18px rgba(224,169,75,.05);margin:3px 0}
+.row.lost{opacity:.5}
+
+.rank{font-weight:800;font-size:15px;color:var(--dim);text-align:center;
+  font-variant-numeric:tabular-nums}
+#rows .row:first-child .rank{color:var(--gold);text-shadow:0 0 8px rgba(224,169,75,.4)}
+
+.pen{display:flex;align-items:center;gap:6px;min-width:0}
+.pen .nm{font-weight:700;font-size:13.5px;letter-spacing:-.2px;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap}
+.badge-me{flex:none;background:var(--gold);color:#1c1409;font-weight:800;font-size:10px;
+  border-radius:3px;padding:1px 6px}
+
+.reach{font-variant-numeric:tabular-nums;font-size:13px}
+.reach .fate{display:block;font-size:10px;margin-top:2px;color:var(--dim)}
+.reach .fate.dead{color:#b06a55}
+.reach .fate.back{color:var(--gold)}
+.reach .fate.gone{color:#6f675a}
+
+.stars{font-size:13px}
+.row.lost .stars{filter:grayscale(1)}
+
+/* 유언 한 줄 — 양피지 칩 */
+.rv{display:block;min-width:0;color:var(--inkc);border:1px solid #8a744d;border-radius:4px;
+  padding:5px 10px;font-size:12px;line-height:1.5;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;
+  /* 질감 줄무늬와 양피지 그라디언트를 한 목록으로 — 따로 쓰면 서로 덮어쓴다 */
+  background-image:repeating-linear-gradient(92deg,rgba(120,100,60,.05) 0 2px,transparent 2px 5px),
+                   linear-gradient(160deg,var(--parch),var(--parch-d))}
+.rv .q{color:#7b6a4d}
+.row.lost .rv{text-decoration:line-through;color:#6a5d49;background:#3a342a;
+  border-color:#4a4136;font-style:italic}
+
+.st{font-size:11px;text-align:center;border:1px solid var(--edge);border-radius:4px;
+  padding:3px 0;color:var(--dim);background:rgba(0,0,0,.3)}
+.st.ok{color:#7dc48d;border-color:#3c5a44}
+.st.hold{color:#d0b070;border-color:#5a4a2c}
+.st.lost{color:#6f675a;text-decoration:line-through}
+
+.date{font-size:11.5px;color:var(--dim);font-variant-numeric:tabular-nums;text-align:right}
+
+.foot{text-align:center;color:#6f675a;font-size:11.5px;line-height:1.7;margin-top:2px}
+</style>
+<script src="data.js"></script>
+<script src="state.js"></script>
+<body>
+<script>document.body.insertAdjacentHTML('afterbegin', RH.ui.topbar('board'));</script>
+
+<div class="wrap">
+  <div class="panel intro">
+    <div class="txt">
+      <h1>환불원정대 명단</h1>
+      <p>
+        소환된 자들의 기록이다. 전원 필명, 전원 익명 — <b>소환이 곧 익명의 조건</b>이다.<br>
+        죽은 대원은 지워지지 않고 마지막 리뷰와 함께 여기 남는다.
+        오래 살아남은 자만이 강해질 수 있다. <b>아직, 오래 살아남은 대원은 없다.</b>
+      </p>
+    </div>
+    <div class="chips">
+      <span class="chip">등재 대원 <b id="cntAll">–</b>명</span>
+      <span class="chip">생존 <b>1</b>명 — 당신</span>
+      <span class="chip">유언 유실 <b id="cntLost">–</b>건</span>
+    </div>
+  </div>
+
+  <div class="panel roster">
+    <div class="rhead">
+      <span style="text-align:center">순위</span><span>필명</span><span>도달</span>
+      <span>별점</span><span>마지막 리뷰 (유언)</span>
+      <span style="text-align:center">상태</span><span style="text-align:right">게시일</span>
+    </div>
+    <div id="rows"></div>
+  </div>
+
+  <p class="foot">
+    유언의 좋아요 보상은 그 런에서 전투 승리 1회 이상인 경우에만 집계된다 (만물대장 운영 원칙 — GDD §4.3).<br>
+    「유실」은 대장 이관 중 원문이 사라진 기록이다. 복구 요청은 접수되지 않는다.
+  </p>
+</div>
+
+<script>
+/* NPC 선배 대원 — 전원 다른 세계에서 불려 온 익명 리뷰어. 전원 사망 또는 소식 두절.
+ * (worldview §1.7 — "살아 있는 사람은 주인공 하나다") */
+const NPCS = [
+  { name: '배송조회중독자', floor: 6, stars: 1, status: '게시', fate: '전사', date: '2026-05-02',
+    review: '주문하신 복수는 배송 중 분실되었습니다. 수령인도 함께요.' },
+  { name: '미개봉철수',     floor: 5, stars: 2, status: '게시', fate: '전사', date: '2026-03-18',
+    review: '미개봉 새 상품인데 중고로 반품됩니다. 저 말입니다.' },
+  { name: '반품테러리스트', floor: 5, stars: 1, status: '유실', fate: '두절', date: '2025-08-14',
+    review: '' },
+  { name: '최저가비교왕',   floor: 4, stars: 2, status: '게시', fate: '전사', date: '2026-01-27',
+    review: '목숨 최저가 비교하다 품절됐습니다. 재입고 문의는 저승으로.' },
+  { name: '리뷰쓰면오백원', floor: 3, stars: 1, status: '계류', fate: '전사', date: '2025-11-09',
+    review: '오백 원 받고 솔직하게 씁니다. 여긴 오지 마세요. 진심입니다.' },
+  { name: '교환말고환불',   floor: 3, stars: 3, status: '유실', fate: '두절', date: '2025-12-30',
+    review: '' },
+  { name: '구매확정안누름', floor: 2, stars: 1, status: '계류', fate: '전사', date: '2026-06-21',
+    review: '구매확정은 끝까지 안 눌렀는데 인생이 확정됐네요.' },
+  { name: '새벽배송희생자', floor: 1, stars: 1, status: '게시', fate: '전사', date: '2026-02-05',
+    review: '문 앞에 두고 가라니까 저를 문 앞에 두고 갔습니다.' },
+];
+
+const esc = RH.ui.esc;
+
+/* 내 지난 런(meta.expedition, me:true) + NPC → 도달 층 내림차순, 동률이면 날짜 최신 */
+const mine = RH.meta().expedition.map(e => ({
+  name: e.name, floor: e.floor, stars: e.stars, status: e.status,
+  review: (e.review || '').split('\n')[0],
+  fate: e.result === 'clear' ? '생환' : '전사',
+  date: e.date, me: true,
+}));
+const all = [...NPCS, ...mine]
+  .sort((a, b) => (b.floor - a.floor) || String(b.date).localeCompare(String(a.date)));
+
+document.getElementById('cntAll').textContent = all.length;
+document.getElementById('cntLost').textContent = all.filter(e => e.status === '유실').length;
+
+const FATE_CLS = { '전사': 'dead', '생환': 'back', '두절': 'gone' };
+document.getElementById('rows').innerHTML = all.map((e, i) => `
+  <div class="row${e.me ? ' me' : ''}${e.status === '유실' ? ' lost' : ''}">
+    <span class="rank">${i + 1}</span>
+    <span class="pen"><span class="nm">✍ ${esc(e.name)}</span>${e.me ? '<span class="badge-me">나</span>' : ''}</span>
+    <span class="reach">1막 ${e.floor}층
+      <span class="fate ${FATE_CLS[e.fate] || ''}">${e.fate === '두절' ? '소식 두절' : e.fate}</span></span>
+    ${RH.ui.stars(e.stars)}
+    <span class="rv">${e.status === '유실'
+      ? '유언 원문 유실 — 복구 불가'
+      : `<span class="q">“</span>${esc(e.review)}<span class="q">”</span>`}</span>
+    <span class="st ${e.status === '게시' ? 'ok' : e.status === '계류' ? 'hold' : 'lost'}">${e.status}</span>
+    <span class="date">${esc(e.date || '')}</span>
+  </div>`).join('');
+</script>
+<script src="debug.js"></script>
+</body>

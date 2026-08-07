@@ -1,0 +1,191 @@
+<meta charset="utf-8">
+<title>이세계 리뷰용사 — 휴식</title>
+<link rel="stylesheet" href="shared.css">
+<style>
+/* 휴식 노드 — 모닥불 앞의 택1 (GDD R09) */
+.wrap{max-width:680px;margin:30px auto 80px;padding:0 16px}
+.nodehead{display:flex;justify-content:center;gap:8px;margin-bottom:20px}
+.scene-ico{text-align:center;font-size:52px;margin-bottom:8px;
+           filter:drop-shadow(0 0 26px rgba(224,169,75,.35)) drop-shadow(0 8px 20px rgba(0,0,0,.75))}
+h1{text-align:center;font-size:22px;color:var(--gold);letter-spacing:-.5px;margin-bottom:16px}
+.story{padding:20px 22px;font-size:13.5px;line-height:1.9;margin-bottom:20px;
+       box-shadow:0 12px 32px rgba(0,0,0,.55);
+       background-image:repeating-linear-gradient(92deg,rgba(120,100,60,.06) 0 2px,transparent 2px 5px),
+                        linear-gradient(160deg,var(--parch),var(--parch-d))}
+.story p+p{margin-top:10px}
+.story .say{display:block;margin-top:10px;padding-left:10px;border-left:3px solid #8a744d;
+            font-weight:700}
+.choices{display:flex;gap:12px}
+.choice{flex:1;display:flex;flex-direction:column;gap:8px;align-items:flex-start;
+        text-align:left;padding:16px 18px}
+.choice .t{font-size:15px}
+.choice .d{font-size:12px;color:var(--dim);font-weight:400;line-height:1.6}
+.choice .fx{font-size:12px;color:var(--gold);font-weight:600}
+#result{display:none;margin-top:4px}
+#result .rtext{padding:18px 20px;font-size:13.5px;line-height:1.9;margin-bottom:14px;
+       background-image:repeating-linear-gradient(92deg,rgba(120,100,60,.06) 0 2px,transparent 2px 5px),
+                        linear-gradient(160deg,var(--parch),var(--parch-d))}
+#result .rtext p+p{margin-top:10px}
+#result .rfx{text-align:center;font-size:13px;color:var(--gold);font-weight:700;margin-bottom:16px}
+#result .go{display:flex;justify-content:center}
+.fallback{margin-top:26px;text-align:center}
+/* 덱 목록 모달 — 태울 초고 고르기 */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.72);display:none;
+         place-items:center;z-index:100}
+.overlay.open{display:grid}
+.modal{width:660px;max-width:94vw;max-height:82vh;display:flex;flex-direction:column;gap:12px}
+.modal .hint{font-size:12px;color:var(--dim)}
+.dgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;overflow:auto;padding:2px}
+.ditem{text-align:left;padding:9px 11px;background:rgba(0,0,0,.35);cursor:pointer;
+       border:1px solid var(--edge);border-radius:5px;color:var(--ink);
+       display:flex;flex-direction:column;gap:3px;font-family:inherit}
+.ditem:hover{border-color:var(--edge-hi)}
+.ditem.sel{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold)}
+.ditem .dn{font-weight:700;font-size:12.5px}
+.ditem .dk{font-size:10.5px;color:var(--dim)}
+.mbtns{display:flex;gap:10px;justify-content:flex-end}
+</style>
+<script src="data.js"></script>
+<script src="state.js"></script>
+<body>
+<div class="wrap">
+  <div class="nodehead">
+    <span class="chip">🏕️ 휴식</span>
+    <span class="chip" id="chipFloor"></span>
+    <span class="chip" id="chipWill"></span>
+    <span class="chip red" id="chipPreview" style="display:none">런 없음 — 미리보기</span>
+  </div>
+  <div class="scene-ico">🔥</div>
+  <h1>먼저 간 원정대의 모닥불</h1>
+
+  <div class="story parch">
+    <p>무너진 회랑 한켠, 먼저 다녀간 원정대가 남긴 모닥불 자리가 있다.
+       재를 헤치자 불씨가 아직 살아 있다.</p>
+    <p>옆의 돌에는 누군가 새겨 둔 글귀.</p>
+    <span class="say">「쉬어라. 별점은 내일도 짤 수 있다.」</span>
+    <p>불을 쬐며 쉴 수도 있고, 그 불에 마음에 안 드는 초고를 태워 버릴 수도 있다.
+       둘 다는 안 된다 — 밤은 짧다.</p>
+  </div>
+
+  <div class="choices" id="choices">
+    <button class="btn choice" data-c="rest">
+      <span class="t">🛌 모닥불에서 쉰다</span>
+      <span class="d">아무것도 평가하지 않는 시간. 불멍은 어느 세계에서나 통한다.</span>
+      <span class="fx" id="fxRest">🧠 의지 회복</span>
+    </button>
+    <button class="btn choice" data-c="burn">
+      <span class="t">📜 초고를 태운다</span>
+      <span class="d">버린 문장 수만큼 필치는 가벼워진다 — 선배들의 유일한 공통 조언.</span>
+      <span class="fx">📋 덱에서 카드 1장 제거</span>
+    </button>
+  </div>
+
+  <div class="panel" id="result">
+    <div class="rtext parch" id="rText"></div>
+    <div class="rfx" id="rFx"></div>
+    <div class="go"><button class="btn primary" id="btnGo">지도로</button></div>
+  </div>
+  <div class="fallback" id="fallback" style="display:none">
+    <a class="btn ghost" href="index.html">메인으로</a>
+  </div>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="modal panel">
+    <h2>📜 어떤 초고를 태울까</h2>
+    <div class="hint">태운 카드는 이 런에서 사라진다. 연기는 사과를 받아 주지 않는다.</div>
+    <div class="dgrid" id="dgrid"></div>
+    <div class="mbtns">
+      <button class="btn ghost" id="btnBurnCancel">그만둔다</button>
+      <button class="btn danger" id="btnBurnOk" disabled>불 속으로</button>
+    </div>
+  </div>
+</div>
+
+<script>
+document.body.insertAdjacentHTML('afterbegin', RH.ui.topbar('map'));
+const $ = (s) => document.querySelector(s);
+const esc = RH.ui.esc;
+const cardById = (id) => RH_DATA.cards.find((c) => c.id === id);
+const KIND_L = { prefix: '접두', suffix: '접미', special: '특수' };
+
+// ── 런 확보. 없으면 미리보기 폴백 (CONTRACT §확인 절차) ──
+const realRun = RH.run();
+const realNode = RH.currentNode();
+const preview = !realRun || !realNode;
+const run = realRun || { gold: 32, will: 14, maxWill: 30, floor: 5, deck: RH_DATA.startingDeck.slice() };
+if (preview) { $('#chipPreview').style.display = ''; $('#fallback').style.display = ''; }
+
+const heal = Math.ceil(run.maxWill * 0.3);       // GDD R09 — 의지 30% 회복
+$('#chipFloor').textContent = `1막 ${run.floor}층`;
+$('#chipWill').textContent = `🧠 의지 ${run.will}/${run.maxWill}`;
+$('#fxRest').textContent = `🧠 의지 +${heal} (최대 ${run.maxWill})`;
+
+let pendingPatch = null;
+
+function showResult(html, fx) {
+  $('#choices').style.display = 'none';
+  $('#rText').innerHTML = html;
+  $('#rFx').textContent = fx;
+  $('#result').style.display = 'block';
+}
+
+$('#choices').addEventListener('click', (e) => {
+  const b = e.target.closest('.choice');
+  if (!b) return;
+  if (b.dataset.c === 'rest') {
+    pendingPatch = { will: heal };
+    showResult(
+      `<p>망토를 말아 베고 불가에 누웠다. 타닥, 타닥.
+       아무것도 평가하지 않아도 되는 시간이 흘러갔다.</p>
+       <p>눈을 떴을 때, 재 속의 불씨가 한 번 크게 숨을 쉬었다.</p>`,
+      `🧠 의지 +${heal}`,
+    );
+  }
+  if (b.dataset.c === 'burn') openBurn();
+});
+
+// ── 태울 초고 고르기 — 덱 목록 모달 ─────────────────────
+let burnIdx = null;
+function openBurn() {
+  burnIdx = null;
+  $('#btnBurnOk').disabled = true;
+  $('#dgrid').innerHTML = run.deck.map((id, i) => {
+    const c = cardById(id) || { name: id, kind: 'special', cost: '?' };
+    return `<button class="ditem" data-i="${i}">
+      <span class="dn">${esc(c.name)}</span>
+      <span class="dk">${KIND_L[c.kind] || c.kind}${c.suit ? ' · ' + esc(c.suit) : ''} · ✍${c.cost}</span>
+    </button>`;
+  }).join('');
+  $('#overlay').classList.add('open');
+}
+$('#dgrid').addEventListener('click', (e) => {
+  const b = e.target.closest('.ditem');
+  if (!b) return;
+  document.querySelectorAll('.ditem').forEach((x) => x.classList.remove('sel'));
+  b.classList.add('sel');
+  burnIdx = +b.dataset.i;
+  $('#btnBurnOk').disabled = false;
+});
+$('#btnBurnCancel').addEventListener('click', () => $('#overlay').classList.remove('open'));
+$('#btnBurnOk').addEventListener('click', () => {
+  if (burnIdx === null) return;
+  const c = cardById(run.deck[burnIdx]) || { name: run.deck[burnIdx] };
+  pendingPatch = { deckRemoveIdx: burnIdx };     // 실제 제거는 completeNode 가 수행
+  $('#overlay').classList.remove('open');
+  showResult(
+    `<p>「${esc(c.name)}」 초고를 불 속에 던졌다.
+     종이가 오그라들며 파란 불꽃이 잠깐 일었다.</p>
+     <p>그 문장을 쓰던 밤의 기억도 같이 타 올라갔다. 조금 가벼워졌다.</p>`,
+    `📋 「${esc(c.name)}」 제거 — 덱 ${run.deck.length - 1}장`,
+  );
+});
+
+// ── 지도로 → completeNode(patch) ───────────────────────
+$('#btnGo').addEventListener('click', () => {
+  if (preview) { location.href = realRun ? 'map.html' : 'index.html'; return; }
+  location.href = RH.completeNode(pendingPatch || {});
+});
+</script>
+<script src="debug.js"></script>
+</body>

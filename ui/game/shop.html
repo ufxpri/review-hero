@@ -1,0 +1,273 @@
+<meta charset="utf-8">
+<title>이세계 리뷰용사 — 상점</title>
+<link rel="stylesheet" href="shared.css">
+<style>
+/* 상점 노드 — 던전 상가 뒷골목의 수상한 잡화점 */
+.wrap{max-width:880px;margin:28px auto 80px;padding:0 16px}
+.nodehead{display:flex;justify-content:center;gap:8px;margin-bottom:18px}
+.scene-ico{text-align:center;font-size:46px;margin-bottom:6px;
+           filter:drop-shadow(0 8px 20px rgba(0,0,0,.75))}
+h1{text-align:center;font-size:21px;color:var(--gold);letter-spacing:-.5px;margin-bottom:14px}
+.keeper{display:flex;gap:14px;align-items:flex-start;margin-bottom:18px}
+.keeper .face{font-size:34px;line-height:1}
+.keeper .say{flex:1;font-size:13px;line-height:1.8;color:var(--ink)}
+.keeper .say b{color:var(--gold)}
+.sect{display:flex;align-items:baseline;gap:10px;margin:18px 2px 10px}
+.sect h2{font-size:14px;color:var(--gold);letter-spacing:-.3px}
+.goods{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.gcard{width:200px;display:flex;flex-direction:column;gap:8px}
+.gcard.soldout .mini{opacity:.45;filter:grayscale(.4)}
+.mini{padding:10px 11px;display:flex;flex-direction:column;gap:6px;min-height:158px;flex:1;
+      background-image:repeating-linear-gradient(92deg,rgba(120,100,60,.05) 0 2px,transparent 2px 5px),
+                       linear-gradient(160deg,var(--parch),var(--parch-d));
+      box-shadow:0 8px 22px rgba(0,0,0,.5)}
+.mhead{display:flex;justify-content:space-between;font-size:10.5px;color:#7b6a4d}
+.mcost{font-weight:800;color:#1c1812}
+.mname{font-weight:800;font-size:14px;color:#1c1812;line-height:1.3}
+.mtext{font-size:11px;line-height:1.55;color:#3a3229;flex:1}
+.mfoot{font-size:9.5px;color:#8a6f3f;border-top:1px solid var(--parch-d);padding-top:5px}
+.svc{display:flex;gap:12px;flex-wrap:wrap}
+.svcbox{flex:1;min-width:260px;display:flex;flex-direction:column;gap:8px}
+.svcbox .desc{font-size:12px;line-height:1.7;color:var(--dim);flex:1}
+.svcbox .row{display:flex;align-items:center;gap:8px}
+.svcbox .row .btn{min-width:96px}
+.svcbox .row .note{font-size:11px;color:var(--dim)}
+.msg{min-height:22px;text-align:center;font-size:12.5px;color:var(--gold);margin:16px 0 6px}
+.foot{display:flex;justify-content:center;gap:12px;align-items:center;margin-top:8px}
+/* 덱 목록 모달 — 파쇄할 카드 고르기 */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.72);display:none;
+         place-items:center;z-index:100}
+.overlay.open{display:grid}
+.modal{width:660px;max-width:94vw;max-height:82vh;display:flex;flex-direction:column;gap:12px}
+.modal .hint{font-size:12px;color:var(--dim)}
+.dgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;overflow:auto;padding:2px}
+.ditem{text-align:left;padding:9px 11px;background:rgba(0,0,0,.35);cursor:pointer;
+       border:1px solid var(--edge);border-radius:5px;color:var(--ink);
+       display:flex;flex-direction:column;gap:3px;font-family:inherit}
+.ditem:hover{border-color:var(--edge-hi)}
+.ditem.sel{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold)}
+.ditem .dn{font-weight:700;font-size:12.5px}
+.ditem .dk{font-size:10.5px;color:var(--dim)}
+.mbtns{display:flex;gap:10px;justify-content:flex-end}
+</style>
+<script src="data.js"></script>
+<script src="state.js"></script>
+<body>
+<div class="wrap">
+  <div class="nodehead">
+    <span class="chip">🪙 상점</span>
+    <span class="chip" id="chipFloor"></span>
+    <span class="chip gold" id="chipGold"></span>
+    <span class="chip red" id="chipPreview" style="display:none">런 없음 — 미리보기</span>
+  </div>
+  <div class="scene-ico">🏚️</div>
+  <h1>만물잡화 「재고처리반」</h1>
+
+  <div class="keeper panel">
+    <span class="face">🧌</span>
+    <span class="say">「어서 오십쇼. 보다시피 정식 협찬 매장은 아니고…
+      주인 잃은 물건들 새 주인 찾아주는 일을 합니다.
+      <b>정찰제</b>고, 흥정 안 받고, <b>환불은 제일 안 받습니다.</b>」</span>
+  </div>
+
+  <div class="sect"><h2>📜 떠돌이 리뷰 초안</h2>
+    <span class="tiny">주인 잃은 문장들 — 일반 25G · 특수 45G · 반품 불가</span></div>
+  <div class="goods" id="goods"></div>
+
+  <div class="sect"><h2>🛎 서비스</h2><span class="tiny">방문당 1회</span></div>
+  <div class="svc" id="svc"></div>
+
+  <div class="msg" id="msg"></div>
+  <div class="foot">
+    <button class="btn primary" id="btnExit">가게를 나선다</button>
+    <a class="btn ghost" href="index.html" id="fallback" style="display:none">메인으로</a>
+  </div>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="modal panel">
+    <h2>🗜 리뷰 파쇄 서비스 — 갈아 버릴 카드를 고르십쇼</h2>
+    <div class="hint">파쇄된 카드는 덱에서 사라지며 가루는 반환되지 않습니다. (수수료 20G)</div>
+    <div class="dgrid" id="dgrid"></div>
+    <div class="mbtns">
+      <button class="btn ghost" id="btnShredCancel">그만둔다</button>
+      <button class="btn danger" id="btnShredOk" disabled>파쇄한다 (🪙 20)</button>
+    </div>
+  </div>
+</div>
+
+<script>
+document.body.insertAdjacentHTML('afterbegin', RH.ui.topbar('map'));
+const $ = (s) => document.querySelector(s);
+const esc = RH.ui.esc;
+const cardById = (id) => RH_DATA.cards.find((c) => c.id === id);
+const KIND_L = { prefix: '접두', suffix: '접미', special: '특수' };
+// GDD §2 규칙 7 — UI에서 피해는 예외 없이 「좋아요」. 공유 data.js 표기를 표시 시점에 변환한다.
+const likeify = (s) => String(s || '')
+  .replace(/의지 데미지/g, '좋아요').replace(/데미지/g, '좋아요')
+  .replace(/피해량/g, '좋아요 수').replace(/피해/g, '좋아요');
+
+// ── 런 확보. 없으면 미리보기 폴백 (CONTRACT §확인 절차) ──
+const realRun = RH.run();
+const realNode = RH.currentNode();
+const preview = !realRun || !realNode;
+const run = realRun || { gold: 60, will: 21, maxWill: 30, floor: 2, deck: RH_DATA.startingDeck.slice() };
+const node = realNode || { id: 'preview' };
+if (preview) { $('#chipPreview').style.display = ''; $('#fallback').style.display = ''; }
+$('#chipFloor').textContent = `1막 ${run.floor}층`;
+
+// ── nodeCtx — 재입장 시 진열이 리롤되거나 재고가 부활하지 않게 런에 저장 ──
+function genStock() {
+  const normals = RH_DATA.cards.filter((c) => c.kind !== 'special');
+  const specials = RH_DATA.cards.filter((c) => c.kind === 'special');
+  const pick = (arr, not) => {
+    let c; do { c = arr[Math.floor(Math.random() * arr.length)]; } while (not.includes(c.id));
+    return c.id;
+  };
+  const a = pick(normals, []), b = pick(normals, [a]);
+  return [
+    { id: a, price: 25, sold: false },
+    { id: b, price: 25, sold: false },
+    { id: pick(specials, []), price: 45, sold: false },  // 특수 초안 — GDD 상점 45G
+  ];
+}
+let ctx = (run.nodeCtx && run.nodeCtx.page === 'shop' && run.nodeCtx.nodeId === node.id)
+  ? run.nodeCtx : null;
+if (!ctx) {
+  ctx = { page: 'shop', nodeId: node.id, stock: genStock(), potionSold: false, shredUsed: false };
+  if (!preview) { run.nodeCtx = ctx; RH.saveRun(run); }
+}
+
+function persist() {
+  if (preview) return;                    // 미리보기는 저장 없이 화면만 움직인다
+  run.nodeCtx = ctx;
+  RH.saveRun(run);
+  const tb = document.querySelector('.topbar');
+  if (tb) tb.outerHTML = RH.ui.topbar('map');   // 골드·의지 표시 갱신
+}
+
+// ── 렌더 ─────────────────────────────────────────────
+function cardHTML(id) {
+  const c = cardById(id) || { name: id, kind: 'special', cost: '?' };
+  const d = (RH_DATA.display || {})[id] || {};
+  const body = likeify(d.text) || (d.flavor ? `“${d.flavor}”` : '') || '…내용은 써 봐야 안다.';
+  return `<div class="mini parch">
+    <div class="mhead"><span>${KIND_L[c.kind] || c.kind}${c.suit ? ' · ' + esc(c.suit) : ''}</span>
+      <span class="mcost">✍${c.cost}</span></div>
+    <div class="mname">${esc(c.name)}</div>
+    <div class="mtext">${esc(body)}</div>
+    ${d.footer ? `<div class="mfoot">${esc(d.footer)}</div>` : ''}
+  </div>`;
+}
+
+function paint() {
+  $('#chipGold').textContent = `🪙 소지금 ${run.gold}`;
+  $('#goods').innerHTML = ctx.stock.map((it, i) => {
+    const afford = run.gold >= it.price;
+    return `<div class="gcard${it.sold ? ' soldout' : ''}">
+      ${cardHTML(it.id)}
+      <button class="btn" data-buy="${i}" ${it.sold || !afford ? 'disabled' : ''}>
+        ${it.sold ? '판매 완료' : `구입 — 🪙 ${it.price}`}</button>
+    </div>`;
+  }).join('');
+  const fullWill = run.will >= run.maxWill;
+  $('#svc').innerHTML = `
+    <div class="svcbox panel">
+      <h2>🧪 의지 회복제 <span class="tiny">— 🪙 12</span></h2>
+      <div class="desc">유통기한은 지났지만 효능은 지나지 않았습니다. 들이켜면
+        <b class="green">의지 +10</b>. 맛은 별 한 개.</div>
+      <div class="row">
+        <button class="btn" data-a="potion"
+          ${ctx.potionSold || run.gold < 12 || fullWill ? 'disabled' : ''}>
+          ${ctx.potionSold ? '판매 완료' : '마신다 — 🪙 12'}</button>
+        <span class="note">${ctx.potionSold ? '' : fullWill ? '의지가 이미 가득하다'
+          : `현재 의지 ${run.will}/${run.maxWill}`}</span>
+      </div>
+    </div>
+    <div class="svcbox panel">
+      <h2>🗜 리뷰 파쇄 서비스 <span class="tiny">— 🪙 20</span></h2>
+      <div class="desc">덱에서 카드 1장을 곱게 갈아 드립니다. 흑역사도 초심도,
+        갈리면 똑같은 가루입니다. <b class="red">복구 불가.</b></div>
+      <div class="row">
+        <button class="btn" data-a="shred"
+          ${ctx.shredUsed || run.gold < 20 || run.deck.length === 0 ? 'disabled' : ''}>
+          ${ctx.shredUsed ? '이용 완료' : '맡긴다 — 🪙 20'}</button>
+        <span class="note">${ctx.shredUsed ? '' : `덱 ${run.deck.length}장`}</span>
+      </div>
+    </div>`;
+}
+
+function say(t) { $('#msg').textContent = t; }
+
+// ── 구매 — 즉시 런에 반영 (RH.saveRun) ──────────────────
+$('#goods').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-buy]');
+  if (!b || b.disabled) return;
+  const it = ctx.stock[+b.dataset.buy];
+  if (it.sold || run.gold < it.price) return;
+  run.gold -= it.price;
+  run.deck.push(it.id);
+  it.sold = true;
+  persist(); paint();
+  const c = cardById(it.id);
+  say(`「${c ? c.name : it.id}」 구입 — 덱에 추가되었다. 주인 잃은 문장에 새 주인이 생겼다.`);
+});
+
+$('#svc').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-a]');
+  if (!b || b.disabled) return;
+  if (b.dataset.a === 'potion') {
+    run.gold -= 12;
+    run.will = Math.min(run.maxWill, run.will + 10);
+    ctx.potionSold = true;
+    persist(); paint();
+    say('회복제를 들이켰다. 지독하게 쓰다. 의지 +10 — 역시 회복은 쓴맛이다.');
+  }
+  if (b.dataset.a === 'shred') openShred();
+});
+
+// ── 파쇄 모달 — 덱 목록에서 1장 선택 제거 ────────────────
+let shredIdx = null;
+function openShred() {
+  shredIdx = null;
+  $('#btnShredOk').disabled = true;
+  $('#dgrid').innerHTML = run.deck.map((id, i) => {
+    const c = cardById(id) || { name: id, kind: 'special', cost: '?' };
+    return `<button class="ditem" data-i="${i}">
+      <span class="dn">${esc(c.name)}</span>
+      <span class="dk">${KIND_L[c.kind] || c.kind}${c.suit ? ' · ' + esc(c.suit) : ''} · ✍${c.cost}</span>
+    </button>`;
+  }).join('');
+  $('#overlay').classList.add('open');
+}
+$('#dgrid').addEventListener('click', (e) => {
+  const b = e.target.closest('.ditem');
+  if (!b) return;
+  document.querySelectorAll('.ditem').forEach((x) => x.classList.remove('sel'));
+  b.classList.add('sel');
+  shredIdx = +b.dataset.i;
+  $('#btnShredOk').disabled = false;
+});
+$('#btnShredCancel').addEventListener('click', () => $('#overlay').classList.remove('open'));
+$('#btnShredOk').addEventListener('click', () => {
+  if (shredIdx === null || run.gold < 20) return;
+  const [removed] = run.deck.splice(shredIdx, 1);
+  run.gold -= 20;
+  ctx.shredUsed = true;
+  persist(); paint();
+  $('#overlay').classList.remove('open');
+  const c = cardById(removed);
+  say(`「${c ? c.name : removed}」 파쇄 완료. 위이잉— 소리와 함께 문장이 가루가 되었다.`);
+});
+
+// ── 나가기 → completeNode({}) ───────────────────────────
+$('#btnExit').addEventListener('click', () => {
+  if (preview) { location.href = realRun ? 'map.html' : 'index.html'; return; }
+  delete run.nodeCtx; RH.saveRun(run);
+  location.href = RH.completeNode({});
+});
+
+paint();
+</script>
+<script src="debug.js"></script>
+</body>

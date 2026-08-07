@@ -1,0 +1,333 @@
+<meta charset="utf-8">
+<title>이세계 리뷰용사 — 런 종료</title>
+<link rel="stylesheet" href="shared.css">
+<style>
+/* result.html — 런 종료(사망/클리어) 공용. topbar 는 몰입을 위해 생략(CONTRACT 허용). */
+body{display:flex;flex-direction:column;align-items:center;padding:28px 16px 70px}
+body.death{background:radial-gradient(120% 90% at 50% 0%,#171310,#0b0908 62%)}
+body.clear{background:radial-gradient(120% 90% at 50% 0%,#262012 0%,#141009 58%,var(--bg))}
+.wrap{width:100%;max-width:680px;display:flex;flex-direction:column;gap:16px}
+
+/* ── 머리 — 사망은 별이 하나씩 꺼지고, 클리어는 계속 빛난다 ── */
+.head{text-align:center;padding:6px 0 0}
+.bigstars{font-size:30px;letter-spacing:9px;color:var(--gold);
+          text-shadow:0 0 14px rgba(224,169,75,.45)}
+body.death .bigstars span{animation:snuff 1s ease forwards}
+body.death .bigstars span:nth-child(2){animation-delay:.22s}
+body.death .bigstars span:nth-child(3){animation-delay:.44s}
+body.death .bigstars span:nth-child(4){animation-delay:.66s}
+body.death .bigstars span:nth-child(5){animation-delay:.88s}
+@keyframes snuff{60%{color:var(--gold)}100%{color:#2e2820;text-shadow:none}}
+body.clear .bigstars span{animation:glow 1.5s ease-in-out infinite alternate}
+@keyframes glow{from{text-shadow:0 0 7px rgba(224,169,75,.3)}
+                to{text-shadow:0 0 22px rgba(224,169,75,.85)}}
+h1{font-size:26px;letter-spacing:-.6px;margin:10px 0 8px}
+body.death h1{color:#d8cdb9}
+body.clear h1{color:var(--gold)}
+.sub{color:var(--dim);font-size:13px;line-height:1.75}
+.sub b{color:var(--ink)}
+.demochip{margin-top:10px;display:none}
+body.demo .demochip{display:inline-block;border-color:var(--red);color:#e0a08e}
+
+/* ── 런 요약 ── */
+.sum{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.sum .cell{text-align:center;padding:8px 0 6px}
+.sum .v{font-size:21px;font-weight:800;font-variant-numeric:tabular-nums}
+body.clear .sum .v{color:var(--gold)}
+.sum .k{font-size:11px;color:var(--dim);margin-top:3px}
+
+/* ── 마지막 리뷰 — 양피지 위에 쓴다 ── */
+.compose{position:relative;color:var(--inkc);border:1px solid #8a744d;border-radius:8px;
+  padding:18px 20px 14px;box-shadow:6px 6px 0 rgba(0,0,0,.5);
+  /* 질감 줄무늬와 양피지 그라디언트를 한 목록으로 — 따로 쓰면 서로 덮어쓴다 */
+  background-image:repeating-linear-gradient(92deg,rgba(120,100,60,.05) 0 2px,transparent 2px 5px),
+                   linear-gradient(160deg,var(--parch),var(--parch-d))}
+.compose .hd{display:flex;align-items:baseline;gap:8px;border-bottom:1px solid #b3a075;
+  padding-bottom:9px;margin-bottom:12px}
+.compose .hd b{font-size:15px;letter-spacing:-.3px}
+.compose .hd span{font-size:11px;color:#7b6a4d}
+.sect{font-size:10px;letter-spacing:3px;color:#8a744d;margin:12px 0 6px}
+
+.rate{display:flex;align-items:center;gap:4px}
+.rate span{font-size:29px;line-height:1;cursor:pointer;color:#c0ad83;
+  transition:color .12s,transform .12s;user-select:none}
+.rate span:hover{transform:scale(1.15)}
+.rate span.on{color:#b07a10;text-shadow:0 0 6px rgba(176,122,16,.35)}
+.rate .lab{font-size:12px;color:#7b6a4d;margin-left:8px;cursor:default}
+.rate .lab:hover{transform:none}
+
+.tpl{display:block;width:100%;text-align:left;background:rgba(255,255,255,.30);
+  border:1px solid #a48f63;border-radius:5px;padding:8px 11px;margin-bottom:6px;
+  cursor:pointer;font:inherit;font-size:13px;color:var(--inkc);line-height:1.5}
+.tpl:hover{background:rgba(255,255,255,.5)}
+.tpl.sel{border-color:#7a2a1c;background:rgba(122,42,28,.10);font-weight:700;
+  box-shadow:inset 0 0 0 1px #7a2a1c}
+.tpl.sel::before{content:"✔ ";color:#7a2a1c}
+
+.free{width:100%;background:rgba(255,255,255,.35);border:1px solid #a48f63;border-radius:5px;
+  padding:9px 11px;font:inherit;font-size:13px;color:var(--inkc);resize:none;height:56px;outline:none}
+.free:focus{border-color:#7a5a2c}
+.free::placeholder{color:#9c8a66}
+
+/* 서명 — signature.html 이 저장한 획을 그대로 다시 긋는다 */
+.sigrow{display:flex;justify-content:flex-end;align-items:flex-end;gap:10px;margin-top:12px}
+.sigrow .cap{font-size:10px;letter-spacing:2px;color:#8a744d;padding-bottom:6px}
+.sigbox{width:212px;border-bottom:1px solid #6d5a37;position:relative;padding:0 2px}
+.sigbox::before{content:"×";position:absolute;left:-14px;bottom:-8px;color:#a48f63;font-size:14px}
+.sigbox canvas{width:100%;height:52px;display:block}
+.signame{height:52px;display:flex;align-items:flex-end;justify-content:center;
+  font-size:21px;font-weight:700;font-style:italic;color:#2b2119;padding-bottom:4px;
+  letter-spacing:1px}
+
+/* ── 제출 ── */
+.act{display:flex;flex-direction:column;align-items:center;gap:9px}
+.act .btn{width:300px;padding:13px 0;font-size:15px}
+.act .why{font-size:11px;color:var(--dim)}
+
+/* ── 게시 완료 연출 ── */
+.doneov{position:fixed;inset:0;z-index:60;display:none;place-items:center;
+  background:rgba(8,6,4,.88);backdrop-filter:blur(4px)}
+.doneov.on{display:grid}
+.doneov .box{max-width:480px;text-align:center;display:flex;flex-direction:column;
+  align-items:center;gap:12px;animation:dvin .55s ease both;padding:0 20px}
+@keyframes dvin{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+.doneov .stamped{font-size:21px;font-weight:900;letter-spacing:2px;padding:9px 26px;
+  border:3px double var(--gold);border-radius:8px;color:var(--gold);
+  transform:rotate(-4deg);animation:dstamp .5s cubic-bezier(.2,1.6,.4,1) .3s both}
+.doneov.hold .stamped{color:#b4a894;border-color:#b4a894}
+@keyframes dstamp{from{opacity:0;transform:rotate(-14deg) scale(2.2)}
+                  to{opacity:1;transform:rotate(-4deg) scale(1)}}
+.doneov .dn{color:#9b8c74;font-size:13px;line-height:1.8}
+.doneov .dn b{color:#f2e6cf}
+.doneov .reward{font-size:14px;font-weight:700;color:var(--gold);
+  border:1px solid var(--edge);border-radius:5px;padding:6px 16px;background:rgba(0,0,0,.4)}
+.doneov .nav{display:flex;gap:10px;margin-top:10px}
+.doneov .nav .btn{padding:12px 24px}
+</style>
+<script src="data.js"></script>
+<script src="state.js"></script>
+<body>
+
+<div class="wrap">
+  <div class="head">
+    <div class="bigstars" id="bigstars"><span>★</span><span>★</span><span>★</span><span>★</span><span>★</span></div>
+    <h1 id="title"></h1>
+    <p class="sub" id="sub"></p>
+    <span class="chip demochip">런 없음 — 미리보기</span>
+  </div>
+
+  <div class="panel sum" id="sum"></div>
+
+  <div class="compose">
+    <div class="hd"><b id="cTitle">마지막 리뷰</b><span>만물대장 양식 제7호 — 올리는 것이 곧 서명하는 것입니다</span></div>
+
+    <div class="sect">별 점</div>
+    <div class="rate" id="rate"></div>
+
+    <div class="sect">본 문 — 하 나 를 고 르 시 오</div>
+    <div id="tpls"></div>
+
+    <div class="sect">덧 붙 임 (선 택)</div>
+    <textarea class="free" id="free" maxlength="80"
+      placeholder="한 줄 더 남기고 싶다면 — 다음 대원이 읽게 됩니다 (80자)"></textarea>
+
+    <div class="sigrow">
+      <span class="cap">작 성 자 서 명</span>
+      <div class="sigbox"><canvas id="sigcv"></canvas></div>
+    </div>
+  </div>
+
+  <div class="act">
+    <button class="btn primary" id="submit">만물대장에 올리기</button>
+    <span class="why" id="why"></span>
+  </div>
+</div>
+
+<div class="doneov" id="doneov">
+  <div class="box">
+    <div class="stamped" id="dStamp">게시 완료</div>
+    <p class="dn" id="dNote"></p>
+    <div class="reward" id="dReward"></div>
+    <div class="nav">
+      <a class="btn primary" href="board.html">원정대 명단 보기</a>
+      <a class="btn ghost" href="index.html">메인으로</a>
+    </div>
+  </div>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+
+/* 유언 템플릿 — 사망 6종 / 클리어(사장 참교육 성공) 3종 */
+const TPL = {
+  death: [
+    '별점 테러당했다. 내가.',
+    '환불은 저승에서 받겠습니다.',
+    '재구매 의사: 다음 생에.',
+    '단점: 죽음. 장점: 아직 못 찾음.',
+    '사장님, 답글 좀 다세요. 이번엔 사람이 죽었어요.',
+    '택배는 문 앞에 두고 가세요. 받으러 못 나갑니다.',
+  ],
+  clear: [
+    '사장님, 3년 치 답글 잘 받았습니다. 이제 제 답글 받으세요.',
+    '환불 완료. 별점은 돌려받았는데 마음고생은 환불이 안 된답니다.',
+    '무응답 고객센터, 오늘부로 폐업시켰습니다. 재오픈 시 재방문 의사 있음.',
+  ],
+};
+
+const enemyName = id => {
+  const e = (window.RH_DATA?.enemies || []).find(x => x.id === id);
+  return e ? e.name : null;
+};
+
+let outcome, run, demo, beforeMeta, selStars, selTpl, submitted = false;
+
+function boot(oc) {
+  const q = new URLSearchParams(location.search);
+  outcome = (oc || q.get('outcome')) === 'clear' ? 'clear' : 'death';
+  run = RH.run();
+  demo = !run;
+  submitted = false;
+  beforeMeta = RH.meta();
+  const R = run || { floor: 4, gold: 63, battlesWon: 3, deck: { length: 15 } };  // 데모 미리보기
+  const pen = RH.penname() || '무명';
+
+  document.body.classList.remove('death', 'clear', 'demo');
+  document.body.classList.add(outcome);
+  if (demo) document.body.classList.add('demo');
+
+  // 머리 — 별 5개를 다시 붙여 사망 소등 애니메이션을 재시작한다
+  $('#bigstars').innerHTML = '<span>★</span>'.repeat(5);
+  if (outcome === 'death') {
+    const eid = q.get('enemy');
+    const en = eid && enemyName(eid);
+    $('#title').textContent = '여기까지였다';
+    $('#sub').innerHTML =
+      `<b>${RH.ui.esc(pen)}</b> 대원의 원정이 1막 ${R.floor}층에서 끝났다.` +
+      (en ? `<br>「${RH.ui.esc(en)}」의 좋아요를 끝내 견디지 못했다.` : '') +
+      `<br>죽은 대원은 지워지지 않는다 — 마지막 리뷰가 명단에 남는다.`;
+    $('#cTitle').textContent = '마지막 리뷰 (유언)';
+  } else {
+    $('#title').textContent = '환불 완료 — 사장 참교육 성공';
+    $('#sub').innerHTML =
+      `<b>${RH.ui.esc(pen)}</b> 대원, 1막의 끝에서 「답글 없는 사장」의 답글을 받아냈다.` +
+      `<br>빼앗긴 별점의 환불 — 원정대가 삼 년 동안 못 한 일이다.`;
+    $('#cTitle').textContent = '이번 원정의 리뷰';
+  }
+
+  // 런 요약
+  $('#sum').innerHTML = [
+    [`1막 ${R.floor}층`, '도달'],
+    [`🪙 ${R.gold}`, '획득 골드'],
+    [`${R.battlesWon}승`, '전투'],
+    [`${R.deck.length}장`, '덱'],
+  ].map(([v, k]) => `<div class="cell"><div class="v">${v}</div><div class="k">${k}</div></div>`).join('');
+
+  // 별점 — 사망은 1점에서, 클리어는 5점에서 시작
+  selStars = outcome === 'death' ? 1 : 5;
+  renderRate();
+
+  // 템플릿
+  selTpl = 0;
+  $('#tpls').innerHTML = TPL[outcome]
+    .map((t, i) => `<button class="tpl${i === 0 ? ' sel' : ''}" data-i="${i}">${t}</button>`).join('');
+
+  $('#free').value = '';
+  drawSig();
+
+  // 제출 버튼
+  $('#submit').disabled = demo;
+  $('#why').textContent = demo
+    ? '진행 중인 런이 없어 게시할 수 없습니다 — 화면 미리보기입니다.'
+    : (outcome === 'death' && R.battlesWon === 0
+      ? '전투 승리 기록이 없는 원정의 유언은 게시되지 않고 계류됩니다.'
+      : '게시하면 이 런이 정산되고, 리뷰는 원정대 명단에 오릅니다.');
+  $('#doneov').classList.remove('on', 'hold');
+}
+
+function renderRate() {
+  const cap = ['', '단종 임박', '불량 재고', '보통', '명품', '전설'][selStars];
+  $('#rate').innerHTML =
+    Array.from({ length: 5 }, (_, i) =>
+      `<span class="${i < selStars ? 'on' : ''}" data-v="${i + 1}">★</span>`).join('') +
+    `<span class="lab">${selStars}점 — ${cap}</span>`;
+}
+$('#rate').addEventListener('click', e => {
+  const v = e.target.closest('span[data-v]');
+  if (!v) return;
+  selStars = +v.dataset.v;
+  renderRate();
+});
+$('#tpls').addEventListener('click', e => {
+  const b = e.target.closest('.tpl');
+  if (!b) return;
+  selTpl = +b.dataset.i;
+  document.querySelectorAll('.tpl').forEach(x => x.classList.toggle('sel', x === b));
+});
+
+/* 서명 — reviewhero.sig 획(660×236 기준)을 작은 canvas 에 비율 맞춰 다시 긋는다.
+ * signature.html 은 점을 [x,y] 배열로 저장하므로 {x,y} 객체 형식도 함께 받아 준다. */
+function drawSig() {
+  const box = document.querySelector('.sigbox');
+  box.innerHTML = '<canvas id="sigcv"></canvas>';
+  const sig = RH.sig();
+  const gx = p => (p.x !== undefined ? p.x : p[0]);
+  const gy = p => (p.y !== undefined ? p.y : p[1]);
+  if (!sig?.strokes?.length) {   // 서명 없음 → 필명을 손글씨풍으로
+    box.innerHTML = `<div class="signame">${RH.ui.esc(RH.penname() || '무명')}</div>`;
+    return;
+  }
+  const cv = document.getElementById('sigcv');
+  const W = 208, H = 52, S = 2;
+  cv.width = W * S; cv.height = H * S;
+  const ctx = cv.getContext('2d');
+  ctx.scale(S, S);
+  ctx.strokeStyle = '#2b2119'; ctx.lineWidth = 2;
+  ctx.lineCap = ctx.lineJoin = 'round';
+  const pts = sig.strokes.flat();
+  const xs = pts.map(gx), ys = pts.map(gy);
+  const x0 = Math.min(...xs), y0 = Math.min(...ys);
+  const sw = Math.max(1, Math.max(...xs) - x0), sh = Math.max(1, Math.max(...ys) - y0);
+  const k = Math.min(W / sw, H / sh) * .9;
+  const ox = (W - sw * k) / 2 - x0 * k, oy = (H - sh * k) / 2 - y0 * k;
+  for (const s of sig.strokes) {
+    const p = s.map(q => [gx(q) * k + ox, gy(q) * k + oy]);
+    ctx.beginPath();
+    ctx.moveTo(p[0][0], p[0][1]);
+    if (p.length < 3) { ctx.lineTo(p[p.length - 1][0] + .1, p[p.length - 1][1]); }
+    else {
+      for (let i = 1; i < p.length - 1; i++)
+        ctx.quadraticCurveTo(p[i][0], p[i][1], (p[i][0] + p[i + 1][0]) / 2, (p[i][1] + p[i + 1][1]) / 2);
+      ctx.lineTo(p[p.length - 1][0], p[p.length - 1][1]);
+    }
+    ctx.stroke();
+  }
+}
+
+/* 제출 → RH.finalizeRun → 게시/계류 연출 */
+$('#submit').addEventListener('click', () => {
+  if (demo || submitted) return;
+  const extra = $('#free').value.trim();
+  const text = TPL[outcome][selTpl] + (extra ? '\n' + extra : '');
+  const after = RH.finalizeRun(outcome, { stars: selStars, text });
+  if (!after) return;
+  submitted = true;
+  const drp = after.rp - beforeMeta.rp, dp = after.p - beforeMeta.p;
+  const hold = after.expedition[0]?.status === '계류';
+  const ov = $('#doneov');
+  ov.classList.toggle('hold', hold);
+  $('#dStamp').textContent = hold ? '계류' : '게시 완료';
+  $('#dNote').innerHTML = hold
+    ? `리뷰가 <b>계류함</b>에 보관되었다.<br>전투 승리 기록이 없는 원정의 유언은 집계에 오르지 않는다 —<br>그래도 명단에서는 지워지지 않는다.`
+    : (outcome === 'clear'
+      ? `리뷰가 게시되었다.<br>당신의 이름 옆에 <b>생환</b> 두 글자가 적혔다 — 명단에서 처음 있는 일이다.`
+      : `리뷰가 게시되었다.<br>당신의 마지막 문장은 이제 만물대장의 것이다.<br><b>다음에 불려 올 대원</b>이 읽게 된다.`);
+  $('#dReward').textContent = `만물대장 정산 — RP +${drp} · P +${dp}`;
+  ov.classList.add('on');
+});
+
+boot();
+window.RH_RESULT = { boot };   // 스크린샷·디버그에서 outcome 을 바꿔 재렌더할 수 있게
+</script>
+<script src="debug.js"></script>
+</body>
