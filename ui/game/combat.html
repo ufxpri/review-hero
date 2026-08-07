@@ -644,7 +644,7 @@
 
   function paintStatus() {
     const p = st.player;
-    $('#pWho').textContent = `✍ ${RH.penname() || '환불원정대장'} · 성향: ${p.disposition}`;
+    $('#pWho').textContent = `✍ ${RH.penname() || '무명 대원'} · 성향: ${p.disposition}`;
     const w = Math.max(0, p.will);
     $('#pBar').style.width = (w / p.maxWill) * 100 + '%';
     $('#pWill').textContent = `${w} / ${p.maxWill}`;
