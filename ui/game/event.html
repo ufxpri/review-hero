@@ -3,6 +3,11 @@
 <link rel="stylesheet" href="shared.css">
 <style>
 /* 이벤트 노드 — 폐허에서 마주친 한 장면. 이야기책 한 페이지처럼 좁은 세로 흐름 */
+/* 무대 배경 — 글이 얹히므로 어둡게 깔고 한 겹 덮는다 */
+body{background:#12100e url('../assets/scene-basement.png') center/cover fixed no-repeat}
+body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
+             background:linear-gradient(rgba(12,10,8,.82),rgba(12,10,8,.93))}
+.topbar,.wrap{position:relative;z-index:1}
 .wrap{max-width:680px;margin:30px auto 80px;padding:0 16px}
 .nodehead{display:flex;justify-content:center;gap:8px;margin-bottom:20px}
 .scene-ico{text-align:center;font-size:48px;margin-bottom:8px;

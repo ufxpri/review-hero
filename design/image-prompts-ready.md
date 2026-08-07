@@ -100,12 +100,15 @@ presented for display rather than caught mid-action.
 Serious and imposing. Real weight, real threat. The rendering itself contains no comedy.
 Vertical 4:5 composition, subject fills about 80 percent of the frame.
 
-A wiry goblin peddler, chest-high to a man, sinewy and quick-eyed, sallow olive-green skin
-stretched over sharp bone, long notched ears, a mouth of crooked teeth held in a hard flat line.
-He is draped in layered scavenged gear — a patchwork leather jerkin stitched from mismatched hides,
-the seams crooked and puckered, loose threads hanging, one shoulder strap knotted where a buckle
-should be, a rivet already pulling free of the leather.
-A cheap curved dagger hangs at his belt, its pommel visibly loose on the tang.
+A goblin. A small green-skinned goblinoid monster, not a human — bright mossy green skin, huge
+long pointed ears swept back from a bald knobbed skull, a long hooked nose, a wide mouth crowded
+with small crooked fangs, large yellow eyes under a heavy brow. Short and stunted, chest-high to
+a man, hunched and wiry, all sinew stretched over sharp bone.
+This little green goblin creature is draped in layered scavenged gear, all of it visibly badly made —
+a patchwork leather jerkin stitched from mismatched hides, its seams burst wide open along one
+shoulder with the raw stitching showing through, loose threads and frayed ends hanging everywhere,
+rivets popped half out of the leather and dangling, a strap mended with knotted twine where a buckle
+should be. A cheap curved dagger hangs at his belt, its pommel visibly loose and canted off the tang.
 He stands his ground with the contained menace of something that has survived by being underestimated.
 Not comical. Small, filthy, and genuinely dangerous.
 ```
@@ -126,14 +129,17 @@ presented for display rather than caught mid-action.
 Serious and imposing. Real weight, real threat. The rendering itself contains no comedy.
 Vertical 4:5 composition, subject fills about 80 percent of the frame.
 
-A towering gaunt figure in an immaculate charcoal frock coat, tailored sharp and pressed without
-a single crease, worn over dark plate at the shoulders — part administrator, part warlord.
-Where the face should be there is a smooth featureless expanse of pale bone-white surface —
-no eyes, no mouth, no seam, no expression. Nothing to appeal to.
-A small brass name plate is pinned to the lapel, its surface deliberately blank and unengraved.
-One gloved hand rests on the haft of a great scythe whose blade is not forged metal but a thick
-fused stack of compressed contract parchment — dozens of laminated sheets pressed and hardened
-into a curved cutting edge, the layered strata visible along the spine, edges yellowed and
+A faceless figure. Its head is a completely smooth blank egg of pale bone-white porcelain — no eyes,
+no nose, no mouth, no brow, no features of any kind, a polished unpainted mannequin head. There is
+nothing there to appeal to.
+The body beneath is towering and gaunt, dressed in an immaculate charcoal frock coat tailored sharp
+and pressed without a single crease, worn over dark plate at the shoulders — part administrator,
+part warlord. A small brass name plate is pinned to the lapel, its surface deliberately blank and
+unengraved. Both gloved hands rest on the haft of an enormous great scythe — a huge hooked reaper's
+scythe standing upright beside him, taller than he is, its long wooden haft planted on the ground
+and its vast curved blade sweeping high overhead. That blade is not forged metal but a thick fused
+stack of compressed contract parchment — dozens of laminated yellowed sheets pressed and hardened
+into a curved cutting edge, the layered paper strata clearly visible along the spine, the edges
 faintly stirring as though in a draft that isn't there.
 Perfectly still, perfectly composed, absolutely silent. Corporate, immovable, and terrifying
 in the way that something which will simply never answer you is terrifying.
@@ -197,15 +203,19 @@ presented for display rather than caught mid-action.
 Serious and imposing. Real weight, real threat. The rendering itself contains no comedy.
 Vertical 4:5 composition, subject fills about 80 percent of the frame.
 
-A tall slender high elf mage, porcelain-pale skin, severe elegant features, long straight silver
-hair, expression cold and detached.
-Wearing layered ceremonial robes of deep indigo and gold — extravagantly embroidered, trailing
-ribbons, ornamental tassels, floor-length sleeves that serve no practical purpose.
-He holds upright an enormously over-designed staff, crusted with dozens of faceted crystals,
-gold filigree scrollwork and hanging charms — top-heavy, ostentatious, more jewelry than tool.
-Arcane light spills from the crystals in bright wasteful arcs, far more radiance than any spell
-requires, the excess bleeding off into the air as drifting motes that dissipate uselessly.
-Magnificent, expensive, and burning far more power than it produces.
+A high elf archmage holding up an enormous ornate wizard staff, taller than he is, gripped upright in
+both hands. The staff is the loudest thing in the picture: its tip is a massive top-heavy ball of
+glowing faceted crystals in clashing colors, wrapped in gold filigree scrollwork with charms and
+metal rings dangling off it — more chandelier than weapon, and far too heavy for its own shaft.
+An enormous blinding fireworks display of wasted arcane light erupts out of that crystal ball and
+fills the upper half of the picture — wild spiralling arcs, whipping ribbons of raw energy, great
+showers of fat golden sparks raining down and dying uselessly in the air, blazing glare washing over
+everything — vastly more spectacle than any spell could possibly require.
+He is tall and slender with porcelain-pale skin, long straight silver hair, sharply pointed ears and
+severe elegant features, his expression cold, detached and faintly bored, entirely unimpressed by
+the fireworks he is producing. His layered ceremonial robes of deep indigo and gold are
+extravagantly embroidered, with trailing ribbons, ornamental tassels and floor-length sleeves that
+serve no practical purpose. Magnificent, expensive, and burning far more power than it produces.
 ```
 
 ### C04 야매 배송 도적 (E04 · 약점 #속도 · 은신)
@@ -224,14 +234,19 @@ presented for display rather than caught mid-action.
 Serious and imposing. Real weight, real threat. The rendering itself contains no comedy.
 Vertical 4:5 composition, subject fills about 80 percent of the frame.
 
-A lean hooded rogue built entirely for speed — narrow frame, light dark travel leathers cut close
-to the body, wrapped forearms, soft-soled boots. A courier's satchel is slung tight across the back,
-its strap repaired with a crude knot instead of a buckle.
-His face is lost in the shadow of the hood, only a hard jawline and the faint glint of one eye visible.
-He holds a single curved shortblade low and ready. The matching second blade is thrust into the
-ground beside him, apart from him, its grip wrapping already unravelling.
-Everything about him is fast, and everything about him is hastily made.
-Coiled, silent, one step from vanishing.
+A hooded delivery courier who is also a thief, standing in deep darkness, half dissolving into it.
+Slung across his chest is a huge overstuffed courier's mail bag, bulging with battered brown paper
+parcels and crushed cardboard packages jammed in at every angle, several of them spilling out; its
+shoulder strap has snapped and been retied in a crude knot instead of a buckle. Two more burst
+parcels lie dropped and trampled at his feet, their contents scattered.
+His face is entirely swallowed by the black shadow inside a deep drawn hood — no features readable
+at all, only a hard jawline and the faint cold glint of one eye. He is built purely for speed:
+narrow wiry frame, close-cut charcoal-black travel leathers, tightly wrapped forearms, soft-soled
+boots, no armor anywhere on him — no plate, no pauldrons, no mail.
+He holds a single curved shortblade low and ready. Its matching twin is stabbed into the ground far
+off to one side, apart from him, its grip wrapping already unravelling — the pair clearly did not
+arrive together. Everything about him is fast, and everything about him is hastily made.
+Coiled, silent, one step from vanishing into the dark.
 ```
 
 ### C05 나르시시스트 기사 (E05 · 약점 #디자인 #감성)
@@ -250,14 +265,18 @@ presented for display rather than caught mid-action.
 Serious and imposing. Real weight, real presence. The rendering itself contains no comedy.
 Vertical 4:5 composition, subject fills about 80 percent of the frame.
 
-A knight in full gold-plated plate armor, mirror-polished to a blinding showroom shine, catching
-and throwing the key light from every surface. The armor is lavishly ornamented — engraved
-scrollwork, decorative fluting, an extravagant plume, pauldrons oversized for silhouette rather
-than defense. The plating is visibly thin, the articulated joints ornamental, built to be looked
-at rather than struck. Not a single scratch anywhere on it.
-Helmet held under one arm. A handsome symmetrical face, chin lifted, gaze angled deliberately
-past the viewer toward some imagined audience, one hip cocked in a practiced heroic stance.
-Radiant, immaculate, and entirely occupied with being seen.
+A bare-headed man. His head is uncovered and his handsome symmetrical face is fully visible and
+brightly lit — clean-shaven, flawless, high cheekbones, long wavy dark hair swept back to his
+shoulders and perfectly arranged, chin lifted, gaze angled deliberately past the viewer toward some
+imagined audience, wearing the faint self-satisfied half-smile of a man who knows he is being looked
+at. Nothing covers his head or his face.
+From the neck down he is encased in full gold-plated plate armor, mirror-polished to a blinding
+showroom shine, catching and throwing the key light from every surface. The armor is lavishly
+ornamented — engraved scrollwork, decorative fluting, oversized pauldrons shaped for silhouette
+rather than defense. The plating is visibly thin, the articulated joints ornamental, built to be
+looked at rather than struck. Not a single scratch anywhere on it.
+He stands full length, head to boots inside the frame, one hip cocked in a practiced heroic stance,
+one hand resting on his hip. Radiant, immaculate, and entirely occupied with being seen.
 ```
 
 ### C07 플레이어 아바타 — 시네마틱용 실체 (S51·S52 전용)
@@ -505,6 +524,167 @@ screws rest on the ground beneath it, left over. Utterly mundane — and lit lik
 ---
 
 # 5. 배경 · 키비주얼 · 결과 화면
+
+## 5.1 전투 무대 배경 플레이트 (S20 · 1344×768 고정)
+
+> 전투 화면은 이 그림 위에 좌측 주인공 · 중앙우측 적 · 양옆 장비 패널 · 하단 손패를 얹고,
+> 그 위에 다시 비네트(`radial-gradient(120% 92% at 58% 40%)`)를 덧씌운다. 그래서 세 가지가 규칙이다 —
+> **① 중앙~중앙우측 바닥은 비워 둔다**(적이 설 자리) **② 구조물·디테일은 좌우 가장자리로 몰고 가장자리는 어둠에 잠긴다**
+> **③ 인물·생물은 한 명도 넣지 않는다.** 일러스트가 아니라 연극 무대의 배경막이다.
+>
+> 캐릭터 프롬프트와 달리 **장소 서술을 맨 앞**에 둔다. 스타일 블록을 앞세우면 공간이 희석돼 인물 그림으로 끌려간다.
+> 생성 시 네거티브 추가 권장: `person, people, character, creature, figure, portrait, large object in center, statue, foreground obstruction`
+> 세피아 단색으로 쏠리면 `sepia, monochrome, warm light` 를, 현대 인테리어로 끌려가면
+> `modern interior, contemporary architecture, minimalist, boutique, showroom, recessed spotlights` 를 더한다.
+>
+> 채택본 (juggernautXL · 1344x768 · 30스텝 · CFG 6.0):
+> BG01→`ui/assets/scene-arcade.png` · BG02→`scene-warehouse.png` · BG03→`scene-basement.png`
+> BG04→`scene-market.png` · BG05→`scene-boss.png` · BG06→`scene-rest.png`
+> 구 `ui/assets/scene.png` 은 폴백으로 남긴다.
+
+### BG01 상가 아케이드 (1층 입점 매장 · 기본 전투)
+
+```
+Wide 16:9 dark fantasy environment plate: a huge vaulted stone hall serving as the shopping
+arcade of an underground dungeon mall. Two facing rows of merchant bays are cut into the
+massive stone piers on the far left and far right — each bay a closed-up shopfront with a
+rusted iron roll-down grille pulled halfway down over a thick stone counter, tiered wooden
+goods shelves standing empty in the dark behind the grille, bare hanging chains where
+signboards used to swing, blank uncarved plaques above the lintels. Rope-and-post queue
+barriers stand abandoned along one side. Gothic vaulted ribs spring from the piers and meet
+high overhead before dissolving into soot and haze. Between the two rows is a very wide bare
+concourse of flagstone, worn glass-smooth by decades of foot traffic.
+Detailed painterly concept art, digital matte painting for a video game, visible brushwork.
+Cold pale daylight falls from a great height onto the empty middle of the concourse; small
+guttering orange lanterns burn only on the piers at the far edges. Cool and warm in clear
+opposition. Desaturated palette: slate blue-grey stone, damp black, tarnished brass, mossy
+olive, with sparse warm lantern accents at the edges only.
+Completely empty — no people, no creatures, no figures anywhere.
+Staged like a theatre backdrop: the centre and centre-right of the frame is open bare
+concourse with absolutely nothing standing on it, all architecture and clutter pushed hard
+to the left and right edges, which fall away into deep shadow.
+Camera at standing eye level, wide lens, horizon low in the lower third, tall airy space
+filling the upper two thirds, deep volumetric haze.
+Muted and atmospheric, intended to sit far behind interface elements.
+No text, no letters, no signage, no ui.
+```
+
+### BG02 물류 창고 (배송 계열 전투 · 야매 배송 도적)
+
+```
+Wide 16:9 dark fantasy environment plate: the freight warehouse of an underground dungeon
+shopping mall. Towering timber-and-iron racking runs down both sides, loaded with roped
+crates, banded barrels, lashed sacks and stacked bales that recede into darkness. A heavy
+black-iron chain-and-cog conveyor runs along one flank, still and cold. Pulley blocks and
+loading hooks hang from the ceiling on long chains. Split pallets, torn packing straw and
+one tipped crate litter the floor near the walls. A high loading hatch far above drops a
+single shaft of dusty light onto the bare loading floor.
+Detailed painterly concept art, digital matte painting for a video game, visible brushwork.
+Cold pale daylight pours down the high shaft onto the bare loading floor; a couple of small
+orange lamps burn on the racking at the far edges. Cool and warm in clear opposition.
+Desaturated palette: iron grey, cold blue shadow, raw timber brown, sackcloth beige, oxblood.
+Completely empty — no people, no creatures, no figures anywhere.
+Staged like a theatre backdrop: the centre and centre-right of the frame is open empty
+loading floor with nothing standing on it, all racking and cargo pushed hard to the left
+and right edges, which fall away into deep shadow.
+Camera at standing eye level, wide lens, low horizon, dust hanging in the air.
+Muted and atmospheric, intended to sit far behind interface elements.
+No text, no letters, no signage, no ui.
+```
+
+### BG03 지하 매장 (정예전 · 습하고 폐쇄된)
+
+```
+Wide 16:9 dark fantasy environment plate: the flooded sub-basement stockroom under a dungeon
+shopping mall. Low, heavy brick groin vaults press down close overhead. Black standing water
+covers the floor an ankle deep, dead flat and mirror-still, doubling the few weak lamps.
+Tall rusted iron stockroom shelving lines both side walls, several bays buckled and half
+collapsed, their shelves still loaded with swollen crates and barrels gone soft with rot,
+sacks slumped and split, goods spilled into the water. Dripping pipes, mineral streaks and
+pale salt bloom run down the seeping brickwork. A heavy iron vault door stands ajar in one
+side wall, black inside.
+Detailed painterly concept art, digital matte painting for a video game, visible brushwork.
+Moody desaturated palette: wet black, cold slate blue, rust orange, sick green damp, with
+one dim sodium lamp accent burning at the far edge.
+Completely empty — no people, no creatures, no figures anywhere.
+Staged like a theatre backdrop: the centre and centre-right of the frame is open flooded
+floor with nothing standing on it, all shelving and wreckage pushed hard to the left and
+right edges, which fall away into deep shadow. Reflections carry the only brightness.
+Camera at standing eye level, wide lens, low horizon, close and airless, cold haze.
+Muted and atmospheric, intended to sit far behind interface elements.
+No text, no letters, no signage, no ui.
+```
+
+### BG04 노천 좌판 골목 (잡상인 전투 · 고블린 잡상인)
+
+```
+Wide 16:9 dark fantasy environment plate: a cramped night market alley inside a dungeon
+shopping mall. Crooked trestle tables and plank counters crowd both walls under sagging
+patched cloth awnings, propped on lashed poles. Ropes of small paper lanterns sag across
+between the awnings, half of them dark. The stalls are heaped with goods — dented pots,
+bundled cloth, wicker baskets, hanging tools and cheap trinkets on strings, tipped crates
+of produce. Mud-tracked cobbles underfoot, puddles holding lantern reflections. The alley
+opens out into a small bare clearing where the ground has been trampled flat.
+Detailed painterly 3D render for a video game. Moody desaturated palette: soot brown, faded
+awning ochre, mossy olive, damp cobble grey, with warm paper-lantern accents.
+Completely empty — no people, no creatures, no figures anywhere, no vendors.
+Staged like a theatre backdrop: the centre and centre-right of the frame is the open bare
+clearing with nothing standing on it, all stalls and hanging goods pushed hard to the left
+and right edges, which fall away into deep shadow.
+Camera at standing eye level, wide lens, low horizon, smoke and steam drifting.
+Muted and atmospheric, intended to sit far behind interface elements.
+No text, no letters, no signage, no ui.
+```
+
+### BG05 본사 직영 · 지배인실 (6층 보스 · 답글 없는 사장)
+
+```
+Wide 16:9 dark fantasy environment plate: the manager's hall crowning an ancient underground
+dungeon mall — a cathedral-scale audience chamber of colossal black stone that is also an
+archive office. Down the far left side and down the far right side of the frame run
+two immense facing walls of iron pigeonhole racking, towering thirty metres from the
+flagstone up into total darkness, every single cell crammed with rolled parchment scrolls
+and roped bundles of ledgers, tall iron rolling ladders leaning against them, carved black
+stone piers rising between the stacks. Far away at the end, dwarfed by the height, sits one
+long low black stone service counter with its iron shutter drawn fully down and a tarnished
+brass rail along its front. Between the two walls of ledgers the vast flagstone floor is bare
+and polished mirror-dark; a single narrow strip of cold pale light falls across it from an
+arrow-slit far above.
+Detailed painterly concept art, digital matte painting for a video game, visible brushwork.
+Ancient, monumental, hand-cut stone — not modern architecture. No warmth at all: cold blue-grey
+light only. Desaturated palette: black iron, cold bone-grey parchment, deep blue shadow,
+tarnished brass.
+Completely empty — no people, no creatures, no figures anywhere.
+Staged like a theatre backdrop: the centre and centre-right of the frame is open polished
+floor with absolutely nothing standing on it, the rear counter kept low and far back, all
+shelving and mass pushed hard to the left and right edges, which fall away into deep shadow.
+Symmetrical, frontal, crushing vertical scale. Camera at standing eye level, wide lens,
+horizon low in the lower third, the towering stacks filling the upper two thirds, cold haze.
+Institutional, silent, and airless — bureaucracy rendered as ancient architecture.
+No text, no letters, no signage, no ui.
+```
+
+### BG06 휴게 공간 · 불 켜진 노점 (5층 휴게 시설 · 휴식 노드)
+
+```
+Wide 16:9 dark fantasy environment plate: a small lit rest stop tucked into a dungeon
+shopping mall concourse. On one side a covered timber food stall with a big copper cauldron
+steaming under its hood, ladles and bowls stacked on the counter, a brazier of live coals
+glowing beside it. On the other side low worn benches and stools, folded blankets, a stone
+water basin, a tall lantern post. A single string of warm lamps loops overhead between them.
+The stone floor between is swept bare and empty.
+Detailed painterly 3D render for a video game. Palette darker at the edges but warmed at the
+centre: ember orange, copper, worn timber, damp stone grey, deep shadow beyond.
+Completely empty — no people, no creatures, no figures anywhere, no cook, no patrons.
+Staged like a theatre backdrop: the centre and centre-right of the frame is the swept bare
+floor with nothing standing on it, stall and benches pushed hard to the left and right edges,
+the concourse beyond them falling away into deep shadow.
+Camera at standing eye level, wide lens, low horizon, steam and warm haze drifting.
+Quiet, safe, and small against a very large dark space.
+No text, no letters, no signage, no ui.
+```
+
+---
 
 ### B05 맵 배경 (S11 · 9:16)
 

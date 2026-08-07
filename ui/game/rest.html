@@ -3,6 +3,11 @@
 <link rel="stylesheet" href="shared.css">
 <style>
 /* 휴식 노드 — 모닥불 앞의 택1 (GDD R09) */
+/* 불 켜진 노점 배경. 글이 얹히므로 어둡게 깔고 위에서 한 겹 덮는다 */
+body{background:#12100e url('../assets/scene-rest.png') center/cover fixed no-repeat}
+body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
+             background:linear-gradient(rgba(12,10,8,.82),rgba(12,10,8,.93))}
+.topbar,.wrap{position:relative;z-index:1}
 .wrap{max-width:680px;margin:30px auto 80px;padding:0 16px}
 .nodehead{display:flex;justify-content:center;gap:8px;margin-bottom:20px}
 .scene-ico{text-align:center;font-size:52px;margin-bottom:8px;
