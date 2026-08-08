@@ -105,6 +105,11 @@
         display:flex;flex-direction:column;gap:6px}
 .mygear .hd{font-size:10px;color:var(--dim);letter-spacing:.3px}
 .mygear .at{font-size:10px;color:#8fce9e}
+/* 남은 방어 — 찬양 리뷰가 쌓고 적 좋아요가 깎는다 (ADR-023 ①) */
+.slot .def{font-size:10.5px;color:#7fc4e8;margin-top:2px}
+.slot .def b{font-size:12px;color:#a9dcf7}
+.slot .def .dn{color:#6a8ea3;font-size:9.5px}
+.cbtn.parcel{border-color:#b98b3e;color:#f0d69a}
 
 /* 초고 폐기함 — 카드를 여기에 끌어다 놓으면 퇴고(1장 버리고 1장 드로우) */
 .trash{position:absolute;left:268px;bottom:6px;width:178px;z-index:13;cursor:pointer;
@@ -974,6 +979,7 @@
           <div class="nm">${esc(q.def.name)}</div>
           <div class="tg">${q.def.tags.map((t) => `<b>#${esc(t)}</b>`).join('')}
             ${q.def.nullTags.map((t) => `<b style="background:#3a221c;color:#e0a08b">불가:${esc(t)}</b>`).join('')}</div>
+          ${q.defense > 0 ? `<div class="def">🛡 방어 <b>${q.defense}</b> <span class="dn">— 적 좋아요를 이만큼 대신 맞는다</span></div>` : ''}
           ${q.attachments.length ? `<div class="at">부착: ${q.attachments.map((a) => `좋아요 +${a.value}`).join(', ')}</div>` : ''}
         </div>`).join('');
   }
@@ -1010,6 +1016,9 @@
     let html = '';
     if (p.gauge >= 10 && !p.critUsedThisTurn && !st.result)
       html += '<button class="cbtn crit" data-act="crit">🔥 베스트 리뷰 등극</button>';
+    if (battle.parcelAvailable)
+      html += `<button class="cbtn parcel" data-act="parcel" ${p.energy < 1 ? 'disabled' : ''}
+        title="보스에게 가던 보급품이다. 뜯으면 내 장비가 된다">📦 택배 개봉 ✍1</button>`;
     html += `<button class="cbtn" data-act="revise" ${p.energy < 1 ? 'disabled' : ''}>퇴고 ✍1 · 1장 교체</button>`;
     if (enemyDef.tier === 'boss')
       html += '<button class="cbtn warn" disabled title="보스전은 도망칠 수 없다">항복 불가 (보스)</button>';
@@ -1555,6 +1564,18 @@
     paint();
   }
 
+  /** 택배 개봉 (ADR-024 ③) — 보스에게 가던 보급품을 뜯어 내 장비로 만든다 */
+  function doParcel() {
+    let got;
+    try { got = battle.openParcel(); }
+    catch (err) { toast(err.message); return; }
+    const run = RH.run();
+    if (run) { run.parcel = { opened: true, name: got.name }; RH.saveRun(run); }
+    toast(`📦 ${got.name} — 이제 내 장비다. 찬양 리뷰를 붙일 수 있다`);
+    st.log.push(`택배 개봉: ${got.name} (#${got.tags.join(' #')})`);
+    paint();
+  }
+
   function doRetreat() {
     if (busy || st.result || resultHandled) return;
     if (!retreatArmed) {
@@ -1603,6 +1624,7 @@
       if (a === 'end') doEndTurn();
       else if (a === 'crit') doCrit();
       else if (a === 'retreat') doRetreat();
+      else if (a === 'parcel') doParcel();
       else if (a === 'revise') { unhold(); mode = 'revise'; paint(); }
       else if (a === 'cancelmode') { mode = 'play'; unhold(); paint(); }
       else if (a === 'unhold') unhold();

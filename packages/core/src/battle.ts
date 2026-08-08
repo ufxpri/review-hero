@@ -34,6 +34,7 @@ import {
   type ReviewCardDef,
   type Suit,
   DISPOSITION_SUIT,
+  BOSS_PARCEL_EQUIPMENT,
   STARTING_EQUIPMENT,
   SUIT_DISPOSITION,
 } from './types.ts';
@@ -144,6 +145,8 @@ export interface BattleConfig {
    *   new Battle({ ...cfg, rules: { judge: { mult: { normal: 0.75 } } } })
    */
   rules?: RulesOverride;
+  /** 보스에게 가던 보급품 (ADR-024 ③). 주면 전투 중 openParcel() 로 개봉할 수 있다 */
+  parcel?: PlayerEquipmentDef | null;
   maxTurns?: number; // 미지정 시 rules.battle.maxTurns — 초과 시 패배(timeout) 처리
   layer?: number; // 기본 1 (MVP). X09는 layer 2
   /** 성향 스냅샷용 런 누적 제출 카드 계열 카운터 (GDD §3.5 — 전투 시작 시 스냅샷 고정) */
@@ -193,6 +196,7 @@ export interface PlayerState {
   deck: CardInstance[];
   discard: CardInstance[];
   removedFromRun: CardInstance[]; // X04 증정 (GDD §3.6)
+  parcelOpened: boolean; // 택배 개봉 여부 — 전투당 1회 (ADR-024 ③)
   critUsedThisTurn: boolean;
   inconvenienceGoldUsed: boolean; // 프로 불편러 골드 갈취 전투당 1회
   viralBonusGranted: number; // 바이럴 크리 가산 누적 (상한 12, 크리 간 공유 — GDD §3.5)
@@ -246,6 +250,7 @@ export class Battle {
   private readonly rng: Rng;
   /** 이 전투에 확정된 밸런스 수치 (ADR-025) — 코드에 수치를 박지 않고 전부 여기를 거친다 */
   private readonly rules: RulesConfig;
+  private readonly parcel: PlayerEquipmentDef | null;
   private readonly maxTurns: number;
   private readonly layer: number;
   private readonly sigmaP: number;
@@ -261,6 +266,10 @@ export class Battle {
     this.cards = cfg.cards;
     this.rng = cfg.rng;
     this.rules = mergeRules(DEFAULT_RULES, cfg.rules);
+    // 보스전에만 택배가 따라온다 — 미지정이면 보스일 때 기본 보급품을 쓴다 (ADR-024 ③)
+    this.parcel = cfg.parcel !== undefined
+      ? cfg.parcel
+      : (cfg.enemy.tier === 'boss' ? BOSS_PARCEL_EQUIPMENT : null);
     this.maxTurns = cfg.maxTurns ?? this.rules.battle.maxTurns;
     this.layer = cfg.layer ?? 1;
     this.sigmaP = cfg.sigmaP ?? 0;
@@ -296,6 +305,7 @@ export class Battle {
         deck,
         discard: [],
         removedFromRun: [],
+        parcelOpened: false,
         critUsedThisTurn: false,
         inconvenienceGoldUsed: false,
         viralBonusGranted: 0,
@@ -1109,6 +1119,31 @@ export class Battle {
     this.discardFromHand(uid);
     this.draw(this.rules.player.reviseDraw);
     this.log('퇴고 — 손패 1장 교체');
+  }
+
+  /** 개봉할 택배가 남아 있는가 — UI 가 버튼 노출을 판단한다 */
+  get parcelAvailable(): boolean {
+    return this.parcel !== null && !this.state.player.parcelOpened;
+  }
+
+  /**
+   * 택배 개봉 (ADR-024 ③) — 보스에게 가던 보급품을 뜯어 내 장비로 쓴다.
+   * 필력을 쓰므로 **언제 여는가가 결정이 된다** — 일찍 열면 찬양 리뷰를 오래 굴리고,
+   * 미루면 그 턴의 필력을 딜에 쓴다. 전투당 1회.
+   */
+  openParcel(): PlayerEquipmentDef {
+    const st = this.state;
+    if (st.result) throw new Error('전투 종료됨');
+    if (this.parcel === null) throw new Error('개봉할 택배가 없다');
+    const p = st.player;
+    if (p.parcelOpened) throw new Error('이미 개봉했다');
+    const cost = this.rules.player.parcelCost;
+    if (p.energy < cost) throw new Error('필력 부족');
+    p.energy -= cost;
+    p.parcelOpened = true;
+    p.equipment.push({ def: this.parcel, attachments: [], defense: 0 });
+    this.log(`택배 개봉 — ${this.parcel.name} 입수 (내 장비)`);
+    return this.parcel;
   }
 
   // ── 크리티컬 리뷰 (GDD §3.5) ──

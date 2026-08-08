@@ -638,3 +638,32 @@ test('previewSubmit: 방어·회복 예상치도 실제 결과와 일치', () =>
   assertPreviewMatches(wounded('W01'), 1); // 일반 0
   assertPreviewMatches(wounded('Z01'), 1); // 헛소리 0
 });
+
+// ── 택배 개봉 (ADR-024 ③) ──
+
+test('택배: 보스전에만 따라오고 개봉하면 내 장비가 된다', () => {
+  const b = makeBattle('B01', ['Z01']);
+  assert.equal(b.parcelAvailable, true, '보스전엔 택배가 있어야 한다');
+  const before = b.state.player.equipment.length;
+  const e0 = b.state.player.energy;
+  const got = b.openParcel();
+  assert.equal(b.state.player.equipment.length, before + 1);
+  assert.equal(b.state.player.energy, e0 - 1, '필력 1 소모');
+  assert.ok(got.tags.includes('디자인'), '디자인 태그 — 디자인 찬양 카드의 해금 고리');
+  assert.equal(b.parcelAvailable, false, '전투당 1회');
+  assert.throws(() => b.openParcel(), /이미 개봉/);
+});
+
+test('택배: 일반 전투엔 없다', () => {
+  const b = makeBattle('E01', ['Z01']);
+  assert.equal(b.parcelAvailable, false);
+  assert.throws(() => b.openParcel(), /개봉할 택배가 없다/);
+});
+
+test('택배: 개봉한 장비가 찬양 리뷰의 대상이 된다 (디자인 → 팩트)', () => {
+  const b = makeBattle('B01', ['N03']); // N03 #디자인 my_equipment 찬양
+  const idx = b.state.player.equipment.length; // 개봉 후 추가될 슬롯
+  b.openParcel();
+  const pv = b.previewSubmit(uid(b, 'N03'), { myEquipmentIndex: idx });
+  assert.equal(pv.judgement, 'fact', '명패의 #디자인에 맞아 팩트여야 한다');
+});

@@ -18,6 +18,7 @@ export interface RulesConfig {
     handSize: number; // 턴 시작 시 채우는 손패 수
     handMax: number; // 손패 상한 — 초과분은 드로우 중단(소멸 없음)
     reviseCost: number; // 퇴고 비용 (필력)
+    parcelCost: number; // 택배 개봉 비용 (필력) — ADR-024 ③
     reviseDraw: number; // 퇴고 1회로 뽑는 장수 (버리는 장수는 1로 고정 — uid 지정 교체)
     attachSlots: number; // 장비당 부착 슬롯 (GDD §3.9)
   };
@@ -93,6 +94,7 @@ export const DEFAULT_RULES: RulesConfig = {
     handSize: 5,
     handMax: 8,
     reviseCost: 1,
+    parcelCost: 1,
     reviseDraw: 1,
     attachSlots: 2,
   },

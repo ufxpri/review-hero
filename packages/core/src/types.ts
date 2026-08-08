@@ -206,3 +206,15 @@ export const STARTING_EQUIPMENT: PlayerEquipmentDef[] = [
   { name: '물려받은 가죽 갑옷', tags: ['내구도', '무게'], nullTags: ['이펙트'] },
   { name: '위조 인증 목걸이', tags: ['감성'], nullTags: ['출력'] },
 ];
+
+/**
+ * 보스에게 가던 보급품 — 보스전에서 개봉해 내 장비가 된다 (ADR-024 ③).
+ * `#디자인`을 갖는 유일한 장비다: 시작 장비 3종에 디자인 태그가 없어 디자인 찬양 카드가
+ * 항상 일반 판정이었는데, 이걸 열면 그 카드들이 팩트로 바뀐다 — **개봉이 곧 덱 해금이다.**
+ * 무효 태그가 `응대`인 것은 농담이자 설정이다. 답글을 단 적이 없으니 평가할 응대가 없다.
+ */
+export const BOSS_PARCEL_EQUIPMENT: PlayerEquipmentDef = {
+  name: '본사 직영 금박 명패',
+  tags: ['디자인', '감성'],
+  nullTags: ['응대'],
+};
