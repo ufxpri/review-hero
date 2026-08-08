@@ -27,6 +27,17 @@ const TEST_INDEX: CardIndex = {
 
 const defenseTotal = (b: Battle): number => b.state.player.equipment.reduce((s, q) => s + q.defense, 0);
 
+/**
+ * 적 최대 의지를 YAML 에서 읽는다 — **규칙 검증이 밸런스 수치에 묶이지 않게 하는 장치.**
+ * 이 파일이 검증하는 것은 "판정 배율·가산 순서·효과 처리"이지 "고블린의 의지가 14 인가"가
+ * 아니다. 밸런스 라운드에서 적 의지를 조정할 때마다 규칙 테스트가 깨지면 안 된다.
+ * 의지 수치 자체의 잠금은 balance-v1.1.test.ts 가 담당한다.
+ */
+const eWill = (id: string): number => data.enemies.get(id)!.will;
+
+/** B01 「계약 갱신 베기」 피해도 같은 이유로 YAML 에서 읽는다 */
+const slashDamage: number = data.enemies.get('B01')!.actions.find((a) => a.id === 'contract_slash')!.effects.find((e) => e.op === 'damage')!.value!;
+
 /** noShuffle 덱으로 시작 손패를 고정한다 (handIds 순서대로 드로우) */
 function makeBattle(enemyId: string, handIds: string[], opts: Partial<BattleConfig> = {}): Battle {
   const deck = [...(opts.deck ?? []), ...[...handIds].reverse()];
@@ -52,7 +63,7 @@ test('v2 판정: 팩트 ×1.5 내림, 게이지 +3', () => {
   const b = makeBattle('E01', ['Z06']); // Z06 #마감 👍4 — E01 약점 [마감]
   const r = b.submitReview(uid(b, 'Z06'));
   assert.equal(r.judgement, 'fact');
-  assert.equal(b.state.enemy.will, 14 - 6); // floor(4×1.5)=6
+  assert.equal(b.state.enemy.will, eWill('E01') - 6); // floor(4×1.5)=6
   assert.equal(b.state.player.gauge, 3);
   assert.equal(b.state.stats.judgements.fact, 1);
 });
@@ -62,7 +73,7 @@ test('v2 판정: 원산지 ×1.5 + 고정 +1(내림 후·배율 비대상), 게�
   const r = b.submitReview(uid(b, 'Q01'));
   assert.equal(r.judgement, 'origin');
   // floor(7×1.5)+1 = 11. 고정 가산이 배율을 받으면 floor((7+1)×1.5)=12가 되므로 구분됨 (GDD §2)
-  assert.equal(b.state.enemy.will, 14 - 11);
+  assert.equal(b.state.enemy.will, eWill('E01') - 11);
   assert.equal(b.state.player.gauge, 4);
   assert.equal(b.state.stats.judgements.origin, 1);
 });
@@ -71,7 +82,7 @@ test('v2 판정: 헛소리 ×0.5(최소 1), 게이지 −2', () => {
   const b = makeBattle('E01', ['Z01'], { startGauge: 3 }); // Z01 #연비 👍5 — E01 무효 [연비,이펙트]
   const r = b.submitReview(uid(b, 'Z01'));
   assert.equal(r.judgement, 'fumble');
-  assert.equal(b.state.enemy.will, 14 - 2); // floor(5×0.5)=2
+  assert.equal(b.state.enemy.will, eWill('E01') - 2); // floor(5×0.5)=2
   assert.equal(b.state.player.gauge, 1);
 });
 
@@ -81,10 +92,10 @@ test('v2 원산지: 무효 태그 무시 (같은 태그 비원산지 카드는 �
   const b = makeBattle('E02', ['W01', 'A03'], { enemy: enemyMod });
   const r1 = b.submitReview(uid(b, 'W01')); // W01 origin E02 #무게 👍7 — 무효 태그여도 원산지
   assert.equal(r1.judgement, 'origin');
-  assert.equal(b.state.enemy.will, 30 - 11); // floor(7×1.5)+1
+  assert.equal(b.state.enemy.will, eWill('E02') - 11); // floor(7×1.5)+1
   const r2 = b.submitReview(uid(b, 'A03')); // A03 origin E05 #무게 👍6 — 원산지 아님 → 헛소리
   assert.equal(r2.judgement, 'fumble');
-  assert.equal(b.state.enemy.will, 30 - 11 - 3); // floor(6×0.5)=3
+  assert.equal(b.state.enemy.will, eWill('E02') - 11 - 3); // floor(6×0.5)=3
 });
 
 test('§2-2: 게이지 상한 10 초과 소실 / 하한 0', () => {
@@ -104,7 +115,7 @@ test('v2 원산지 범위: 적 본체 대상 → origin.enemy 일치 (다른 적
   assert.equal(vs02.submitReview(uid(vs02, 'W01')).judgement, 'origin');
   const vs01 = makeBattle('E01', ['W01']); // #무게 — E01 약점/무효 아님
   assert.equal(vs01.submitReview(uid(vs01, 'W01')).judgement, 'normal');
-  assert.equal(vs01.state.enemy.will, 14 - 7); // ×1.0
+  assert.equal(vs01.state.enemy.will, eWill('E01') - 6); // 일반 ×0.9 내림 → floor(7×0.9)=6
 });
 
 test('v2 원산지 범위: 구성품 대상 → origin.equipment 이름 완전 일치', () => {
@@ -131,7 +142,7 @@ test('v2: 전생 카드(Z01~Z12)는 origin 없음 — 원산지 영구 미발동
   }
   const b = makeBattle('E04', ['Z07']); // Z07 #속도 = E04 약점 — 팩트까지만 (원산지 불가)
   assert.equal(b.submitReview(uid(b, 'Z07')).judgement, 'fact');
-  assert.equal(b.state.enemy.will, 22 - 7); // floor(5×1.5)
+  assert.equal(b.state.enemy.will, eWill('E04') - 7); // floor(5×1.5)
 });
 
 test('v2: 단일 카드 제출 — 특수 카드는 submitReview 불가, 리뷰 카드는 playSpecial 불가', () => {
@@ -149,16 +160,16 @@ test('v2 로드 검증: tag 배열이면 로드 에러 (단일 초점 원칙)', 
 
 test('§3.2: 기절 시 attack 불발, gimmick은 기절 무시 발동', () => {
   const b = makeBattle('B01', ['B01c', 'W03']);
-  b.submitReview(uid(b, 'B01c')); // 원산지: floor(9×1.5)+1=14 → 46
-  assert.equal(b.state.enemy.will, 46);
-  b.endTurn(); // contract_slash 8
-  assert.equal(b.state.player.will, 22);
+  b.submitReview(uid(b, 'B01c')); // 원산지: floor(9×1.5)+1=14
+  assert.equal(b.state.enemy.will, eWill('B01') - 14);
+  b.endTurn(); // contract_slash
+  assert.equal(b.state.player.will, 30 - slashDamage);
   b.submitReview(uid(b, 'W03')); // 기절 1턴 (판정 일반 — #무게)
   assert.equal(b.state.enemy.stunTurns, 1);
   b.state.enemy.patternIndex = 2;
   b.state.enemy.intentId = 'owner_reply'; // 기믹 강제
   b.endTurn();
-  assert.equal(b.state.enemy.will, 51); // 기절 무시 발동: 반박 대상 없음 → 의지 +5
+  assert.equal(b.state.enemy.will, eWill('B01') - 14 + 5); // 기절 무시 발동: 반박 대상 없음 → 의지 +5
   assert.equal(b.state.enemy.stunTurns, 0);
   assert.equal(b.state.enemy.staggerImmunityTurns, 1); // 기상 → 경직 내성 1턴
 });
@@ -181,7 +192,7 @@ test('§3.2: X06 리액션 — attack에 자동 발동, −50% 후 50% 반사, 1
   assert.ok(b.state.player.reaction);
   b.endTurn(); // stab 5 → floor(5×0.5)=2 피해, floor(2×0.5)=1 반사
   assert.equal(b.state.player.will, 28);
-  assert.equal(b.state.enemy.will, 13);
+  assert.equal(b.state.enemy.will, eWill('E01') - 1);
   assert.equal(b.state.player.reaction, null); // 소진
 });
 
@@ -215,7 +226,7 @@ test('E02: 리뷰 카드의 delay_enemy_action(W02)도 준비 캔슬 + 원산지
   assert.ok(b.state.enemy.charging);
   const r = b.submitReview(uid(b, 'W02')); // origin E02: 동반 피해 floor(5×1.5)+1=8
   assert.equal(r.judgement, 'origin');
-  assert.equal(b.state.enemy.will, 30 - 8);
+  assert.equal(b.state.enemy.will, eWill('E02') - 8);
   assert.equal(b.state.enemy.charging, null); // 캔슬
   assert.equal(b.state.enemy.intentId, 'roar');
 });
@@ -226,7 +237,7 @@ test('E03: casting_weakness — 영창 중 #이펙트 리뷰 효과 ×2 (적 특
   assert.ok(b.state.enemy.charging);
   const r = b.submitReview(uid(b, 'L03')); // origin E03 · #이펙트 · 👍6 + 기절 1
   assert.equal(r.judgement, 'origin');
-  assert.equal(b.state.enemy.will, 24 - 19); // floor(6×1.5×2)=18, +1 = 19
+  assert.equal(b.state.enemy.will, eWill('E03') - 19); // floor(6×1.5×2)=18, +1 = 19
   assert.equal(b.state.enemy.stunTurns, 1);
 });
 
@@ -234,12 +245,12 @@ test('E03: casting_weakness — 영창 중 #이펙트 리뷰 효과 ×2 (적 특
 
 test('§3.3: damage_buff 부착(슬롯 점유) — 가산은 기본 좋아요에 합산 후 판정 배율', () => {
   const b = makeBattle('E01', ['D03', 'Z06']);
-  b.submitReview(uid(b, 'D03'), { myEquipmentIndex: 0 }); // 롱소드[마감] vs #속도 → 일반 → 부착 +3
+  b.submitReview(uid(b, 'D03'), { myEquipmentIndex: 0 }); // 롱소드[마감] vs #속도 → 일반 → floor(3×0.9)=2
   const att = b.state.player.equipment[0]!.attachments[0]!;
-  assert.equal(att.value, 3);
+  assert.equal(att.value, 2);
   assert.equal(att.usesSlot, true); // v2: 리뷰 유래 부착은 슬롯 사용 (GDD §3.9)
-  b.submitReview(uid(b, 'Z06')); // 팩트: (4+3)×1.5 → floor(10.5)=10
-  assert.equal(b.state.enemy.will, 14 - 10);
+  b.submitReview(uid(b, 'Z06')); // 팩트: (4+2)×1.5 = 9 — 가산이 배율 안쪽에 들어간다
+  assert.equal(b.state.enemy.will, eWill('E01') - 9);
 });
 
 test('§2(GDD): X05 예약 가산은 고정 가산 — 내림 후 더한다', () => {
@@ -248,7 +259,7 @@ test('§2(GDD): X05 예약 가산은 고정 가산 — 내림 후 더한다', ()
   b.endTurn(); // stab 5 피격 → 예약 확정 5
   assert.equal(b.state.player.will, 25);
   b.submitReview(uid(b, 'Z06')); // 팩트 floor(4×1.5)=6, +5(고정) = 11
-  assert.equal(b.state.enemy.will, 14 - 11);
+  assert.equal(b.state.enemy.will, eWill('E01') - 11);
   assert.equal(b.state.player.storedDamageBonus, 0); // 소진
 });
 
@@ -258,7 +269,7 @@ test('§3.5: 크리티컬은 턴당 1회, 게이지 전량 소모', () => {
   const b = makeBattle('B01', []);
   b.state.player.gauge = 10;
   b.useCritical(); // 팩트 폭격기 (초기값) — 고정 20
-  assert.equal(b.state.enemy.will, 40);
+  assert.equal(b.state.enemy.will, eWill('B01') - 20);
   assert.equal(b.state.player.gauge, 0);
   b.state.player.gauge = 10;
   assert.throws(() => b.useCritical(), /턴당 1회/);
@@ -267,23 +278,23 @@ test('§3.5: 크리티컬은 턴당 1회, 게이지 전량 소모', () => {
 test('§3.5: 바이럴 앞잡이 — 버프 2배 가산, 크리 간 공유 상한 +12', () => {
   const b = makeBattle('B01', ['D03'], { initialSuitCounters: { 감성: 2 } });
   assert.equal(b.state.player.disposition, '바이럴 앞잡이'); // 스냅샷 (argmax)
-  b.submitReview(uid(b, 'D03'), { myEquipmentIndex: 0 }); // 부착 +3 (일반)
+  b.submitReview(uid(b, 'D03'), { myEquipmentIndex: 0 }); // 부착 floor(3×0.9)=2 (일반)
   const att = () => b.state.player.equipment[0]!.attachments[0]!.value;
   b.state.player.gauge = 10;
-  b.useCritical(); // 3→6 (+3)
-  assert.equal(att(), 6);
+  b.useCritical(); // 2→4 (+2, 누적 2)
+  assert.equal(att(), 4);
   b.endTurn();
   b.state.player.gauge = 10;
-  b.useCritical(); // 6→12 (+6, 누적 9)
-  assert.equal(att(), 12);
+  b.useCritical(); // 4→8 (+4, 누적 6)
+  assert.equal(att(), 8);
   b.endTurn();
   b.state.player.gauge = 10;
-  b.useCritical(); // 잔여 예산 3 → 12→15 (누적 12)
-  assert.equal(att(), 15);
+  b.useCritical(); // 잔여 예산 6 → 8→14 (누적 12)
+  assert.equal(att(), 14);
   b.endTurn();
   b.state.player.gauge = 10;
   b.useCritical(); // 상한 소진 → 변화 없음
-  assert.equal(att(), 15);
+  assert.equal(att(), 14);
   assert.equal(b.state.player.viralBonusGranted, 12);
 });
 
@@ -292,13 +303,13 @@ test('§3.5: 바이럴 앞잡이 — 버프 2배 가산, 크리 간 공유 상�
 test('§3.6: X04 증정 카드는 런 제외, 비용 ×4 데미지(0코는 최소 1)', () => {
   const b = makeBattle('E01', ['X04', 'G01']);
   b.playSpecial(uid(b, 'X04'), { giftUid: uid(b, 'G01') });
-  assert.equal(b.state.enemy.will, 10); // 1코 ×4 = 4
+  assert.equal(b.state.enemy.will, eWill('E01') - 4); // 1코 ×4 = 4
   assert.equal(b.state.player.removedFromRun.length, 1);
   assert.equal(b.state.player.removedFromRun[0]!.cardId, 'G01');
   assert.ok(!b.state.player.discard.some((c) => c.cardId === 'G01')); // 묘지 순환에서 제외
   const b2 = makeBattle('E01', ['X04', 'X03']);
   b2.playSpecial(uid(b2, 'X04'), { giftUid: uid(b2, 'X03') });
-  assert.equal(b2.state.enemy.will, 13); // 0코 → max(1, 0×4) = 1 (가정: §2-1 최소 1)
+  assert.equal(b2.state.enemy.will, eWill('E01') - 1); // 0코 → max(1, 0×4) = 1 (가정: §2-1 최소 1)
 });
 
 // ── §3.8 적 규칙 ──────────────────────────────────────
@@ -317,13 +328,13 @@ test('E04: 은신 중 배송 계열만 명중(카드 suit 기준), 명중 시 �
   assert.equal(b.state.enemy.stealth, true);
   const miss = b.submitReview(uid(b, 'Z06')); // 품질 계열 → 빗나감
   assert.equal(miss.missed, true);
-  assert.equal(b.state.enemy.will, 22);
+  assert.equal(b.state.enemy.will, eWill('E04'));
   const j = b.state.stats.judgements;
   assert.equal(j.origin + j.fact + j.normal + j.fumble, 0); // 빗나간 리뷰는 무판정
   const hit = b.submitReview(uid(b, 'D01')); // 배송(D01, origin E04) → 명중 + 은신 해제
   assert.equal(hit.judgement, 'origin');
   assert.equal(b.state.enemy.stealth, false);
-  assert.equal(b.state.enemy.will, 22 - 10); // floor(6×1.5)+1 = 10
+  assert.equal(b.state.enemy.will, eWill('E04') - 10); // floor(6×1.5)+1 = 10
   b.endTurn(); // ambush: 은신 해제 상태 → 6
   assert.equal(b.state.player.will, 24);
 });
@@ -331,7 +342,7 @@ test('E04: 은신 중 배송 계열만 명중(카드 suit 기준), 명중 시 �
 test('E05: 감성 계열 의지 데미지 ×2(vanity) + 찬양 강요 게이지 −1(하한 0)', () => {
   const b = makeBattle('E05', ['Z05'], { startGauge: 5 });
   b.submitReview(uid(b, 'Z05')); // #감성 팩트 → floor(4×1.5×2)=12
-  assert.equal(b.state.enemy.will, 28 - 12);
+  assert.equal(b.state.enemy.will, eWill('E05') - 12);
   assert.equal(b.state.player.gauge, 8); // 5 + 팩트 +3
   b.state.enemy.patternIndex = 2;
   b.state.enemy.intentId = 'demand_praise';
@@ -363,7 +374,7 @@ test('B01: 사장님 답글 — 정지 → 같은 계열 원산지/팩트로 재
   b.state.enemy.cooldownLastFired['owner_reply'] = -10; // cooldown 3 경과 가정
   b.endTurn();
   assert.equal(debuff.suspended, false); // 디버프당 반박 1회 소진 → 재정지 불가
-  assert.equal(b.state.enemy.will, Math.min(60, will + 5)); // 대상 없음 → 의지 +5만
+  assert.equal(b.state.enemy.will, Math.min(eWill('B01'), will + 5)); // 대상 없음 → 의지 +5만
 });
 
 test('B01: 반박 우선순위 — 힙스터 크리(Tier 3)를 일반 디버프(Tier 1)보다 먼저 정지', () => {
@@ -382,7 +393,7 @@ test('B01: 반박 우선순위 — 힙스터 크리(Tier 3)를 일반 디버프(
   b.state.enemy.patternIndex = 0;
   b.state.enemy.intentId = 'contract_slash';
   b.endTurn();
-  assert.equal(b.state.player.will, 30 - (8 - 4)); // 힙스터 정지 → −50% 미적용, attack_down 4만
+  assert.equal(b.state.player.will, 30 - (slashDamage - 4)); // 힙스터 정지 → −50% 미적용, attack_down 4만
 });
 
 test('전 장비 파괴 → 항복 승리 + 6G (원산지 구성품 피해 +1 포함)', () => {
@@ -397,7 +408,7 @@ test('전 장비 파괴 → 항복 승리 + 6G (원산지 구성품 피해 +1 �
 test('X02: 별점 테러 — 무판정 의지 12 (배율·게이지 비대상)', () => {
   const b = makeBattle('E01', ['X02']);
   b.playSpecial(uid(b, 'X02'));
-  assert.equal(b.state.enemy.will, 14 - 12);
+  assert.equal(b.state.enemy.will, eWill('E01') - 12);
   const j = b.state.stats.judgements;
   assert.equal(j.origin + j.fact + j.normal + j.fumble, 0);
   assert.equal(b.state.player.gauge, 0);
@@ -412,10 +423,10 @@ test('X08: 별점 구걸 — 신뢰도 +3 (v2)', () => {
 test('X09(Layer 2): Σp(상한 5)×3 데미지, Layer 1에선 사용 불가', () => {
   const b = makeBattle('B01', ['X09'], { layer: 2, sigmaP: 5 });
   b.playSpecial(uid(b, 'X09'));
-  assert.equal(b.state.enemy.will, 45); // 5×3 = 15
+  assert.equal(b.state.enemy.will, eWill('B01') - 15); // 5×3 = 15
   const b2 = makeBattle('B01', ['X09'], { layer: 2, sigmaP: 9 });
   b2.playSpecial(uid(b2, 'X09'));
-  assert.equal(b2.state.enemy.will, 45); // cap_points 5 → min(9,5)×3
+  assert.equal(b2.state.enemy.will, eWill('B01') - 15); // cap_points 5 → min(9,5)×3
   const b3 = makeBattle('B01', ['X09'], { layer: 1 });
   assert.throws(() => b3.playSpecial(uid(b3, 'X09')), /Layer/); // MVP(Layer 1)에서는 사용 불가
 });
@@ -503,7 +514,7 @@ test('previewSubmit: 은신 빗나감·무판정 카드를 blocked 로 알린다
 
 // ── ADR-023 ①: 방어 축 (찬양 리뷰 → 내 장비 방어) ─────
 
-test('ADR-023 ①: defense_buff는 판정 배율을 받는다 (팩트 ×1.5 / 일반 ×1.0 / 헛소리 ×0.5)', () => {
+test('ADR-023 ①: defense_buff는 판정 배율을 받는다 (팩트 ×1.5 / 일반 ×0.9 / 헛소리 ×0.5)', () => {
   const fact = makeBattle('E01', ['T_DEF6'], { cards: TEST_INDEX });
   fact.submitReview(uid(fact, 'T_DEF6'), { myEquipmentIndex: 0 }); // 롱소드[마감] vs #마감 → 팩트
   assert.equal(fact.state.player.equipment[0]!.defense, 9); // floor(6×1.5)
@@ -511,7 +522,7 @@ test('ADR-023 ①: defense_buff는 판정 배율을 받는다 (팩트 ×1.5 / �
 
   const normal = makeBattle('E01', ['T_DEF6'], { cards: TEST_INDEX });
   normal.submitReview(uid(normal, 'T_DEF6'), { myEquipmentIndex: 1 }); // 갑옷[내구도,무게] → 일반
-  assert.equal(normal.state.player.equipment[1]!.defense, 6);
+  assert.equal(normal.state.player.equipment[1]!.defense, 5); // floor(6×0.9)
 
   const fumble = makeBattle('E01', ['T_DEFN'], { cards: TEST_INDEX });
   fumble.submitReview(uid(fumble, 'T_DEFN'), { myEquipmentIndex: 0 }); // 롱소드 무효 태그[연비] → 헛소리

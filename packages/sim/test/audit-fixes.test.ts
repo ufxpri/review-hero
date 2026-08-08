@@ -27,6 +27,9 @@ function uid(b: Battle, cardId: string, nth = 0): number {
   return found[nth]!.uid;
 }
 
+/** 적 최대 의지는 밸런스 수치 — 규칙 검증이 그 값에 묶이지 않도록 YAML 에서 읽는다 */
+const eWill = (id: string): number => data.enemies.get(id)!.will;
+
 // ── E04 은신 게이트 — 크리티컬 리뷰 (§3.8 특성 문언 "리뷰만 명중") ────
 
 test('E04: 은신 중 비배송 크리(팩트 폭격기)는 빗나감 — 게이지만 소모', () => {
@@ -35,7 +38,7 @@ test('E04: 은신 중 비배송 크리(팩트 폭격기)는 빗나감 — 게이
   assert.equal(b.state.enemy.stealth, true);
   b.state.player.gauge = 10;
   b.useCritical();
-  assert.equal(b.state.enemy.will, 22); // 고정 20 미적용 (즉사 우회 봉쇄)
+  assert.equal(b.state.enemy.will, eWill('E04')); // 고정 20 미적용 (즉사 우회 봉쇄)
   assert.equal(b.state.player.gauge, 0); // 자원 소모는 유지 (빗나간 리뷰와 일관)
   assert.equal(b.state.stats.critMisses, 1);
 });
@@ -82,9 +85,9 @@ test('§4.4: 온보딩 1판 보정 — 헛소리 −1, 버프 카드 무판정, 
   });
   b.submitReview(uid(b, 'Z01')); // #연비 → 헛소리
   assert.equal(b.state.player.gauge, 2); // −2 대신 −1
-  assert.equal(b.state.enemy.will, 12); // 피해 규칙은 정상: max(1, floor(5×0.5)) = 2
+  assert.equal(b.state.enemy.will, eWill('E01') - 2); // 피해 규칙은 정상: max(1, floor(5×0.5)) = 2
   b.submitReview(uid(b, 'D03'), { myEquipmentIndex: 0 }); // 러닝화[속도] — 팩트감이지만 무판정
-  assert.equal(b.state.player.equipment[0]!.attachments[0]!.value, 3); // ×1.5 미적용 (항상 일반)
+  assert.equal(b.state.player.equipment[0]!.attachments[0]!.value, 2); // ×1.5 미적용 (항상 일반 — floor(3×0.9))
   assert.equal(b.state.player.gauge, 2); // 게이지 변화 없음
   b.endTurn(); // stab 5 → applyMult(5, 0.75) = 3
   assert.equal(b.state.player.will, 27);
@@ -94,23 +97,24 @@ test('§4.4: 온보딩 1판 보정 — 헛소리 −1, 버프 카드 무판정, 
 
 test('B01: owner_reply는 마지막 발동 후 3턴 전 재도래 시 불발 (패턴 앞당김 방어)', () => {
   const b = makeBattle('B01', ['B01c']);
-  b.submitReview(uid(b, 'B01c')); // 원산지 floor(9×1.5)+1=14 → 46
+  b.submitReview(uid(b, 'B01c')); // 원산지 floor(9×1.5)+1=14
+  const afterReply = eWill('B01') - 14 + 5;
   b.state.enemy.patternIndex = 2;
   b.state.enemy.intentId = 'owner_reply';
-  b.endTurn(); // 턴1 발동: 반박 대상 없음 → 의지 +5 = 51
-  assert.equal(b.state.enemy.will, 51);
+  b.endTurn(); // 턴1 발동: 반박 대상 없음 → 의지 +5
+  assert.equal(b.state.enemy.will, afterReply);
   b.state.enemy.patternIndex = 2;
   b.state.enemy.intentId = 'owner_reply';
   b.endTurn(); // 턴2: 2−1=1 < 3 → 재사용 대기 (불발)
-  assert.equal(b.state.enemy.will, 51);
+  assert.equal(b.state.enemy.will, afterReply);
   b.state.enemy.patternIndex = 2;
   b.state.enemy.intentId = 'owner_reply';
   b.endTurn(); // 턴3: 3−1=2 < 3 → 불발
-  assert.equal(b.state.enemy.will, 51);
+  assert.equal(b.state.enemy.will, afterReply);
   b.state.enemy.patternIndex = 2;
   b.state.enemy.intentId = 'owner_reply';
   b.endTurn(); // 턴4: 4−1=3 ≥ 3 → 발동 (+5)
-  assert.equal(b.state.enemy.will, 56);
+  assert.equal(b.state.enemy.will, afterReply + 5);
 });
 
 // ── 시뮬 통계 정확성 ─────────────────────────────────────────────────

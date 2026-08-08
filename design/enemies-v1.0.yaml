@@ -9,12 +9,12 @@
 # enemy:
 #   id: string                  # E01~, B01~. 온보딩 변형판은 원본id + "T"
 #   name: string
-#   tier: normal | elite | boss # 전투 길이 기준선(§3.1): 일반 2~4턴 / 정예 5~6턴 / 보스 8~10턴
+#   tier: normal | elite | boss # 전투 길이 기준선(§3.1): 일반 2~4턴 / 정예 5~6턴 / 보스 6~7턴
 #   tutorial_variant: bool      # true = 온보딩 1판 전용(§4.4). 생략 시 false
 #   variant_of: string          # 변형판일 때 원본 id
 #   role: string                # 사람용 설계 의도 메모
 #   will: int                   # HP. 용어 사전(worldview §6): "의지"
-#   weakness_tags: [tag]        # 팩트 판정 대상 태그(×1.5, 게이지 +2)
+#   weakness_tags: [tag]        # 팩트 판정 대상 태그(×1.5, 게이지 +3)
 #   null_tags: [tag]            # 무효 태그(×0.5, 게이지 −2). UI 라벨 "평가 불가 항목"으로 전 구간 상시 노출(§3.3)
 #   traits: [ {id, text, ...} ] # 상시 특성. 기계 필드는 특성별 자유 확장, text 필수
 #   equipment: [ equipment ]
@@ -71,7 +71,7 @@ enemies:
     name: 고블린 잡상인
     tier: normal
     role: 튜토리얼 (품질 계열 교본)
-    will: 14
+    will: 30
     weakness_tags: [마감]
     null_tags: [연비, 이펙트]   # 기계·마법 아님 → 배터리(연비)/이펙트 접두는 헛소리 판정
     equipment:
@@ -104,7 +104,7 @@ enemies:
     tutorial_variant: true
     variant_of: E01
     role: 온보딩 1판 첫 전투 (팩트/일반 판정만 학습 — 헛소리 미도입)
-    will: 14
+    will: 30
     weakness_tags: [마감]
     null_tags: []               # 유일한 차이: 무효 태그 제거(§3.8)
     equipment:
@@ -134,7 +134,7 @@ enemies:
     name: 오크 중량 전사
     tier: elite
     role: 정예 (둔화·행동 캔슬 학습. 온보딩 2판에서 항복 자연 발견 지점 — §4.4)
-    will: 30    # v1.1: 24→30 (밸런스 라운드 1 제안 2 — 정예 5~6턴·억지 처벌·크리 이벤트화)
+    will: 55
     weakness_tags: [무게]
     null_tags: [이펙트, 개연성]
     equipment:
@@ -148,9 +148,9 @@ enemies:
         type: attack
         charge_turns: 1
         cancel_on: [delay_enemy_action]   # 지연 효과 적중 시 캔슬 (O02·L01·W02·X01)
-        text: "1턴 준비 후 의지 피해 9. 준비 중 지연 효과 적중 시 발동 캔슬."
+        text: "1턴 준비 후 의지 피해 11. 준비 중 지연 효과 적중 시 발동 캔슬."
         effects:
-          - {op: damage, value: 9}
+          - {op: damage, value: 11}
       - id: roar
         name: 포효
         type: buff
@@ -166,7 +166,7 @@ enemies:
     name: 엘프 이펙트 마법사
     tier: elite
     role: 정예 (성능 계열 교본, 영창 카운터 학습)
-    will: 24    # v1.1: 18→24 (제안 2)
+    will: 65
     weakness_tags: [이펙트, 연비]
     null_tags: [무게]
     traits:
@@ -185,9 +185,9 @@ enemies:
         name: 화려한 파이어볼
         type: attack
         charge_turns: 1
-        text: "영창 1턴 후 의지 피해 7. 영창 중 #이펙트 태그 리뷰의 카운터 대상."
+        text: "영창 1턴 후 의지 피해 8. 영창 중 #이펙트 태그 리뷰의 카운터 대상."
         effects:
-          - {op: damage, value: 7}
+          - {op: damage, value: 8}
       - id: mana_shield
         name: 마나 실드
         type: buff
@@ -203,7 +203,7 @@ enemies:
     name: 야매 배송 도적
     tier: elite
     role: 정예 (배송 계열 교본, 은신 해제 학습)
-    will: 22    # v1.1: 16→22 (제안 2)
+    will: 55
     weakness_tags: [속도]
     null_tags: [감성, 디자인]
     traits:
@@ -242,7 +242,7 @@ enemies:
     name: 나르시시스트 기사
     tier: elite
     role: 정예 (감성 계열 교본, 멘탈 직격 학습)
-    will: 28    # v1.1: 22→28 (제안 2)
+    will: 70
     weakness_tags: [디자인, 감성]
     null_tags: [출력]
     traits:
@@ -290,7 +290,7 @@ bosses:
       베스트 리뷰어가 나쁜 리뷰를 아예 올리지 않아 영구히 무효화한다면,
       B01은 반박해 이번 전투 한정으로 정지시킨다.
       대리인이라 불완전하고, 그래서 banned_words(금지어)라는 약점이 생긴다.
-    will: 60    # MVP(1막 완결 런) = 60 유지. R11 해소(v1.1): 48 하향은 phase2 비례 트리거(50%)와 함께면 완화로 작동 — Layer 1.5 배치 시 적용 가능
+    will: 78    # 1막 완결 런의 최종 보스 — 도달 기대 덱(boss1) 기준 6~7턴·승률 50%
     weakness_tags: [응대, 개연성]
     null_tags: []               # 보스는 무효 태그 없음. 대응은 사장님 답글 기믹이 담당
     banned_words: [환불, 응대, 답변, 고객센터, 게시]   # Layer 4 금지어 팩폭용. 「게시」는 대리인이라 게시 권한이 없다는 급소(worldview §1.4)
@@ -303,15 +303,15 @@ bosses:
       - id: contract_slash
         name: 계약 갱신 베기
         type: attack
-        text: "의지 피해 8"
+        text: "의지 피해 11"
         effects:
-          - {op: damage, value: 8}
+          - {op: damage, value: 11}
       - id: forced_overtime
         name: 야근 강요
         type: attack
-        text: "의지 피해 4, 다음 턴 플레이어 필력 −1"
+        text: "의지 피해 6, 다음 턴 플레이어 필력 −1"
         effects:
-          - {op: damage, value: 4}
+          - {op: damage, value: 6}
           - {op: energy_down, value: 1, when: next_turn}
       - id: owner_reply
         name: 사장님 답글
@@ -365,8 +365,8 @@ bosses:
     tier: boss
     tutorial_variant: true
     variant_of: B01
-    role: 온보딩 1판 보스 (의지 45, 야근 강요 미사용 — §4.4)
-    will: 45
+    role: 온보딩 1판 보스 (야근 강요 미사용 — §4.4)
+    will: 46    # 온보딩 1판 — 시작 덱만으로도 확실히 이기되 잔여 의지 5~12 로 끝난다
     weakness_tags: [응대, 개연성]
     null_tags: []
     banned_words: [환불, 응대, 답변, 고객센터, 사장]
@@ -379,9 +379,9 @@ bosses:
       - id: contract_slash
         name: 계약 갱신 베기
         type: attack
-        text: "의지 피해 8"
+        text: "의지 피해 11"
         effects:
-          - {op: damage, value: 8}
+          - {op: damage, value: 11}
       - id: owner_reply
         name: 사장님 답글
         type: gimmick

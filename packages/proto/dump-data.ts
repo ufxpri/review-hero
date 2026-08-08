@@ -15,8 +15,9 @@ const out = {
   enemies: [...d.enemies.values()],
   startingDeck: d.startingDeck,
   irremovable: [...d.irremovable],
-  // 보스 도달 기대 덱 추가분 — cli.ts boss1 프리셋과 동일 (GDD v2.0 병합 시 정본 확정 필요)
-  bossExtra: ['G01', 'G02', 'D02'],
+  // 보스 도달 기대 덱 추가분 — sim/src/cli.ts 의 boss1 프리셋과 같은 값을 유지할 것
+  // (전투 보상 3 + 상점 2. 근거는 그쪽 주석과 balance-report-v2-round1.md §5)
+  bossExtra: ['G01', 'G02', 'D02', 'S02', 'X02'],
 };
 writeFileSync(join(here, 'src/data.json'), JSON.stringify(out));
 console.log('cards', out.cards.length, 'enemies', out.enemies.length, 'deck', out.startingDeck.length);

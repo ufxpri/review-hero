@@ -84,8 +84,12 @@ export interface RulesConfig {
 }
 
 /**
- * 기본 수치 — GDD v1.2 기준.
- * ⚠ 방어·회복 축(ADR-023)은 신설이라 **잠정치**다. 밸런스 라운드 1(v2)에서 확정한다.
+ * 기본 수치 — GDD v1.2 기준. 밸런스 라운드 1(v2) 확정치.
+ * 근거·측정: design/balance-report-v2-round1.md
+ *
+ * `judge.mult.normal` 이 1.0 이 아닌 것은 오타가 아니다 — 플레이어 화력을 GDD §3.1 이 선언한
+ * 턴당 8~12 대역으로 되돌리는 레버다(실측 12.8 → 11.1). 팩트/일반 격차도 1.5배에서 1.67배로
+ * 벌어져 태그를 겨냥하는 플레이의 값이 올라간다. 자세한 것은 보고서 §3.
  */
 export const DEFAULT_RULES: RulesConfig = {
   player: {
@@ -99,7 +103,7 @@ export const DEFAULT_RULES: RulesConfig = {
     attachSlots: 2,
   },
   judge: {
-    mult: { origin: 1.5, fact: 1.5, normal: 1.0, fumble: 0.5 },
+    mult: { origin: 1.5, fact: 1.5, normal: 0.9, fumble: 0.5 },
     gauge: { origin: 4, fact: 3, normal: 0, fumble: -2 },
     heal: { origin: 2, fact: 1, normal: 0, fumble: 0 },
     originFixedAdd: 1,
