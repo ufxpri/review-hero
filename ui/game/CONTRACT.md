@@ -63,9 +63,13 @@
 - 성향 연속성: 생성 시 `initialSuitCounters: run.suitCounters, initialLastSuit: run.lastSuit`, 종료 시 되써넣기.
 - 보스전 덱: `RH_DATA.bossExtra` 를 덱에 추가해 생성한다.
 - 승리: 골드 보상 일반 15 / 정예 24 / 보스 50 (GDD §4.2), `run.battlesWon += 1`, `run.will = 전투 후 의지`.
-- **승리 카드 보상 (ADR-011 근거 ② "이번 전투 대상의 리뷰를 등재")**: 승리 오버레이에서
-  이번 전투 대상들의 리뷰 풀 — `origin.enemy === 적 id` 또는 `origin.equipment ∈ 그 적 장비 이름` — 중
-  **미보유(`run.deck` 에 없는) 카드 최대 3장 제시 → 1장 선택(건너뛰기 가능)** →
+- **승리 카드 보상 (ADR-011 근거 ② + ADR-027)**: 승리 오버레이에서 **3칸** 제시 → 1장
+  선택(건너뛰기 가능). 칸 구성은 **대상 리뷰 2 + 내 장비 리뷰 1**이다.
+  · 대상 리뷰 = `origin.enemy === 적 id` 또는 `origin.equipment ∈ 그 적 장비 이름`
+  · 내 장비 리뷰 = `target === 'my_equipment'` (찬양·방어) — 상시 1칸 배정.
+    찬양 카드는 origin 이 없어 대상 풀에 뜰 수 없고, 그 탓에 방어 축의 정규 획득 경로가
+    없었다. **origin 을 주는 것이 아니라 보상 풀에만 넣는다** — 원산지는 여전히 영구 미발동.
+  · 양쪽 다 미보유 필터. 한쪽이 비면 다른 쪽으로 칸을 채운다 →
   `location.href = RH.completeNode({gold:+n, deckAdd:cardId})`. 풀이 비면 보상 없이 즉시 정산.
   **디버그 전투(런 없음)와 `RH_DEBUG_HOOKS.win()` 은 카드 보상을 생략하고 즉시 정산**한다 (통합 E2E 전제).
 - 패배(의지 0): `run.will = 0` 저장 후 `result.html?outcome=death&enemy={id}` 로 이동. **런은 지우지 않는다** — result 가 정산한다.

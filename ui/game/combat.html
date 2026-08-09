@@ -110,6 +110,9 @@
 .slot .def b{font-size:12px;color:#a9dcf7}
 .slot .def .dn{color:#6a8ea3;font-size:9.5px}
 .cbtn.parcel{border-color:#b98b3e;color:#f0d69a}
+/* 보상 카드의 대상 종류 — 공격이냐 방어냐가 선택의 축이다 (ADR-027) */
+.rkind{font-size:10px;color:#8a6f3f;margin:2px 0 4px}
+.rkind.gear{color:#7fc4e8}
 
 /* 초고 폐기함 — 카드를 여기에 끌어다 놓으면 퇴고(1장 버리고 1장 드로우) */
 .trash{position:absolute;left:268px;bottom:6px;width:178px;z-index:13;cursor:pointer;
@@ -1438,7 +1441,7 @@
 
   function goldDelta() { return st.player.gold - (runMode ? run.gold : 0); }
 
-  /** 승리 보상 풀 (ADR-011 근거 ②): 이번 전투 대상들 — 적 본체 origin.enemy 일치
+  /** 승리 보상 풀 ① (ADR-011 근거 ②): 이번 전투 대상들 — 적 본체 origin.enemy 일치
    *  + 그 적 장비 origin.equipment 일치 — 의 리뷰 중 미보유 카드 */
   function rewardPool() {
     if (!runMode) return [];
@@ -1446,6 +1449,29 @@
     const eqNames = new Set(enemyDef.equipment.map((q) => q.name));
     return D.cards.filter((c) => c.kind === 'review' && c.origin && !owned.has(c.id)
       && (c.origin.enemy === enemyId || (c.origin.equipment && eqNames.has(c.origin.equipment))));
+  }
+
+  /** 승리 보상 풀 ② — 내 장비 리뷰 (ADR-027): 이기고 살아남은 직후 제 장비를 다시 보는 것이
+   *  찬양 리뷰가 태어나는 순간이다. 찬양 카드는 대상이 내 장비라 「이겨서 얻는」 경로가
+   *  원리상 없었고, 그 탓에 방어 축의 정규 획득처가 상점·이벤트뿐이었다.
+   *  origin 을 주는 것이 아니라 보상 풀에만 넣는다 — 원산지는 여전히 영구 미발동이다. */
+  function myGearPool() {
+    if (!runMode) return [];
+    const owned = new Set(run.deck);
+    return D.cards.filter((c) => c.kind === 'review' && c.target === 'my_equipment' && !owned.has(c.id));
+  }
+
+  /** 보상 3칸 = 대상 리뷰 2 + 내 장비 리뷰 1 (ADR-027). 한쪽이 비면 다른 쪽으로 채운다 */
+  function buildRewards(n = 3) {
+    const gear = sample(myGearPool(), 1);
+    const target = sample(rewardPool(), n - gear.length);
+    const out = [...target, ...gear];
+    // 대상 리뷰가 모자라면 내 장비로 마저 채운다 (반대도 마찬가지 — 칸을 비우지 않는다)
+    if (out.length < n) {
+      const seen = new Set(out.map((c) => c.id));
+      out.push(...sample(myGearPool().filter((c) => !seen.has(c.id)), n - out.length));
+    }
+    return out;
   }
 
   function showOverlay(o) {
@@ -1468,6 +1494,9 @@
     const rw = (c) => `<button class="rwcard" data-act="reward" data-id="${c.id}">
       <div class="rhead"><span>${'★'.repeat(c.stars)}</span><span>#${esc(c.tag)} · ✍${c.cost}</span></div>
       <div class="rname">${esc(c.name)}</div>
+      <div class="rkind ${c.target === 'my_equipment' ? 'gear' : ''}">${
+        c.target === 'my_equipment' ? '🛡 내 장비에 붙이는 찬양 — 버틸 것'
+        : c.target === 'enemy_equipment' ? '⚔ 구성품을 겨냥하는 악평' : '⚔ 판매자를 겨냥하는 악평'}</div>
       <div class="rtext">${esc((c.text || '').trim())}</div>
       <div class="rui">${esc(likeify(c.ui))}</div>
     </button>`;
@@ -1507,7 +1536,7 @@
         writeBackRun();
         RH.saveRun(run);
         // 카드 보상: 미보유 대상 리뷰 최대 3장 제시. 디버그 훅(win)·풀 소진 시 생략 → 즉시 정산
-        const pool = skipReward ? [] : sample(rewardPool(), 3);
+        const pool = skipReward ? [] : buildRewards(3);
         if (pool.length) {
           showWinReward({ icon, sub, goldLine, pool, isBoss });
           paint();
