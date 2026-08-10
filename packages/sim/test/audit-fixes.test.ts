@@ -32,8 +32,8 @@ const eWill = (id: string): number => data.enemies.get(id)!.will;
 
 // ── E04 은신 게이트 — 크리티컬 리뷰 (§3.8 특성 문언 "리뷰만 명중") ────
 
-test('E04: 은신 중 비배송 크리(팩트 폭격기)는 빗나감 — 게이지만 소모', () => {
-  const b = makeBattle('E04', []); // 초기 성향 = 팩트 폭격기 (품질)
+test('E04: 은신 중 비배송 크리(품질 논점)는 빗나감 — 게이지만 소모', () => {
+  const b = makeBattle('E04', []); // 초기 논점 = 품질 논점
   b.endTurn(); // hide → 은신
   assert.equal(b.state.enemy.stealth, true);
   b.state.player.gauge = 10;
@@ -43,9 +43,9 @@ test('E04: 은신 중 비배송 크리(팩트 폭격기)는 빗나감 — 게이
   assert.equal(b.state.stats.critMisses, 1);
 });
 
-test('E04: 은신 중 배송 크리(프로 불편러)는 명중 + 은신 해제', () => {
+test('E04: 은신 중 배송 크리(배송 논점)는 명중 + 은신 해제', () => {
   const b = makeBattle('E04', [], { initialSuitCounters: { 배송: 1 } });
-  assert.equal(b.state.player.disposition, '프로 불편러');
+  assert.equal(b.state.player.disposition, '배송 논점');
   b.endTurn(); // hide → 은신
   b.state.player.gauge = 10;
   b.useCritical();
@@ -58,7 +58,7 @@ test('E04: 은신 중 배송 크리(프로 불편러)는 명중 + 은신 해제'
 // ── §2-1 "모든 배율은 내림, 최소 1" — 적 피해 배율 경로 ───────────────
 
 test('§2-1: 적 피해도 배율 결과는 최소 1 (감산 하한 0은 유지)', () => {
-  // E01 stab 5, attack_down 4 → 감산 후 1, 힙스터 ×0.5 → floor(0.5)=0이 아니라 최소 1
+  // E01 stab 5, attack_down 4 → 감산 후 1, 「힙스터 인증」 ×0.5 → floor(0.5)=0이 아니라 최소 1
   const b = makeBattle('E01', []);
   b.state.enemy.debuffs.push(
     { uid: 900, kind: 'attack_down', value: 4, suit: '배송', tier: 1, suspended: false, beenRebutted: false, createdAt: 900 },

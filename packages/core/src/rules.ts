@@ -37,14 +37,14 @@ export interface RulesConfig {
   };
   /** 크리티컬 리뷰 (GDD §3.5) */
   critical: {
-    factBomberDamage: number; // 팩트 폭격기 — 방어·저항 무시 고정 피해
-    hipsterAttackDownPct: number; // 힙스터 — 적 공격력 감소 %
+    factBomberDamage: number; // 「팩트 폭격」 — 방어·저항 무시 고정 피해
+    hipsterAttackDownPct: number; // 「힙스터 인증」 — 적 공격력 감소 %
     hipsterTier: number; // 그 디버프의 반박 저항 등급 (R22)
-    viralBonusCap: number; // 바이럴 가산 누적 상한 (크리 간 공유)
-    viralFloorBonus: number; // 바이럴 — 버프 0개일 때 즉시 부착하는 바닥 보장 가산 (v1.1 제안 5)
-    inconvenienceStunTurns: number; // 프로 불편러 — 기절 턴
-    inconvenienceWeakenPct: number; // 프로 불편러 — 다음 행동 위력 % (음수. v1.1 제안 6)
-    inconvenienceGold: Record<'normal' | 'elite' | 'boss', number>; // 프로 불편러 — 등급별 골드 갈취(전투당 1회)
+    viralBonusCap: number; // 「바이럴 확산」 가산 누적 상한 (크리 간 공유)
+    viralFloorBonus: number; // 「바이럴 확산」 — 버프 0개일 때 즉시 부착하는 바닥 보장 가산 (v1.1 제안 5)
+    inconvenienceStunTurns: number; // 「진상 접수」 — 기절 턴
+    inconvenienceWeakenPct: number; // 「진상 접수」 — 다음 행동 위력 % (음수. v1.1 제안 6)
+    inconvenienceGold: Record<'normal' | 'elite' | 'boss', number>; // 「진상 접수」 — 등급별 골드 갈취(전투당 1회)
   };
   /** 온보딩 보정 (GDD §4.4) — 판 번호로 고르는 것이 아니라 값을 주입한다 */
   onboarding: {
@@ -61,7 +61,7 @@ export interface RulesConfig {
      * 「다음 플레이어 턴 1턴 유지」가 되려면 staggerImmunityTurns + 1 이어야 한다.
      */
     equipmentLockImmunityTurns: number;
-    attachedDebuffTier: number; // 전투 중 부착한 일반 디버프의 반박 저항 등급 (힙스터 크리만 3)
+    attachedDebuffTier: number; // 전투 중 부착한 일반 디버프의 반박 저항 등급 (「힙스터 인증」 크리만 3)
     surrenderGold: number; // 전 장비 파괴 항복 승리 보상 (GDD §4.2)
   };
   /**

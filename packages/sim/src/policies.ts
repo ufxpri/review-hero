@@ -147,7 +147,7 @@ export function playTurn(battle: Battle, cards: CardIndex, name: PolicyName, rng
     // E04 은신 게이트: 은신 중 명중 불가 계열의 크리는 빗나가므로(게이지만 소모) 시도하지 않는다
     const gate = st.enemy.def.stealthGate;
     const critBlockedByStealth =
-      st.enemy.stealth && !!gate && p.disposition !== '바이럴 앞잡이' && !gate.hittableSuits.includes(DISPOSITION_SUIT[p.disposition]);
+      st.enemy.stealth && !!gate && p.disposition !== '감성 논점' && !gate.hittableSuits.includes(DISPOSITION_SUIT[p.disposition]);
     if (p.gauge >= rules.gauge.max && !p.critUsedThisTurn && !critRolled && !critBlockedByStealth) {
       critRolled = true;
       if (rng() < params.critProb) {

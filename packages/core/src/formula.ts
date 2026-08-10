@@ -155,7 +155,7 @@ export function clampGauge(value: number, rules: RulesConfig): number {
 /**
  * 적 공격 1발의 최종 위력.
  *   ① 가산·감산 먼저 — 감산(attack_down)은 배율이 아니므로 §2-1 미적용, 하한 0(피해 0 가능)
- *   ② 0이 아니면 배율들을 순서대로 — 힙스터 크리(−%) → 행동 위력 보정(S08·X06) → 온보딩(§4.4).
+ *   ② 0이 아니면 배율들을 순서대로 — 「힙스터 인증」 크리(−%) → 행동 위력 보정(S08·X06) → 온보딩(§4.4).
  *      배율 경로는 §2-1 "내림·최소 1"이라 배율만으로는 0이 되지 않는다.
  */
 export function computeEnemyDamage(params: {

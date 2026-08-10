@@ -268,16 +268,16 @@ test('§2(GDD): X05 예약 가산은 고정 가산 — 내림 후 더한다', ()
 test('§3.5: 크리티컬은 턴당 1회, 게이지 전량 소모', () => {
   const b = makeBattle('B01', []);
   b.state.player.gauge = 10;
-  b.useCritical(); // 팩트 폭격기 (초기값) — 고정 20
+  b.useCritical(); // 품질 논점 (초기값) — 고정 20
   assert.equal(b.state.enemy.will, eWill('B01') - 20);
   assert.equal(b.state.player.gauge, 0);
   b.state.player.gauge = 10;
   assert.throws(() => b.useCritical(), /턴당 1회/);
 });
 
-test('§3.5: 바이럴 앞잡이 — 버프 2배 가산, 크리 간 공유 상한 +12', () => {
+test('§3.5: 감성 논점 — 버프 2배 가산, 크리 간 공유 상한 +12', () => {
   const b = makeBattle('B01', ['D03'], { initialSuitCounters: { 감성: 2 } });
-  assert.equal(b.state.player.disposition, '바이럴 앞잡이'); // 스냅샷 (argmax)
+  assert.equal(b.state.player.disposition, '감성 논점'); // 스냅샷 (argmax)
   b.submitReview(uid(b, 'D03'), { myEquipmentIndex: 0 }); // 부착 floor(3×0.9)=2 (일반)
   const att = () => b.state.player.equipment[0]!.attachments[0]!.value;
   b.state.player.gauge = 10;
@@ -377,9 +377,9 @@ test('B01: 사장님 답글 — 정지 → 같은 계열 원산지/팩트로 재
   assert.equal(b.state.enemy.will, Math.min(eWill('B01'), will + 5)); // 대상 없음 → 의지 +5만
 });
 
-test('B01: 반박 우선순위 — 힙스터 크리(Tier 3)를 일반 디버프(Tier 1)보다 먼저 정지', () => {
+test('B01: 반박 우선순위 — 「힙스터 인증」 크리(Tier 3)를 일반 디버프(Tier 1)보다 먼저 정지', () => {
   const b = makeBattle('B01', ['K01'], { initialSuitCounters: { 성능: 1 } });
-  assert.equal(b.state.player.disposition, '힙스터 평론가');
+  assert.equal(b.state.player.disposition, '성능 논점');
   b.submitReview(uid(b, 'K01')); // Tier 1 attack_down 4 (원산지 강화)
   b.state.player.gauge = 10;
   b.useCritical(); // Tier 3 attack_halve
@@ -393,7 +393,7 @@ test('B01: 반박 우선순위 — 힙스터 크리(Tier 3)를 일반 디버프(
   b.state.enemy.patternIndex = 0;
   b.state.enemy.intentId = 'contract_slash';
   b.endTurn();
-  assert.equal(b.state.player.will, 30 - (slashDamage - 4)); // 힙스터 정지 → −50% 미적용, attack_down 4만
+  assert.equal(b.state.player.will, 30 - (slashDamage - 4)); // 「힙스터 인증」 정지 → −50% 미적용, attack_down 4만
 });
 
 test('전 장비 파괴 → 항복 승리 + 6G (원산지 구성품 피해 +1 포함)', () => {

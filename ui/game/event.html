@@ -207,6 +207,8 @@ $('#choices').addEventListener('click', (e) => {
 
 $('#btnGo').addEventListener('click', () => {
   if (preview) { location.href = realRun ? 'map.html' : 'index.html'; return; }
+  // 이벤트로 얻은 카드도 도감에 오른다 (completeNode 의 중앙 기록과 같은 값 — 중복은 무시된다)
+  if (pendingPatch && pendingPatch.deckAdd) RH.recordSeen(pendingPatch.deckAdd);
   delete run.nodeCtx; RH.saveRun(run);           // 다음 노드에서 새 문맥을 굴리도록 정리
   location.href = RH.completeNode(pendingPatch || {});
 });

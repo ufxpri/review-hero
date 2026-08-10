@@ -40,14 +40,59 @@
 ## RH API (state.js — 전문을 읽을 것)
 
 - `RH.run()` → 진행 중 런 또는 null. `RH.newRun(seed?)`, `RH.saveRun(run)`, `RH.clearRun()`
-- 런 구조: `{seed, act, floor(1~6), pos, gold, will, maxWill, deck[], map:{floors[][]}, suitCounters, lastSuit, battlesWon}`
+- 런 구조: `{seed, act, floor(1~6), pos, characterId, gold, will, maxWill, deck[], map:{floors[][]}, suitCounters, lastSuit, path[], parcel, battlesWon, combat?}`
 - 노드: `{id, type: battle|elite|event|shop|rest|boss, enemy?, visited?}` — 아이콘/라벨/페이지 매핑은 `RH.NODE_ICON/NODE_LABEL/NODE_PAGE`
 - `RH.enterNode(id)` — 지도에서 호출. pos 기록 후 해당 페이지로 이동
 - `RH.currentNode()` — 노드 페이지에서 자기 노드를 얻는다
+- `RH.reachable(run?)` — 지금 고를 수 있는 노드 id 목록. **`run.pos` 가 남아 있으면(= 노드를 끝내지 않았다) 그 노드 하나만 돌려준다** — 아래 §중단·재개 참조
 - `RH.completeNode({gold?, will?, deckAdd?, deckRemoveIdx?})` → 다음 페이지 경로 반환(직접 `location.href` 에 대입). 보스면 `result.html?outcome=clear`
 - `RH.finalizeRun('death'|'clear', {stars, text})` — result.html 전용. 메타 정산 + 명단 등재 + 런 삭제
-- `RH.meta()` → `{runs, wins, bestFloor, rp, p, expedition[]}` · `RH.penname()` · `RH.sig()` → `{v, box:[660,236], strokes:[[[x,y],…],…]}` — 점은 `{x,y}` 객체가 아니라 **`[x,y]` 배열**이다 (signature.html 저장 형식)
+- `RH.meta()` → `{runs, wins, bestFloor, rp, p, expedition[], characterId, stats, seen[], badges[]}` · `RH.penname()` · `RH.sig()` → `{v, box:[660,236], strokes:[[[x,y],…],…]}` — 점은 `{x,y}` 객체가 아니라 **`[x,y]` 배열**이다 (signature.html 저장 형식)
 - `RH.ui.topbar(k)` `RH.ui.stars(n)` `RH.ui.esc(s)`
+
+## 중단·재개 — 세이브 스커밍 차단 (노드 갈아타기 금지)
+
+전투 도중 탭을 닫아도 **런은 살린다**(브라우저 크래시로 런을 통째로 날리는 쪽이 더 나쁘다).
+**재전은 허용하고, 막는 것은 노드 갈아타기뿐이다.** 근거는 `run.pos`: 노드를 끝내는 유일한
+경로가 `completeNode()`(= path 에 적고 pos 를 비운다)라, pos 가 남아 있으면 곧 중도 이탈이다.
+
+| 중단 지점 | 복원 | `RH.resumeInfo().label` |
+|---|---|---|
+| 지도 (노드 미선택) | 그대로 | `중단 지점: 지도` |
+| 노드 진입 후 전투 전 | 그대로 (그 노드만 열림) | `중단 지점: 지도` |
+| **전투 중** | **그 노드로 강제 복귀 + 전투 처음부터.** 노드 교체 불가 | `중단 지점: ⚔ 전투 — 처음부터 다시 붙습니다` |
+
+- `RH.resumeInfo(run?)` → `{kind:'map'|'combat', nodeId, nodeType, floor, href, label}` (런 없으면 `null`).
+  메인 허브가 이어하기 버튼의 문구·목적지로 쓴다. 전투 상태는 저장하지 않으므로 재개 = 처음부터.
+- `RH.beginCombat(nodeId, run?)` / `RH.endCombat(run?)` — **combat.html 전용.** Battle 을 만든 직후 켜고
+  승/패/항복 처리 시 끈다. 이 표시만이 「노드에 발만 들인 상태」와 「전투 중」을 가른다.
+
+## 계측 — 업적·도감 (소급 계산이 불가능하므로 기록은 항상 켜 둔다)
+
+`meta.stats` 누적 카운터 / `meta.seen` 등재 카드 id / `meta.badges` 등재 업적 id.
+없는 필드는 `RH.meta()` 가 기본값으로 채우므로 **구 세이브도 그대로 산다.**
+`meta.characterId` · `run.characterId` 는 ADR-028 대비로 지금은 `'default'` 고정.
+
+```js
+meta.stats = {
+  submissions, judgements:{origin,fact,normal,fumble}, crits, critMisses,
+  battlesWon, surrenderWins, retreats, cardsRemoved,
+  minWillWin,          // 최소 의지 승리 기록 (미달성 null)
+  defenseAbsorbed, willHealed, parcelsOpened,
+}
+```
+
+**페이지는 localStorage 를 직접 만지지 않는다.** 기록은 아래 헬퍼로만 한다:
+
+- `RH.recordSeen(idsOrId)` → 새로 등재한 장수. 중복은 무시. **카드를 얻는 모든 경로에서 부른다**
+  (시작 덱 12장은 `newRun` 이, 전투 보상·이벤트 획득은 `completeNode({deckAdd})` 가 자동으로 처리한다.
+  상점 구매처럼 `run.deck` 을 직접 만지는 경로는 그 페이지가 직접 부른다)
+- `RH.bumpStat(key, n=1)` — 중첩 키는 점 표기(`'judgements.origin'`). `RH.recordStatMin(key, v)` 는 최솟값 기록
+- `RH.recordBadges(idsOrId)` — 업적 등재 (판정 로직은 다음 단계)
+- `RH.mergeBattleStats(battle.state.stats, {result, willLeft})` — 엔진 `BattleStats` 1판치를 계정 누적으로.
+  combat.html 이 전투 종료 시 한 번 부른다
+- `completeNode({deckRemoveIdx})` 는 `cardsRemoved` 를 자동으로 센다 (휴식 태우기).
+  덱을 직접 splice 하는 상점 파쇄는 shop.html 이 직접 센다
 
 ## 전투 페이지 추가 계약 (combat.html) — 카드 체계 v2 (ADR-011)
 
@@ -60,7 +105,7 @@
   (원산지 ★금색 / 팩트 ● / 헛소리 ⚠ / 일반 무표시, 특수는 「무판정」) + 예상 좋아요 → 카드 탭 = 즉시 제출.
 - 적 결정: `RH.currentNode().enemy`. 런 없이 열리면 `?enemy=E01` 쿼리로 디버그 단독 전투 지원.
 - 플레이어 의지는 런에서 잇는다: Battle 생성 직후 `battle.state.player.will = run.will; battle.state.player.maxWill = run.maxWill;`
-- 성향 연속성: 생성 시 `initialSuitCounters: run.suitCounters, initialLastSuit: run.lastSuit`, 종료 시 되써넣기.
+- 논점 연속성: 생성 시 `initialSuitCounters: run.suitCounters, initialLastSuit: run.lastSuit`, 종료 시 되써넣기.
 - 보스전 덱: `RH_DATA.bossExtra` 를 덱에 추가해 생성한다.
 - 승리: 골드 보상 일반 15 / 정예 24 / 보스 50 (GDD §4.2), `run.battlesWon += 1`, `run.will = 전투 후 의지`.
 - **승리 카드 보상 (ADR-011 근거 ② + ADR-027)**: 승리 오버레이에서 **3칸** 제시 → 1장

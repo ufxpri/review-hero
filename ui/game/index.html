@@ -2,93 +2,329 @@
 <title>이세계 리뷰용사 — 메인</title>
 <link rel="stylesheet" href="shared.css">
 <style>
-/* 타이틀 화면 — 게임에서 유일하게 topbar 없는 전체화면 페이지 (CONTRACT §공통 뼈대의 예외) */
-body{overflow:hidden}
-.title{position:relative;min-height:100vh;display:flex;flex-direction:column;
-       align-items:center;justify-content:center;
-       background:radial-gradient(120% 100% at 50% 0%,#211b13,#0a0806)}
-.grain{position:absolute;inset:0;pointer-events:none;opacity:.05;
+/* index.html = S01 스플래시 + S02 계정 홈 허브 겸임.
+   게임에서 유일하게 topbar 없는 페이지 (CONTRACT §공통 뼈대의 예외) —
+   대신 하단 내비로 이동 경로를 확보한다.
+   AD §2.3 「모바일 세로 우선(최대 폭 760px)」 준수: 데스크톱에서는 760px 컬럼을 중앙 고정. */
+body{background:#0a0806}
+.page{position:relative;max-width:760px;min-height:100vh;margin:0 auto;
+      display:flex;flex-direction:column;
+      background:linear-gradient(180deg,#16120e,#0d0b09 420px,#0d0b09);
+      border-left:1px solid rgba(107,86,54,.4);border-right:1px solid rgba(107,86,54,.4)}
+.sec{margin:11px 14px 0}
+
+/* ── A 세계관 띠 ─────────────────────────────────────────── */
+.strip{display:flex;align-items:center;gap:7px;padding:9px 14px;font-size:11.5px;color:var(--dim);
+       background:var(--slab);border-bottom:1px solid var(--edge)}
+.strip .st{color:var(--gold);letter-spacing:1.5px}
+.strip b{color:var(--ink);font-weight:700}
+.strip .sep{color:#4a4136}
+.strip .gear{margin-left:auto;text-decoration:none;color:var(--dim);font-size:14px;
+             border:1px solid var(--edge);border-radius:4px;padding:1px 7px;line-height:1.5}
+.strip .gear:hover{color:var(--ink);border-color:var(--edge-hi)}
+
+/* ── B 히어로 (S01 흡수) — 240px 상한 ───────────────────── */
+.hero{position:relative;height:206px;flex:none;display:grid;place-items:center;overflow:hidden;
+      border-bottom:1px solid var(--edge);
+      background:#0a0806 url("../assets/scene-market.png") center 62%/cover no-repeat}
+.hero .grain{position:absolute;inset:0;opacity:.05;
        background-image:repeating-linear-gradient(0deg,#fff 0 1px,transparent 1px 3px),
                         repeating-linear-gradient(90deg,#fff 0 1px,transparent 1px 4px)}
-.vig{position:absolute;inset:0;pointer-events:none;
-     background:radial-gradient(92% 74% at 50% 40%,transparent 42%,rgba(0,0,0,.62))}
-
-/* 로고 — 이미지 없이 CSS 타이포로 */
-.brand{position:relative;text-align:center;margin-bottom:44px}
-.deco{font-size:13px;color:var(--dim);margin-bottom:16px}
-.deco .st{color:var(--gold);letter-spacing:2px;font-size:14px}
-.deco b{color:var(--ink)}
-h1{font-size:88px;font-weight:900;letter-spacing:-3.5px;line-height:1.04;
+.hero .vig{position:absolute;inset:0;
+       background:radial-gradient(88% 78% at 50% 46%,rgba(10,8,6,.5),rgba(10,8,6,.94))}
+.hero .in{position:relative;text-align:center}
+.hero h1{font-size:54px;font-weight:900;letter-spacing:-2.4px;line-height:1.04;
    background:linear-gradient(178deg,#f8ecc9 28%,#e0a94b 60%,#8f6b2a 98%);
    -webkit-background-clip:text;background-clip:text;color:transparent;
-   filter:drop-shadow(0 4px 0 rgba(0,0,0,.6)) drop-shadow(0 12px 30px rgba(224,169,75,.16))}
+   filter:drop-shadow(0 3px 0 rgba(0,0,0,.6)) drop-shadow(0 10px 26px rgba(224,169,75,.16))}
 /* 부제 = 도장. 커머스 세계관답게 뾰족한 판타지 대신 인주 냄새로 */
-.stamp{display:inline-block;margin-top:22px;transform:rotate(-2.4deg);
+.stamp{display:inline-block;margin-top:14px;transform:rotate(-2.4deg);
        border:3px double #c2452e;border-radius:6px;color:#e0876c;
-       padding:6px 18px 6px 24px;font-size:17px;font-weight:800;letter-spacing:6px;
-       background:rgba(122,58,44,.12);text-shadow:0 1px 0 rgba(0,0,0,.4)}
+       padding:4px 14px 4px 20px;font-size:14px;font-weight:800;letter-spacing:5px;
+       background:rgba(122,58,44,.14);text-shadow:0 1px 0 rgba(0,0,0,.4)}
 
-/* 메뉴 */
-.menu{position:relative;display:flex;flex-direction:column;gap:10px;width:312px}
-.menu .btn{padding:13px 18px;font-size:15px}
-.menu .btn .sub{display:block;font-size:11px;font-weight:400;color:#cdb98b;
-                margin-top:4px;letter-spacing:0}
-.menu .btn.ghost .sub{color:var(--dim)}
-.row3{display:flex;gap:8px}
-.row3 .btn{flex:1;padding:10px 0;font-size:13px}
+/* ── C 리뷰어 카드 — 만물대장 레이어라 명조체 (AD §1, ADR-010) ── */
+.card{display:grid;grid-template-columns:132px 1fr;gap:14px;
+      border:1px solid var(--edge);border-radius:6px;padding:12px 14px;
+      background:linear-gradient(180deg,rgba(32,27,20,.92),rgba(18,16,13,.92))}
+.card .sig{position:relative;height:52px;border-radius:4px;overflow:hidden;
+      border:1px solid #8a744d;box-shadow:2px 2px 0 rgba(0,0,0,.45);
+      background-color:var(--parch);
+      background-image:repeating-linear-gradient(92deg,rgba(120,100,60,.05) 0 2px,transparent 2px 5px),
+                       linear-gradient(160deg,var(--parch),var(--parch-d))}
+.card .sig canvas{position:absolute;inset:0;width:100%;height:100%}
+.card .sig .none{position:absolute;inset:0;display:grid;place-items:center;
+      color:#a08f68;font-size:10.5px}
+.card .who{font-size:16px;letter-spacing:-.3px;color:var(--ink)}
+.card .who b{color:var(--gold);font-weight:700}
+.card .cur{margin-top:7px;font-size:12.5px;color:var(--dim);font-variant-numeric:tabular-nums}
+.card .cur b{color:var(--ink);font-weight:700;font-size:14px}
+.card .cur .sep{color:#4a4136;margin:0 6px}
+.card .rule{grid-column:1/-1;height:1px;margin:2px 0 1px;
+      background:linear-gradient(90deg,rgba(107,86,54,.7),rgba(107,86,54,.15))}
+.card .roll{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:4px 0;
+      font-size:12px;color:var(--dim);font-variant-numeric:tabular-nums}
+.card .roll span{white-space:nowrap}
+.card .roll span+span::before{content:"·";color:#4a4136;margin:0 8px}
+.card .roll i{font-style:normal;color:var(--ink);font-weight:700}
+.ledger{font-family:"Nanum Myeongjo","Noto Serif KR",AppleMyungjo,"Apple Myungjo",Batang,serif}
 
-/* 하단 — 필명과 빌드 표기 */
-.foot{position:absolute;left:0;right:0;bottom:0;display:flex;align-items:center;gap:10px;
-      padding:14px 20px;font-size:12px;color:var(--dim)}
-.foot .pen{border:1px solid var(--edge);border-radius:4px;padding:4px 10px;
-           background:rgba(0,0,0,.35)}
-.foot .pen b{color:var(--gold);font-weight:700}
-.foot .ver{margin-left:auto;margin-right:52px; /* 디버그 🐞 버튼과 겹치지 않게 */
-           color:#5e564a;font-variant-numeric:tabular-nums}
+/* ── D/E 큰 CTA ────────────────────────────────────────── */
+.cta{display:flex;align-items:center;gap:14px;width:100%;text-align:left;cursor:pointer;
+     border:1px solid var(--edge-hi);border-radius:6px;padding:13px 16px;
+     background:linear-gradient(#3a2f1e,#2a2115);color:var(--ink);text-decoration:none}
+.cta:hover{filter:brightness(1.16)}
+.cta.primary{border-color:var(--gold);background:linear-gradient(#6b4f1e,#4a3612);color:#ffe9bd}
+.cta .body{flex:1;min-width:0}
+.cta .t{font-size:16px;font-weight:800;letter-spacing:-.3px}
+.cta .s{margin-top:4px;font-size:12px;color:#cdb98b;font-variant-numeric:tabular-nums}
+.cta .s .sep{color:rgba(255,255,255,.25);margin:0 6px}
+.cta .note{margin-top:5px;font-size:11.5px;color:#a2947a;font-style:italic}
+.cta .go{flex:none;font-size:20px;color:var(--gold);opacity:.8}
+.cta.plain{background:linear-gradient(#2a2419,#1d1913);border-color:var(--edge)}
+.cta.plain .s{color:var(--dim)}
+.warn{margin-top:5px;font-size:11.5px;color:#e08a72}
+
+/* ── F 잠금 스트립 (ADR-028 — 자리를 지금 잡아 둔다) ────── */
+.lock{display:flex;align-items:center;gap:13px;padding:12px 16px;border-radius:6px;
+      border:1px dashed rgba(107,86,54,.85);background:rgba(0,0,0,.28)}
+.lock .ico{font-size:21px;filter:grayscale(.45);opacity:.8}
+.lock b{display:block;font-size:13.5px;color:#9a8f7d}
+.lock .d{margin-top:3px;font-size:11.5px;color:#6f675a;line-height:1.55}
+.lock .chip{margin-left:auto;flex:none;white-space:nowrap}
+
+/* ── G 2타일 ───────────────────────────────────────────── */
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tile{border:1px solid var(--edge);border-radius:6px;padding:11px 13px;background:rgba(0,0,0,.3);
+      opacity:.72}
+.tile .k{display:flex;align-items:center;gap:5px;font-size:11.5px;color:var(--dim)}
+.tile .k .lk{margin-left:auto;font-size:10px;color:#6f675a}
+.tile .v{margin:6px 0 7px;font-size:20px;font-weight:800;font-variant-numeric:tabular-nums}
+.tile .v small{font-size:11px;font-weight:400;color:var(--dim);margin-left:2px}
+.tile .bar{height:6px;border-radius:2px}
+.tile .bar i{background:linear-gradient(#c39a52,#8f6b2a)}
+
+/* ── H 명단 프리뷰 ─────────────────────────────────────── */
+.roster{border:1px solid var(--edge);border-radius:6px;background:rgba(0,0,0,.3);overflow:hidden}
+.roster .h{display:flex;align-items:center;padding:9px 13px;border-bottom:1px solid var(--edge);
+      font-size:12.5px;color:var(--gold);font-weight:700}
+.roster .h a{margin-left:auto;font-size:11.5px;color:var(--dim);text-decoration:none;font-weight:400}
+.roster .h a:hover{color:var(--ink)}
+.roster .r{display:grid;grid-template-columns:26px 1fr auto;align-items:center;gap:9px;
+      padding:8px 13px;border-bottom:1px solid rgba(107,86,54,.24);font-size:12.5px}
+.roster .r:last-child{border-bottom:none}
+.roster .r.me{background:rgba(224,169,75,.07)}
+.roster .no{color:#6f675a;font-weight:800;text-align:center;font-variant-numeric:tabular-nums}
+.roster .r:first-child .no{color:var(--gold)}
+.roster .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.roster .nm em{font-style:normal;background:var(--gold);color:#1c1409;font-weight:800;font-size:9.5px;
+      border-radius:3px;padding:1px 5px;margin-left:5px}
+.roster .rc{color:var(--dim);font-variant-numeric:tabular-nums;white-space:nowrap}
+.roster .rc .f{color:#b06a55;margin-left:6px}
+.roster .rc .f.back{color:var(--gold)}
+.roster .rc .f.gone{color:#6f675a}
+
+/* ── I 하단 내비 ───────────────────────────────────────── */
+.spacer{flex:1;min-height:14px}
+.nav{position:sticky;bottom:0;z-index:5;display:grid;grid-template-columns:repeat(4,1fr) 48px;
+     background:var(--slab);border-top:1px solid var(--edge);backdrop-filter:blur(3px)}
+.nav a,.nav span.ni{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+     padding:8px 2px;font-size:11px;color:var(--dim);text-decoration:none;
+     border-right:1px solid rgba(107,86,54,.28)}
+.nav a:hover{color:var(--ink);background:rgba(255,255,255,.03)}
+.nav .ic{font-size:15px;line-height:1}
+.nav span.ni{opacity:.45;cursor:default}
+/* 우측 48px 은 디버그 🐞 버튼 자리 — 내비 버튼이 가려지지 않게 비워 둔다 */
+.nav .build{border-right:none;font-size:9.5px;line-height:1.3;color:#5e564a;text-align:center;
+     display:flex;flex-direction:column;align-items:center;justify-content:center}
 </style>
 <script src="data.js"></script>
 <script src="state.js"></script>
 <body>
-<div class="title">
-  <div class="grain"></div>
-  <div class="vig"></div>
+<div class="page">
 
-  <header class="brand">
-    <p class="deco"><span class="st">★★★★★</span> <b>4.9</b> · 누적 리뷰 1,048,576개 · 만물마켓 공식</p>
-    <h1>이세계 리뷰용사</h1>
-    <span class="stamp">리뷰가 무기다</span>
+  <!-- A 세계관 띠 -->
+  <div class="strip">
+    <span class="st">★★★★★</span> <b>4.9</b>
+    <span class="sep">·</span> 누적 리뷰 <b>1,048,576</b>개
+    <span class="sep">·</span> 만물마켓 공식
+    <a class="gear" href="settings.html" title="설정">⚙</a>
+  </div>
+
+  <!-- B 히어로 (S01) -->
+  <header class="hero">
+    <div class="grain"></div><div class="vig"></div>
+    <div class="in">
+      <h1>이세계 리뷰용사</h1>
+      <span class="stamp">리뷰가 무기다</span>
+    </div>
   </header>
 
-  <nav class="menu" id="menu"></nav>
+  <!-- C 리뷰어 카드 -->
+  <section class="sec card ledger" id="card"></section>
 
-  <footer class="foot">
-    <span class="pen" id="pen"></span>
-    <span class="ver">dev 빌드</span>
-  </footer>
+  <!-- D 이어하기 / E 새 원정 -->
+  <div class="sec" id="resume"></div>
+  <div class="sec" id="start"></div>
+
+  <!-- F 대원 소환 (ADR-028 · Layer 1.5) -->
+  <section class="sec lock">
+    <span class="ico">🕯</span>
+    <div>
+      <b>대원 소환 — 다른 세계의 리뷰어</b>
+      <div class="d">소환사는 아직 다음 사람을 부르지 못했다.<br>
+        대원마다 전생의 리뷰 12장과 습관 하나를 들고 온다.</div>
+    </div>
+    <span class="chip">Layer 1.5 예정</span>
+  </section>
+
+  <!-- G 2타일 -->
+  <div class="sec tiles" id="tiles"></div>
+
+  <!-- H 원정대 명단 프리뷰 -->
+  <section class="sec roster">
+    <div class="h">환불원정대 명단 <a href="board.html">전체 보기 ›</a></div>
+    <div id="rows"></div>
+  </section>
+
+  <div class="spacer"></div>
+
+  <!-- I 하단 내비 -->
+  <nav class="nav">
+    <span class="ni" title="Layer 1.5 예정"><span class="ic">📕</span>만물대장 🔒</span>
+    <a href="board.html"><span class="ic">👥</span>원정대 명단</a>
+    <a href="account.html"><span class="ic">🧾</span>계정</a>
+    <a href="settings.html"><span class="ic">⚙</span>설정</a>
+    <span class="build">dev<br>빌드</span>
+  </nav>
 </div>
 
 <script>
 (() => {
-  const run = RH.run();
-  const pen = RH.penname();
   const esc = RH.ui.esc;
+  const run = RH.run();
+  const meta = RH.meta();
+  const pen = RH.penname();
+  const n = (v) => Number(v || 0).toLocaleString('ko-KR');
 
-  // ── 메뉴 — 이어하기는 진행 중인 런이 있을 때만 ──────────────
-  let html = '';
-  if (run) {
-    html += `<a class="btn primary" href="map.html">이어하기
-               <span class="sub">1막 ${run.floor}층 · 🧠 ${run.will}/${run.maxWill} · 🪙 ${run.gold}</span></a>`;
+  /* ── 방어적 조회 ──────────────────────────────────────────
+   * meta.seen / meta.badges 와 RH.resumeInfo() 는 state.js 에 추가되는 중이다.
+   * 없으면 0/미표기로 떨어지되 화면은 그대로 서도록 전부 옵셔널로 읽는다. */
+  const count = (v) => Array.isArray(v) ? v.length
+    : (v && typeof v === 'object') ? Object.keys(v).length
+    : (typeof v === 'number' ? v : 0);
+  const seenN = count(meta.seen);
+  const badgeN = count(meta.badges);
+  const CARD_TOTAL = (window.RH_DATA && RH_DATA.cards && RH_DATA.cards.length) || 66;
+  const BADGE_TOTAL = count(window.RH_DATA && RH_DATA.badges) || 14;
+
+  // ── C 리뷰어 카드 ───────────────────────────────────────
+  document.getElementById('card').innerHTML = `
+    <div class="sig" id="sig"><canvas id="sigcv"></canvas></div>
+    <div>
+      <div class="who">${pen ? `✍ <b>${esc(pen)}</b> 님의 만물대장`
+                             : '✍ <b>미등록 리뷰어</b> — 첫 원정에서 등록합니다'}</div>
+      <div class="cur">명성 <b>${n(meta.rp)}</b> RP<span class="sep">·</span>협찬 <b>${n(meta.p)}</b> P</div>
+    </div>
+    <div class="rule"></div>
+    <div class="roll">
+      <span>원정 <i>${n(meta.runs)}</i></span>
+      <span>생환 <i>${n(meta.wins)}</i></span>
+      <span>최고 <i>${meta.bestFloor ? `1막 ${meta.bestFloor}층` : '—'}</i></span>
+      <span>등재 <i>${seenN}/${CARD_TOTAL}</i></span>
+      <span>기록 <i>${badgeN}/${BADGE_TOTAL}</i></span>
+    </div>`;
+
+  // 서명 썸네일 — 저장 좌표계(660×236)를 썸네일 비율로 되그린다.
+  // signature.html 은 점을 [x,y] 배열로 저장한다 (CONTRACT 의 {x,y} 표기와 다름) — 둘 다 받는다.
+  (function drawSig() {
+    const sig = RH.sig();
+    const box = document.getElementById('sig');
+    const cv = document.getElementById('sigcv');
+    if (!sig || !sig.strokes || !sig.strokes.length) {
+      cv.remove();
+      box.insertAdjacentHTML('beforeend', '<div class="none">서명 없음</div>');
+      return;
+    }
+    const px = (p) => (Array.isArray(p) ? p[0] : p.x);
+    const py = (p) => (Array.isArray(p) ? p[1] : p.y);
+    const [bw, bh] = sig.box || [660, 236];
+    const dpr = window.devicePixelRatio || 1;
+    const w = cv.clientWidth || 130, h = cv.clientHeight || 50;
+    cv.width = w * dpr; cv.height = h * dpr;
+    const ctx = cv.getContext('2d');
+    ctx.scale((w * dpr) / bw, (h * dpr) / bh);
+    ctx.strokeStyle = '#2b2119'; ctx.lineWidth = 5;
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    for (const s of sig.strokes) {
+      if (!s.length) continue;
+      ctx.beginPath();
+      ctx.moveTo(px(s[0]), py(s[0]));
+      if (s.length < 2) ctx.lineTo(px(s[0]) + 0.1, py(s[0]));
+      for (let i = 1; i < s.length - 1; i++) {
+        const x = px(s[i]), y = py(s[i]);
+        ctx.quadraticCurveTo(x, y, (x + px(s[i + 1])) / 2, (y + py(s[i + 1])) / 2);
+      }
+      if (s.length >= 2) { const l = s[s.length - 1]; ctx.lineTo(px(l), py(l)); }
+      ctx.stroke();
+    }
+  })();
+
+  // ── D 이어하기 ──────────────────────────────────────────
+  /** 다음에 무엇을 하러 가는지 — 노드 진행 중이면 그 노드, 아니면 지금 고를 수 있는 종류들 */
+  function nextLine(r) {
+    let node = null;
+    try { node = RH.currentNode(r); } catch {}
+    if (node) return `진행 중 ${RH.NODE_ICON[node.type] || ''} ${RH.NODE_LABEL[node.type] || node.type}`;
+    let open = [];
+    try { open = RH.reachable(r) || []; } catch {}
+    const row = (r.map && r.map.floors && r.map.floors[r.floor - 1]) || [];
+    const types = [...new Set(open.map((id) => (row.find((x) => x.id === id) || {}).type).filter(Boolean))];
+    if (!types.length) return '다음 배송지 선택';
+    return '다음 ' + types.map((t) => `${RH.NODE_ICON[t] || ''} ${RH.NODE_LABEL[t] || t}`).join(' · ');
   }
-  html += `<button class="btn${run ? '' : ' primary'}" id="newrun">새 원정
-             <span class="sub">${pen ? '만물대장을 들고 던전으로' : '리뷰어 등록부터 시작합니다'}</span></button>`;
-  html += `<div class="row3">
-             <a class="btn ghost" href="board.html">원정대 명단</a>
-             <a class="btn ghost" href="account.html">계정</a>
-             <a class="btn ghost" href="settings.html">설정</a>
-           </div>`;
-  document.getElementById('menu').innerHTML = html;
+  /** 중단 지점 문구 — state.js 의 RH.resumeInfo() 가 주면 그대로 쓴다 (문자열/객체 모두 허용) */
+  function stoppedLine(r, info) {
+    if (typeof info === 'string' && info.trim()) return info.trim();
+    if (info && typeof info === 'object') {
+      const t = info.label || info.text || info.line || info.desc || info.where;
+      if (typeof t === 'string' && t.trim()) return t.trim();
+    }
+    let node = null;
+    try { node = RH.currentNode(r); } catch {}
+    return node
+      ? `중단 지점: ${RH.NODE_LABEL[node.type] || '노드'} 한복판`
+      : '중단 지점: 지도 — 다음 배송지를 고르던 중';
+  }
 
-  // ── 새 원정 — 필명 없으면 프롤로그(리뷰어 등록)부터 ─────────
+  if (run) {
+    let info = null;
+    try { info = RH.resumeInfo && RH.resumeInfo(run); } catch {}
+    // 복귀 지점도 state.js 가 정하면 그쪽을 따른다 (전투 중 이탈 → 그 전투로 복귀)
+    const href = (info && typeof info.href === 'string' && info.href) || 'map.html';
+    document.getElementById('resume').innerHTML = `
+      <a class="cta primary" href="${esc(href)}">
+        <div class="body">
+          <div class="t">이어하기</div>
+          <div class="s">1막 ${run.floor}층<span class="sep">·</span>${esc(nextLine(run))}</div>
+          <div class="s">🧠 ${run.will}/${run.maxWill}<span class="sep">·</span>🪙 ${run.gold}<span class="sep">·</span>덱 ${(run.deck || []).length}장</div>
+          <div class="note">${esc(stoppedLine(run, info))}</div>
+        </div>
+        <span class="go">›</span>
+      </a>`;
+  }
+
+  // ── E 새 원정 ──────────────────────────────────────────
+  document.getElementById('start').innerHTML = `
+    <button class="cta ${run ? 'plain' : 'primary'}" id="newrun">
+      <div class="body">
+        <div class="t">새 원정</div>
+        <div class="s">${pen ? '만물대장을 들고 던전으로' : '리뷰어 등록부터 시작합니다'}</div>
+        ${run ? '<div class="warn">⚠ 진행 중인 원정이 사라집니다.</div>' : ''}
+      </div>
+      <span class="go">›</span>
+    </button>`;
+
   document.getElementById('newrun').addEventListener('click', () => {
     if (!RH.penname()) { location.href = '../prologue.html'; return; }
     if (RH.run() && !confirm('진행 중인 원정이 사라집니다.\n새 원정을 떠날까요?')) return;
@@ -96,10 +332,42 @@ h1{font-size:88px;font-weight:900;letter-spacing:-3.5px;line-height:1.04;
     location.href = 'map.html';
   });
 
-  // ── 하단 필명 ───────────────────────────────────────────
-  document.getElementById('pen').innerHTML = pen
-    ? `✍ <b>${esc(pen)}</b> 님의 만물대장`
-    : '✍ 미등록 리뷰어 — 첫 원정에서 등록합니다';
+  // ── G 2타일 — 화면(S50 만물대장)이 아직 없어 비활성. 수치는 실제 meta 에서 읽는다 ──
+  const tiles = [
+    ['📕', '등재된 리뷰', seenN, CARD_TOTAL, '종'],
+    ['🏅', '등재 기록', badgeN, BADGE_TOTAL, '건'],
+  ];
+  document.getElementById('tiles').innerHTML = tiles.map(([ic, k, v, tot, u]) => `
+    <div class="tile">
+      <div class="k">${ic} ${k}<span class="lk">🔒 준비 중</span></div>
+      <div class="v">${v}<small>/${tot}${u}</small></div>
+      <div class="bar g"><i style="width:${Math.min(100, tot ? (v / tot) * 100 : 0)}%"></i></div>
+    </div>`).join('');
+
+  /* ── H 명단 프리뷰 ────────────────────────────────────────
+   * board.html 명단 상위 3인의 사본이다. 전체 목록은 board.html 이 소유하며,
+   * 여기 순위가 전체 순위와 같은 이유는 「상위 3」이 NPC 상위 3 ∪ 내 기록으로만 결정되기 때문.
+   * (공유 데이터로 옮기려면 state.js/data.js 소유자와 조율이 필요하다) */
+  const NPC_TOP = [
+    { name: '배송조회중독자', floor: 6, fate: '전사', date: '2026-05-02' },
+    { name: '미개봉철수',     floor: 5, fate: '전사', date: '2026-03-18' },
+    { name: '반품테러리스트', floor: 5, fate: '두절', date: '2025-08-14' },
+  ];
+  const mine = (meta.expedition || []).map((e) => ({
+    name: e.name, floor: e.floor, date: e.date, me: true,
+    fate: e.result === 'clear' ? '생환' : '전사',
+  }));
+  const FATE = { 전사: '', 생환: 'back', 두절: 'gone' };
+  const top = [...NPC_TOP, ...mine]
+    .sort((a, b) => (b.floor - a.floor) || String(b.date).localeCompare(String(a.date)))
+    .slice(0, 3);
+  document.getElementById('rows').innerHTML = top.map((e, i) => `
+    <div class="r${e.me ? ' me' : ''}">
+      <span class="no">${i + 1}</span>
+      <span class="nm">✍ ${esc(e.name || '무명')}${e.me ? '<em>나</em>' : ''}</span>
+      <span class="rc">1막 ${e.floor}층
+        <span class="f ${FATE[e.fate] || ''}">${e.fate === '두절' ? '소식 두절' : e.fate}</span></span>
+    </div>`).join('');
 })();
 </script>
 <script src="debug.js"></script>

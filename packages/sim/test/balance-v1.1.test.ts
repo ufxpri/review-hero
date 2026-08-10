@@ -67,9 +67,9 @@ test('v1.1 제안 3: 페이즈2 비례 트리거 — 의지 48이면 50% = 24에
   assert.equal(b.state.enemy.phase2Done, true);
 });
 
-test('v1.1 제안 5: 바이럴 크리 바닥 보장 — 버프 0개면 +3 가산 버프 부착 (+12 상한 공유)', () => {
+test('v1.1 제안 5: 「바이럴 확산」 바닥 보장 — 버프 0개면 +3 가산 버프 부착 (+12 상한 공유)', () => {
   const b = makeBattle('E01', [], { initialSuitCounters: { 감성: 5 } });
-  assert.equal(b.state.player.disposition, '바이럴 앞잡이');
+  assert.equal(b.state.player.disposition, '감성 논점');
   b.state.player.gauge = 10;
   b.useCritical();
   const buffs = b.state.player.equipment.flatMap((eq) => eq.attachments.filter((a) => a.kind === 'damage_buff'));
@@ -79,9 +79,9 @@ test('v1.1 제안 5: 바이럴 크리 바닥 보장 — 버프 0개면 +3 가산
   assert.equal(b.state.player.viralBonusGranted, 3); // +12 상한 공유
 });
 
-test('v1.1 제안 6: 불편러 크리 — 기절 + 다음 행동 위력 −50% (기절 면역 시에도 −50%는 적용)', () => {
+test('v1.1 제안 6: 「진상 접수」 — 기절 + 다음 행동 위력 −50% (기절 면역 시에도 −50%는 적용)', () => {
   const b = makeBattle('E01', [], { initialSuitCounters: { 배송: 5 } });
-  assert.equal(b.state.player.disposition, '프로 불편러');
+  assert.equal(b.state.player.disposition, '배송 논점');
   // 경직 내성 상태를 만들어 기절이 무효인 상황에서 −50%가 남는지 확인
   b.state.enemy.staggerImmunityTurns = 1;
   b.state.player.gauge = 10;

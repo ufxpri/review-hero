@@ -219,6 +219,7 @@ $('#goods').addEventListener('click', (e) => {
   run.gold -= it.price;
   run.deck.push(it.id);
   it.sold = true;
+  if (!preview) RH.recordSeen(it.id);   // 구매도 카드를 손에 넣는 경로 — 도감에 등재한다
   persist(); paint();
   const c = cardById(it.id);
   say(`「${c ? c.name : it.id}」 구입 — 덱에 추가되었다. 주인 잃은 문장에 새 주인이 생겼다.`);
@@ -267,6 +268,8 @@ $('#btnShredOk').addEventListener('click', () => {
   const [removed] = run.deck.splice(shredIdx, 1);
   run.gold -= 20;
   ctx.shredUsed = true;
+  // 덱을 직접 만지는 제거라 completeNode 의 중앙 계측을 타지 않는다 — 여기서 센다
+  if (!preview) RH.bumpStat('cardsRemoved');
   persist(); paint();
   $('#overlay').classList.remove('open');
   const c = cardById(removed);

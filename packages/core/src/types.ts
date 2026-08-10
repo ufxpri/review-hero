@@ -21,22 +21,37 @@ export function tagToSuit(tag: string): Suit | undefined {
   return undefined;
 }
 
-/** 크리티컬 성향 (GDD §3.5) */
-export type Disposition = '팩트 폭격기' | '힙스터 평론가' | '프로 불편러' | '바이럴 앞잡이';
+/**
+ * 논점 (GDD §3.5) — 낸 리뷰 카드 계열의 argmax로 정해지는 **이번 전투의 화제**.
+ * 인물 라벨이 아니라 무엇을 물고 늘어졌는지를 가리킨다 (ADR-028 ⑤).
+ * 식별자 `Disposition`·`disposition`은 세이브·UI 계약 호환을 위해 유지한다.
+ */
+export type Disposition = '품질 논점' | '성능 논점' | '배송 논점' | '감성 논점';
 
 export const SUIT_DISPOSITION: Record<Suit, Disposition> = {
-  품질: '팩트 폭격기',
-  성능: '힙스터 평론가',
-  배송: '프로 불편러',
-  감성: '바이럴 앞잡이',
+  품질: '품질 논점',
+  성능: '성능 논점',
+  배송: '배송 논점',
+  감성: '감성 논점',
 };
 
-/** 성향 → 계열 역매핑 (E04 은신 게이트의 크리티컬 리뷰 계열 판정용 — §3.8) */
+/** 논점 → 계열 역매핑 (E04 은신 게이트의 크리티컬 리뷰 계열 판정용 — §3.8) */
 export const DISPOSITION_SUIT: Record<Disposition, Suit> = {
-  '팩트 폭격기': '품질',
-  '힙스터 평론가': '성능',
-  '프로 불편러': '배송',
-  '바이럴 앞잡이': '감성',
+  '품질 논점': '품질',
+  '성능 논점': '성능',
+  '배송 논점': '배송',
+  '감성 논점': '감성',
+};
+
+/**
+ * 논점별 크리티컬 리뷰의 표시 명칭 (GDD §3.5). **표시 전용** —
+ * 판정·수치 로직은 이 표를 참조하지 않는다. 논점 = 화제, 크리티컬 = 그때 하는 행위.
+ */
+export const CRITICAL_NAME: Record<Disposition, string> = {
+  '품질 논점': '팩트 폭격',
+  '성능 논점': '힙스터 인증',
+  '배송 논점': '진상 접수',
+  '감성 논점': '바이럴 확산',
 };
 
 // ── 카드 (v2 — cards-v2.0.yaml) ──────────────────────
@@ -97,7 +112,7 @@ export interface ReviewCardDef {
   id: string;
   name: string;
   origin?: OriginDef;
-  suit: Suit; // 성향 산정 기준 (GDD §3.5)
+  suit: Suit; // 논점 산정 기준 (GDD §3.5)
   tag: string; // 판정 태그 정확히 1개 (배열 금지 — 로드 시 검증)
   cost: number; // 필력 (최소 1 — card-system-v2 §5)
   stars: number; // ★ 1~5. 4 이상 = 찬양 = 버프 계열 (§6)

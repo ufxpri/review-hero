@@ -3,7 +3,7 @@
  * 저장 구조 (localStorage, 서버 없음 — GDD §1.2 "싱글 코어는 네트워크 없이 100% 동작"):
  *   reviewhero.penname  필명 (signature.html 에서 기록)
  *   reviewhero.sig      서명 획 데이터 {v:1, box:[660,236], strokes}
- *   reviewhero.meta     계정 누적 {runs, wins, bestFloor, rp, p, expedition[]}
+ *   reviewhero.meta     계정 누적 {runs, wins, bestFloor, rp, p, expedition[], characterId, stats, seen[], badges[]}
  *   reviewhero.run      진행 중인 런 (없으면 null)
  *   reviewhero.settings {textSpeed, shake, debug}
  *
@@ -35,8 +35,32 @@ window.RH = (() => {
     return window.RHEngine?.DEFAULT_RULES?.player?.will ?? 30;
   }
 
-  const META0 = { runs: 0, wins: 0, bestFloor: 0, rp: 0, p: 0, expedition: [] };
+  /** 업적·도감 계측 (소급 계산이 불가능한 값들이라 판정 로직보다 먼저 심는다).
+   *  · stats  — 누적 카운터. 전투 종료 시 엔진 BattleStats(packages/core/src/battle.ts)를 합산한다.
+   *  · seen   — 한 번이라도 손에 넣은 카드 id (도감 원천). 시작 덱·보상·구매·이벤트 전 경로에서 기록.
+   *  · badges — 등재된 업적 id. 판정 로직은 다음 단계이며 여기서는 그릇만 판다.
+   *  기존 세이브에는 없는 필드라 getMeta() 가 매번 기본값으로 채워 호환을 지킨다. */
+  const STATS0 = {
+    submissions: 0,                                             // 리뷰 제출 수
+    judgements: { origin: 0, fact: 0, normal: 0, fumble: 0 },    // 판정별 카운트 (card-system-v2 §2)
+    crits: 0,                                                   // 베스트 리뷰(크리) 발동 수
+    critMisses: 0,                                              // 은신 게이트에 빗나간 크리 (E04)
+    battlesWon: 0,                                              // 전투 승리 수 (런 누적이 아닌 계정 누적)
+    surrenderWins: 0,                                           // 전 구성품 파괴로 적이 항복한 승리
+    retreats: 0,                                                // 내가 항복·이탈한 전투
+    cardsRemoved: 0,                                            // 덱에서 지운 카드 수 (상점 파쇄 + 휴식 태우기)
+    minWillWin: null,                                           // 최소 의지 승리 기록 (남은 의지 최솟값, 미달성 null)
+    defenseAbsorbed: 0,                                          // 방어가 흡수해 의지에 닿지 않은 좋아요 총량
+    willHealed: 0,                                              // 회복으로 되찾은 의지 총량
+    parcelsOpened: 0,                                           // 택배(보급품) 개봉 수
+  };
+  const META0 = {
+    runs: 0, wins: 0, bestFloor: 0, rp: 0, p: 0, expedition: [],
+    characterId: 'default',   // ADR-028 대비 — 캐릭터 선택이 붙어도 세이브 마이그레이션이 필요 없게 지금 심는다
+    stats: STATS0, seen: [], badges: [],
+  };
   const SETTINGS0 = { textSpeed: 1, shake: true, debug: true };
+  const clone = (v) => JSON.parse(JSON.stringify(v));
 
   // ── 지도 생성 — 1막 6층(일반 5 + 보스 1), 층당 2~3 분기 (GDD §4.1) ──
   // 보스 직전 5층은 휴식 1개 보장. 개발 단계 가중치이며 05 §1.2 정표는 밸런스 라운드에서 반영한다.
@@ -106,6 +130,7 @@ window.RH = (() => {
     seed = seed ?? Math.floor(Math.random() * 0xffffffff);
     const run = {
       seed, act: 1, floor: 1, pos: null,
+      characterId: 'default',         // ADR-028 대비 — 런에도 같이 새긴다 (메타와 짝)
       gold: 0, will: startWill(), maxWill: startWill(),
       deck: (window.RH_DATA ? RH_DATA.startingDeck.slice() : []),
       map: genMap(seed),
@@ -115,7 +140,60 @@ window.RH = (() => {
       battlesWon: 0, startedAt: new Date().toISOString(),
     };
     saveRun(run);
+    recordSeen(run.deck);             // 시작 덱 12장도 도감에 오른다 — 카드를 손에 넣는 첫 경로다
     return run;
+  }
+
+  /** 전투가 실제로 시작됐다는 표시. combat.html 이 Battle 을 만든 직후 부른다.
+   *  노드에 발만 들인 상태(전투 전)와 「전투 중」을 가르는 유일한 근거라 화면이 켜 준다. */
+  function beginCombat(nodeId, run) {
+    run = run || getRun(); if (!run) return null;
+    const id = nodeId || run.pos;
+    if (!id) return null;
+    run.combat = { nodeId: id, startedAt: Date.now() };
+    saveRun(run);
+    return run;
+  }
+  /** 전투가 끝났다(승/패/항복/이탈). 이후의 중단은 「지도」로 복원된다. */
+  function endCombat(run) {
+    run = run || getRun(); if (!run) return null;
+    if (!run.combat) return run;
+    delete run.combat;
+    saveRun(run);
+    return run;
+  }
+
+  /** 이어하기 안내용 조회 — 메인 허브가 읽어 쓴다.
+   *  전투 중 이탈은 그 노드로 강제 복귀하며 전투는 처음부터 다시 시작한다
+   *  (전투 상태는 저장하지 않는다 — 재전은 허용, 노드 갈아타기만 막는다). */
+  /** 런 종료를 표시한다 — result.html 의 finalizeRun 이 정산할 때까지 지도가 잠긴다 */
+  function markEnded(outcome, run) {
+    run = run || getRun(); if (!run) return;
+    run.ended = outcome;                            // 'death' | 'clear'
+    delete run.combat;
+    saveRun(run);
+  }
+
+  function resumeInfo(run) {
+    run = run || getRun();
+    if (!run) return null;
+    const row = run.map.floors[run.floor - 1] || [];
+    const node = run.pos ? row.find((n) => n.id === run.pos) : null;
+    // 사망했는데 유언을 아직 안 올렸다면 결과 화면으로 돌려보낸다 —
+    // 그냥 두면 의지 0으로 그 노드에 갇힌다(진입해도 즉시 다시 죽는다)
+    if (run.ended) {
+      return { kind: 'result', nodeId: run.pos || null, nodeType: null, floor: run.floor,
+               href: `result.html?outcome=${run.ended}`,
+               label: run.ended === 'death'
+                 ? '중단 지점: 💀 마지막 리뷰를 아직 올리지 않았다'
+                 : '중단 지점: 🏁 정복 후기를 아직 올리지 않았다' };
+    }
+    const inCombat = !!(node && run.combat && run.combat.nodeId === node.id);
+    return inCombat
+      ? { kind: 'combat', nodeId: node.id, nodeType: node.type, floor: run.floor,
+          href: 'combat.html', label: '중단 지점: ⚔ 전투 — 처음부터 다시 붙습니다' }
+      : { kind: 'map', nodeId: node ? node.id : null, nodeType: node ? node.type : null,
+          floor: run.floor, href: 'map.html', label: '중단 지점: 지도' };
   }
 
   function currentNode(run) {
@@ -126,12 +204,19 @@ window.RH = (() => {
   }
 
   /** 지금 선택할 수 있는 노드 id 목록 — 직전에 지나온 노드의 next 만 갈 수 있다.
-   *  1층(경로 없음)은 전부 열려 있다. 경로 데이터가 없는 구 세이브도 전부 열어 호환을 지킨다. */
+   *  1층(경로 없음)은 전부 열려 있다. 경로 데이터가 없는 구 세이브도 전부 열어 호환을 지킨다.
+   *
+   *  **세이브 스커밍 차단**: 노드에 들어갔는데 아직 끝내지 않았다면(run.pos 가 남아 있다) 그
+   *  노드만 돌려준다. 완료는 completeNode() 가 path 에 적고 pos 를 비우는 것이 유일한 경로라,
+   *  「pos 는 있는데 완료는 안 됨」 = 중도 이탈이다. 이걸 열어 두면 지고 있는 전투를 닫고
+   *  같은 층의 더 쉬운 노드로 갈아탈 수 있다 — 재전은 허용하되 갈아타기는 막는다. */
   function reachable(run) {
     run = run || getRun();
     if (!run) return [];
     const row = run.map.floors[run.floor - 1] || [];
     const all = row.map((n) => n.id);
+    if (run.ended) return [];                       // 정산 전이다 — 지도는 잠긴다
+    if (run.pos && all.includes(run.pos)) return [run.pos];
     const prevId = (run.path || []).at(-1);
     if (!prevId) return all;
     const prevRow = run.map.floors[run.floor - 2] || [];
@@ -164,11 +249,21 @@ window.RH = (() => {
     (run.path = run.path || []).push(node.id);
     if (patch.gold) run.gold = Math.max(0, run.gold + patch.gold);
     if (patch.will) run.will = Math.max(1, Math.min(run.maxWill, run.will + patch.will));
-    if (patch.deckAdd) run.deck.push(...[].concat(patch.deckAdd));
-    if (typeof patch.deckRemoveIdx === 'number') run.deck.splice(patch.deckRemoveIdx, 1);
+    if (patch.deckAdd) {
+      const got = [].concat(patch.deckAdd);
+      run.deck.push(...got);
+      recordSeen(got);          // 카드를 손에 넣는 모든 경로가 여기를 지난다 (전투 보상·이벤트 획득)
+    }
+    if (typeof patch.deckRemoveIdx === 'number') {
+      run.deck.splice(patch.deckRemoveIdx, 1);
+      bumpStat('cardsRemoved'); // 휴식 태우기 — 상점 파쇄는 덱을 직접 만지므로 shop.html 이 따로 센다
+    }
     const isBoss = node.type === 'boss';
     run.pos = null;
+    delete run.combat;          // 노드를 끝냈으니 「전투 중」 표시도 함께 걷는다
     if (!isBoss) run.floor += 1;
+    // 보스를 잡으면 런이 끝난다 — 정복 후기를 올릴 때까지 지도를 잠근다 (사망과 대칭)
+    if (isBoss) run.ended = 'clear';
     saveRun(run);
     return isBoss ? 'result.html?outcome=clear' : 'map.html';
   }
@@ -199,8 +294,86 @@ window.RH = (() => {
   }
 
   // ── 메타/설정/계정 ──────────────────────────────────────
-  function getMeta() { return Object.assign({}, META0, load(K.meta, {})); }
+  /** 저장본에 없는 필드는 기본값으로 채운다 — 계측 필드가 나중에 생겨도 구 세이브가 그대로 산다.
+   *  stats/judgements 는 중첩이라 얕은 병합으로는 부족해 층마다 채운다. */
+  function getMeta() {
+    const raw = load(K.meta, {}) || {};
+    const m = Object.assign(clone(META0), raw);
+    m.stats = Object.assign(clone(STATS0), raw.stats || {});
+    m.stats.judgements = Object.assign(clone(STATS0.judgements), (raw.stats || {}).judgements || {});
+    m.expedition = Array.isArray(raw.expedition) ? raw.expedition : [];
+    m.seen = Array.isArray(raw.seen) ? raw.seen.slice() : [];
+    m.badges = Array.isArray(raw.badges) ? raw.badges.slice() : [];
+    m.characterId = raw.characterId || 'default';
+    return m;
+  }
   function saveMeta(m) { save(K.meta, m); }
+
+  // ── 계측 기록 헬퍼 — 페이지가 localStorage 를 직접 만지지 않게 여기로 모은다 ──
+  /** 도감 등재. 이미 본 카드는 무시하며, 새로 등재한 장수를 돌려준다. */
+  function recordSeen(ids) {
+    const list = [].concat(ids || []).filter(Boolean);
+    if (!list.length) return 0;
+    const m = getMeta();
+    const has = new Set(m.seen);
+    let added = 0;
+    for (const id of list) if (!has.has(id)) { has.add(id); m.seen.push(id); added++; }
+    if (added) saveMeta(m);
+    return added;
+  }
+  /** 업적 등재. 판정 로직은 다음 단계이며 여기서는 등재 경로만 연다. */
+  function recordBadges(ids) {
+    const list = [].concat(ids || []).filter(Boolean);
+    if (!list.length) return 0;
+    const m = getMeta();
+    const has = new Set(m.badges);
+    let added = 0;
+    for (const id of list) if (!has.has(id)) { has.add(id); m.badges.push(id); added++; }
+    if (added) saveMeta(m);
+    return added;
+  }
+  /** 누적 카운터 증가. 중첩 키는 점 표기 — bumpStat('judgements.origin') */
+  function bumpStat(key, n = 1) {
+    const m = getMeta();
+    const path = String(key).split('.');
+    let o = m.stats;
+    for (let i = 0; i < path.length - 1; i++) o = (o[path[i]] = o[path[i]] || {});
+    const k = path[path.length - 1];
+    o[k] = (typeof o[k] === 'number' ? o[k] : 0) + n;
+    saveMeta(m);
+    return o[k];
+  }
+  /** 「최소 ○○로 승리」 류 기록 갱신 — 더 작을 때만 남는다 */
+  function recordStatMin(key, v) {
+    if (typeof v !== 'number') return null;
+    const m = getMeta();
+    const cur = m.stats[key];
+    if (cur == null || v < cur) { m.stats[key] = v; saveMeta(m); return v; }
+    return cur;
+  }
+  /** 전투 1판의 엔진 계측(BattleStats)을 계정 누적으로 옮긴다.
+   *  @param bs battle.state.stats @param o {result:'win'|'lose'|'timeout'|'retreat', willLeft} */
+  function mergeBattleStats(bs, o = {}) {
+    if (!bs) return null;
+    const m = getMeta();
+    const s = m.stats;
+    s.submissions += bs.submissions || 0;
+    const J = bs.judgements || {};
+    for (const k of ['origin', 'fact', 'normal', 'fumble']) s.judgements[k] += J[k] || 0;
+    s.crits += Array.isArray(bs.crits) ? bs.crits.length : 0;
+    s.critMisses += bs.critMisses || 0;
+    s.defenseAbsorbed += bs.defenseAbsorbed || 0;
+    s.willHealed += bs.willHealed || 0;
+    if (bs.surrender) s.surrenderWins += 1;
+    if (o.result === 'retreat') s.retreats += 1;
+    if (o.result === 'win') {
+      s.battlesWon += 1;
+      const left = o.willLeft;
+      if (typeof left === 'number' && (s.minWillWin == null || left < s.minWillWin)) s.minWillWin = left;
+    }
+    saveMeta(m);
+    return s;
+  }
   function getSettings() { return Object.assign({}, SETTINGS0, load(K.settings, {})); }
   function saveSettings(s) { save(K.settings, s); }
   function getPenname() { return localStorage.getItem(K.penname) || null; }
@@ -238,8 +411,10 @@ window.RH = (() => {
   return {
     K, load, save, mulberry32, genMap,
     NODE_LABEL, NODE_ICON, NODE_PAGE,
-    run: getRun, saveRun, clearRun, newRun, currentNode, reachable, enterNode, completeNode, finalizeRun,
+    run: getRun, saveRun, clearRun, newRun, currentNode, reachable, enterNode, completeNode, finalizeRun, markEnded,
+    beginCombat, endCombat, resumeInfo,
     meta: getMeta, saveMeta, settings: getSettings, saveSettings,
+    recordSeen, recordBadges, bumpStat, recordStatMin, mergeBattleStats,
     penname: getPenname, sig: getSig,
     ui: { topbar, stars, esc },
   };

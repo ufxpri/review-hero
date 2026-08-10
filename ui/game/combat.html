@@ -582,6 +582,9 @@
     battle.state.player.maxWill = run.maxWill;
   }
   window.RH_BATTLE = battle; // 개발·E2E 검증용 노출 (debug.js 훅과 같은 결)
+  // 「전투 중」 표시 — 여기부터 이탈하면 이 노드로 강제 복귀하고 전투는 처음부터다.
+  // 노드에 발만 들인 상태(전투 전)와 가르는 근거라, 실제로 판이 깔린 지금 켠다.
+  if (runMode) RH.beginCombat(node.id, run);
 
   const st = battle.state;
   const def = (id) => cards.byId.get(id);
@@ -1261,10 +1264,10 @@
     const pre = snap();
     let d;
     try { d = battle.useCritical(); } catch (err) { toast(err.message); return; }
-    st.log.push(`베스트 리뷰 발동! (${d})`);
+    st.log.push(`베스트 리뷰 발동! — ${RHEngine.CRITICAL_NAME[d]} (${d})`);
     busy = true;
     const to = rel($('#enemyBox'));
-    stampFx('st-best', `베스트 리뷰 · ${d}`, to.x, to.y - 40);
+    stampFx('st-best', `베스트 리뷰 · ${RHEngine.CRITICAL_NAME[d]}`, to.x, to.y - 40);
     shakeFx();
     pfx.burst(to.x, to.y, 34);
     setTimeout(() => {
@@ -1520,6 +1523,11 @@
     unhold();
     const r = st.result;
     const reward = enemyDef.tier === 'boss' ? 50 : enemyDef.tier === 'elite' ? 24 : 15;
+    // 판이 끝났다 — 「전투 중」 표시를 걷고, 엔진 계측 1판치를 계정 누적으로 옮긴다
+    if (runMode) {
+      RH.endCombat(run);
+      RH.mergeBattleStats(st.stats, { result: r, willLeft: Math.max(0, st.player.will) });
+    }
 
     if (r === 'win') {
       const surrender = st.stats.surrender;
@@ -1559,6 +1567,7 @@
         run.will = 0; // 런은 지우지 않는다 — result 가 정산한다 (CONTRACT)
         writeBackRun();
         RH.saveRun(run);
+        RH.markEnded('death', run);   // 유언을 올릴 때까지 지도가 잠긴다
         href = `result.html?outcome=death&enemy=${enemyId}`;
       }
       showOverlay({
@@ -1600,6 +1609,7 @@
     catch (err) { toast(err.message); return; }
     const run = RH.run();
     if (run) { run.parcel = { opened: true, name: got.name }; RH.saveRun(run); }
+    RH.bumpStat('parcelsOpened');
     toast(`📦 ${got.name} — 이제 내 장비다. 찬양 리뷰를 붙일 수 있다`);
     st.log.push(`택배 개봉: ${got.name} (#${got.tags.join(' #')})`);
     paint();
@@ -1620,6 +1630,8 @@
     st.log.push('항복 — 위로금 6골드를 뜯어내고 물러났다');
     let href = null;
     if (runMode) {
+      RH.endCombat(run);
+      RH.mergeBattleStats(st.stats, { result: 'retreat', willLeft: Math.max(0, st.player.will) });
       run.will = Math.max(1, st.player.will); // 의지 유지 (CONTRACT)
       writeBackRun();
       RH.saveRun(run);
@@ -1647,7 +1659,11 @@
         return;
       }
       // 승리 보상 — st.result 가 선 상태에서 눌리므로 가드보다 먼저 처리한다
-      if (a === 'reward') { location.href = RH.completeNode({ gold: winDelta, deckAdd: actEl.dataset.id }); return; }
+      if (a === 'reward') {
+        RH.recordSeen(actEl.dataset.id);   // 등재 = 도감 원천 (completeNode 도 같은 기록을 하지만 중복은 무시된다)
+        location.href = RH.completeNode({ gold: winDelta, deckAdd: actEl.dataset.id });
+        return;
+      }
       if (a === 'skipreward') { location.href = RH.completeNode({ gold: winDelta }); return; }
       if (busy || st.result) return;
       if (a === 'end') doEndTurn();

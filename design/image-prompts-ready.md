@@ -764,6 +764,86 @@ Muted and atmospheric, intended to sit far behind dense interface text.
 No text, no letters, no numbers, no signage, no ui.
 ```
 
+## 5.3 운송장 용지 · UI 표면 텍스처 (S11 · 1344×768 고정)
+
+> 지도 상단의 운송장 블록은 **어두운 패널이 아니라 종이 한 장**이다(ADR-024). 배경 플레이트(§5.2)와
+> 목적이 반대다 — 저 뒤에 까는 그림이 아니라 **글자가 직접 얹히는 표면**이므로 밝고 균일해야 한다.
+> 세 가지가 규칙이다:
+> **① 값을 밝은 절반에 묶는다** — 어두운 잉크 글자가 위에 얹히므로 대비를 종이가 아니라 글자가 만든다.
+> **② 초점·비네트·조명 얼룩을 만들지 않는다** — 모서리부터 모서리까지 밝기가 같아야 텍스트 블록이 고르게 읽힌다.
+> **③ 인쇄물을 그리지 않는다** — 칸·괘선·바코드·도장이 이미지에 들어가면 코드로 얹는 실제 서식과 이중으로 겹친다.
+>
+> 함정 셋:
+> ① 온색만 지정하면 §5.2와 같은 이유로 세피아 단색 판때기가 되어 종이로 안 읽힌다. **접힌 자국과
+> 카본 얼룩에 한랭색을 명시**해 크림색 바탕과 대립시킨다. 네거티브는 인쇄물 계열만 얇게 얹는다:
+> `text, letters, numbers, watermark, person` — 더 쌓으면 천공·접힘 같은 구조 자체가 지워진다.
+> ② "종이 한 장"이라고만 하면 **종이가 아니라 석고·콘크리트 벽면**으로 흐르고, 종이의 가장자리와
+> 그 밑의 바닥까지 그려 넣는다. `extreme close macro crop` + "가장자리가 안 보이고 사방으로 잘려
+> 나간다"를 명시하고 `stone, concrete, plaster, wall, granular, deckle edge, border` 를 덧붙인다.
+> ③ 뽑은 결과에는 **사진의 저주파 조명 얼룩(비네트·그림자)이 남아** 한쪽 모서리가 어둡다. UI 표면은
+> 그 얼룩이 텍스트 블록 밝기 차이로 보인다. 원본을 크게 흐린 판으로 나눠 조명만 평탄화하고(flat-field)
+> 접힘·결 같은 고주파는 남긴 뒤 쓴다. 처리 후 밝기 p2~p98 이 170~184 로 붙는 것이 목표다.
+>
+> 채택본 (juggernautXL · 30스텝 · CFG 6.0):
+> T01(1344x768, seed 31)→`ui/assets/paper-waybill.png` · C08b(1216x832, seed 88)→`ui/assets/issue-hand.png`
+>
+> C08b 는 슬립을 손 밑에 깔아 달라는 지시를 모델이 끝내 무시한다(종이를 그리지 않는다). **종이는 UI 가
+> 얹으므로 그대로 채택**했다 — 이미지는 카운터와 장갑 낀 손까지만 맡고, 그 위로 실제 운송장이 미끄러져 들어온다.
+
+### T01 운송장 용지 (S11 운송장 블록 배경)
+
+```
+Wide 16:9 flat surface texture plate for a game interface, extreme close macro crop of the middle
+of a sheet of paper, deliberately almost featureless — paper and nothing else.
+Subject: old blank logistics consignment paper, thin cheap sheet stock, filling the entire frame
+edge to edge and running off past every edge, seen flat from directly above. No edge of the sheet
+is visible anywhere and there is no surface underneath it — the paper is the whole image. The
+stock is smooth and yellowed — warm oatmeal cream going to deeper tan where it has aged, soft and
+fibrous, never granular, never mineral. Two soft horizontal fold creases run the full width where
+the sheet was folded in thirds and one vertical crease sits near the left, each crease a faint
+bright ridge with a thin cool grey shadow beside it. A faint regular
+grid of dot-matrix impact printer strikes is pressed into the surface as bare embossing with no
+ink in it, readable only as raking texture. Pale violet-grey carbon copy smudges bloom in two or
+three places, a dull ring stain sits near one corner, with scattered paper fibre flecks, foxing
+specks and a few short scuffs. A single narrow band of tractor-feed sprocket perforations runs
+along the bottom edge — small evenly spaced punched round holes with slightly torn rims.
+Lighting: soft even raking light from the upper left, no lamp in frame, no hotspot, no vignette,
+brightness constant from corner to corner.
+Palette: aged cream, oatmeal beige, warm tan, with cool grey-violet held in the creases and the
+carbon smudges so the sheet never collapses into one flat sepia tone.
+Very low contrast with all values held close together in the brighter half, no dark region and no
+glare anywhere — a quiet even surface meant to sit directly under dark ink-coloured interface text.
+Camera perfectly square on, orthographic, no perspective, no depth of field, no background visible
+around the sheet, the paper fills the frame completely.
+Nothing is printed on the paper — no print, no text, no letters, no numbers, no stamps, no
+barcodes, no ruled lines, no boxes, no forms, no logos.
+```
+
+### C08b 택배좌의 손 — 운송장을 건네는 순간 (S11 발급 연출 · 3:2)
+
+```
+Wide 3:2 dark fantasy interior for a video game, digital matte painting with visible brushwork.
+Subject: a low scarred timber freight counter seen from the customer's side at chest height. One
+single gloved hand — exactly one hand and no other, entering from the far side out of deep shadow
+— rests its fingertips flat on top of a small pale folded blank paper slip lying on the timber,
+sliding it forward across the counter toward the viewer. The pale slip is the brightest thing in
+the frame and sits fully visible under the fingers. Only that hand and part of the forearm are
+lit — a worn heavy leather work glove, cuff frayed, brass buckle dulled. Everything beyond the
+wrist falls away into black: the body behind it is an unlit silhouette with no face, no head and
+no shoulders resolved, unreadable.
+Lighting: one cold pale blue-grey light falls across the counter top from the left and sets the
+overall cast — the frame reads cool, never sepia. A single small warm oil-lamp point glows far
+back on the right as an isolated accent. Cool and warm in clear opposition, and the cold dominates.
+Desaturated palette: cold blue-grey, damp black stone, weathered timber brown, tarnished brass,
+sackcloth beige, with the pale slip as the one bright value.
+Low contrast overall, values held in the darker half apart from the slip and the glove, the outer
+border falling away into deep shadow.
+Camera square on to the counter at seated eye level, wide flat lens, shallow depth, dust in the air.
+Underground and ancient — no sky, no daylight, no modern building.
+No face anywhere in frame, no portrait, no eyes, no second person.
+No text, no letters, no numbers, no writing on the slip, no signage, no ui.
+```
+
 ---
 
 ### B05 맵 배경 (S11 · 9:16)
@@ -957,9 +1037,9 @@ two flat colors, no gradient, no shadow, no text, transparent background.
 
 Draw: a downward arrow striking a small target dot dead center.
 ```
-> - I12 힙스터 평론가 = `a pair of round eyeglasses`
-> - I13 프로 불편러 = `a raised hand with one finger extended in objection`
-> - I14 바이럴 앞잡이 = `three small dots connected by lines spreading outward from one point`
+> - I12 힙스터 인증 = `a pair of round eyeglasses`
+> - I13 진상 접수 = `a raised hand with one finger extended in objection`
+> - I14 바이럴 확산 = `three small dots connected by lines spreading outward from one point`
 
 ### I15 앱 아이콘 / 로고 심볼 (S01 · S02)
 

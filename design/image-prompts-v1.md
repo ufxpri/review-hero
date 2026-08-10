@@ -385,10 +385,10 @@ centered with even padding, clean modern e-commerce app iconography.
 
 | ID | 성향 | 프롬프트 본문 |
 |---|---|---|
-| I11 | 팩트 폭격기 | `[BADGE] a downward arrow striking a small target dot dead center` |
-| I12 | 힙스터 평론가 | `[BADGE] a pair of round eyeglasses` |
-| I13 | 프로 불편러 | `[BADGE] a raised hand with one finger extended in objection` |
-| I14 | 바이럴 앞잡이 | `[BADGE] three small dots connected by lines spreading outward from one point` |
+| I11 | 팩트 폭격 | `[BADGE] a downward arrow striking a small target dot dead center` |
+| I12 | 힙스터 인증 | `[BADGE] a pair of round eyeglasses` |
+| I13 | 진상 접수 | `[BADGE] a raised hand with one finger extended in objection` |
+| I14 | 바이럴 확산 | `[BADGE] three small dots connected by lines spreading outward from one point` |
 
 ---
 

@@ -91,10 +91,10 @@ export interface EnemyEquipmentState {
 /** 플레이어가 적에게 부착한 디버프 (B01 사장님 답글의 반박 풀) */
 export interface EnemyDebuff {
   uid: number;
-  kind: 'attack_down' | 'attack_halve'; // attack_halve = 힙스터 크리 (공격력 −50%)
+  kind: 'attack_down' | 'attack_halve'; // attack_halve = 「힙스터 인증」 크리 (공격력 −50%)
   value: number; // attack_down의 감소량 / attack_halve는 50(위력 표기)
   suit: Suit; // 재반박 계열 매칭용
-  tier: number; // 힙스터 크리 = 3 (R22). 전투 부착 일반 디버프 = 1 (가정)
+  tier: number; // 「힙스터 인증」 크리 = 3 (R22). 전투 부착 일반 디버프 = 1 (가정)
   suspended: boolean; // 사장님 답글로 "이번 전투 한정 정지"
   beenRebutted: boolean; // 디버프당 반박 1회 (once_per_debuff)
   createdAt: number; // 최근성 tiebreak
@@ -149,7 +149,7 @@ export interface BattleConfig {
   parcel?: PlayerEquipmentDef | null;
   maxTurns?: number; // 미지정 시 rules.battle.maxTurns — 초과 시 패배(timeout) 처리
   layer?: number; // 기본 1 (MVP). X09는 layer 2
-  /** 성향 스냅샷용 런 누적 제출 카드 계열 카운터 (GDD §3.5 — 전투 시작 시 스냅샷 고정) */
+  /** 논점 스냅샷용 런 누적 제출 카드 계열 카운터 (GDD §3.5 — 전투 시작 시 스냅샷 고정) */
   initialSuitCounters?: Partial<Record<Suit, number>>;
   initialLastSuit?: Suit;
   startGauge?: number; // 외부 보정 (캡 ±는 런 레벨 규칙 — 시뮬은 값 그대로 클램프만)
@@ -198,8 +198,8 @@ export interface PlayerState {
   removedFromRun: CardInstance[]; // X04 증정 (GDD §3.6)
   parcelOpened: boolean; // 택배 개봉 여부 — 전투당 1회 (ADR-024 ③)
   critUsedThisTurn: boolean;
-  inconvenienceGoldUsed: boolean; // 프로 불편러 골드 갈취 전투당 1회
-  viralBonusGranted: number; // 바이럴 크리 가산 누적 (상한 12, 크리 간 공유 — GDD §3.5)
+  inconvenienceGoldUsed: boolean; // 「진상 접수」 골드 갈취 전투당 1회
+  viralBonusGranted: number; // 「바이럴 확산」 가산 누적 (상한 12, 크리 간 공유 — GDD §3.5)
   x05Armed: boolean;
   storedDamageBonus: number; // X05 예약 확정분 — 다음 리뷰 1회에 가산
   damageTakenThisTurn: number;
@@ -315,7 +315,7 @@ export class Battle {
         reaction: null,
         suitCounters: counters,
         lastSuit: cfg.initialLastSuit ?? null,
-        disposition: '팩트 폭격기', // 초기값 (아래에서 스냅샷 재계산)
+        disposition: '품질 논점', // 초기값 (아래에서 스냅샷 재계산)
         oncePerCombatUsed: new Set(),
       },
       enemy: {
@@ -362,7 +362,7 @@ export class Battle {
       log: [],
     };
 
-    // 성향 스냅샷 (GDD §3.5: argmax, 동률 = 최근 제출 계열, 초기값 = 팩트 폭격기)
+    // 논점 스냅샷 (GDD §3.5: argmax, 동률 = 최근 제출 계열, 초기값 = 품질 논점)
     this.state.player.disposition = this.computeDisposition();
 
     // [전투 시작] 셔플 → 손패 수만큼 드로우 → 인텐트 공개 (GDD §3.2)
@@ -384,13 +384,13 @@ export class Battle {
     const p = this.state.player;
     const suits = Object.keys(p.suitCounters) as Suit[];
     const max = Math.max(...suits.map((s) => p.suitCounters[s]));
-    if (max === 0) return '팩트 폭격기';
+    if (max === 0) return '품질 논점';
     const top = suits.filter((s) => p.suitCounters[s] === max);
     if (top.length === 1) return SUIT_DISPOSITION[top[0]!];
     if (p.lastSuit && top.includes(p.lastSuit)) return SUIT_DISPOSITION[p.lastSuit];
     // 가정(GDD §3.5 침묵): 동률인데 최근 제출 계열이 동률군에 없거나 없음(null)이면
     // 품질→성능→배송→감성 선언 순서로 결정 (결정적. GDD에 1줄 명시 필요 — 에스컬레이션 대상)
-    return SUIT_DISPOSITION[top[0]!] ?? '팩트 폭격기';
+    return SUIT_DISPOSITION[top[0]!] ?? '품질 논점';
   }
 
   private def(cardId: string): CardDef {
@@ -895,7 +895,7 @@ export class Battle {
           kind: 'attack_down',
           value: applyMult(ef.value ?? 0, mult),
           suit: card.suit,
-          tier: this.rules.battle.attachedDebuffTier, // 가정(v1 승계): 전투 중 부착 일반 디버프 (힙스터 크리만 별도 등급)
+          tier: this.rules.battle.attachedDebuffTier, // 가정(v1 승계): 전투 중 부착 일반 디버프 (「힙스터 인증」 크리만 별도 등급)
           suspended: false,
           beenRebutted: false,
           createdAt: this.uidSeq,
@@ -1164,10 +1164,10 @@ export class Battle {
     const e = st.enemy;
 
     // E04 은신 게이트 (§3.8 특성 문언 "은신 중에는 배송/CS 계열 리뷰만 명중" — 크리티컬 리뷰도 리뷰다)
-    // 가정(GDD 침묵): 적을 향하지 않는 크리(바이럴 앞잡이 = 내 버프 대상)는 은신 무관.
+    // 가정(GDD 침묵): 적을 향하지 않는 크리(감성 논점 = 내 버프 대상)는 은신 무관.
     // 빗나간 크리도 게이지·턴 사용은 소모된다(빗나간 일반 리뷰가 필력·카드를 소모하는 것과 일관).
     const gate = e.def.stealthGate;
-    if (e.stealth && gate && d !== '바이럴 앞잡이') {
+    if (e.stealth && gate && d !== '감성 논점') {
       if (!gate.hittableSuits.includes(DISPOSITION_SUIT[d])) {
         st.stats.critMisses++;
         this.log('은신 중 — 크리티컬 리뷰 빗나감');
@@ -1181,11 +1181,11 @@ export class Battle {
     }
 
     switch (d) {
-      case '팩트 폭격기':
+      case '품질 논점':
         // 방어·저항 무시 고정 피해 — 가정(GDD 침묵): 반사(포즈)도 무시
         this.dealWillDamageToEnemy(crit.factBomberDamage, { ignoreDefense: true });
         break;
-      case '힙스터 평론가':
+      case '성능 논점':
         e.debuffs.push({
           uid: this.uidSeq++,
           kind: 'attack_halve',
@@ -1197,7 +1197,7 @@ export class Battle {
           createdAt: this.uidSeq,
         });
         break;
-      case '프로 불편러': {
+      case '배송 논점': {
         if (e.staggerImmunityTurns > 0) this.log('경직 내성 — 크리 기절 무효');
         else e.stunTurns = Math.max(e.stunTurns, crit.inconvenienceStunTurns);
         // v1.1(제안 6): 기절과 별개로 다음 행동 위력 감소 — 기절 면역(경직 내성)·기믹 대상에도
@@ -1210,7 +1210,7 @@ export class Battle {
         }
         break;
       }
-      case '바이럴 앞잡이': {
+      case '감성 논점': {
         // 현재 버프 효과 2배 — 가산 합산 상한, 크리 간 상한 공유 (GDD §3.5)
         let budget = crit.viralBonusCap - p.viralBonusGranted;
         const hasBuff = p.equipment.some((eq) => eq.attachments.some((a) => a.kind === 'damage_buff'));
@@ -1388,7 +1388,7 @@ export class Battle {
         // E04 기습: 은신이 해제된 상태면 if_stealth_broken 값으로 (가정: 행동 시점에 은신 아님 = 해제됨)
         let base = ef.value ?? 0;
         if (ef.if_stealth_broken !== undefined && !e.stealth) base = ef.if_stealth_broken;
-        // 가·감산과 배율 순서는 formula.computeEnemyDamage 가 소유한다 (힙스터 크리 → S08/X06 → 온보딩)
+        // 가·감산과 배율 순서는 formula.computeEnemyDamage 가 소유한다 (「힙스터 인증」 크리 → S08/X06 → 온보딩)
         const v = computeEnemyDamage({
           base,
           attackUp: this.enemyAttackUpTotal(),

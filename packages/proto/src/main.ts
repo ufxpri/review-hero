@@ -243,7 +243,7 @@ function render(): void {
 
     <div class="card-panel">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
-        <div><b>내 리뷰어 계정</b> <span class="tiny">성향: ${p.disposition}</span>
+        <div><b>내 리뷰어 계정</b> <span class="tiny">${p.disposition}</span>
           <div class="gauge" style="margin-top:4px">${Array.from({ length: 10 }, (_, i) => `<i class="${i < p.gauge ? 'on' : ''}">★</i>`).join('')}</div>
           <div class="tiny">신뢰도 ${p.gauge}/10 ${p.reaction ? '· 🛡 피해보상 청구 대기중' : ''}${p.storedDamageBonus ? `· 💢 보상 예약 👍 +${p.storedDamageBonus}` : ''}</div></div>
         <div style="display:flex;gap:6px;flex-wrap:wrap">

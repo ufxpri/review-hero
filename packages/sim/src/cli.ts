@@ -50,7 +50,7 @@ const help = (): string => `전투 시뮬레이터 (packages/sim)
   --layer <N>               카드 레이어 상한 (기본 1)
   --deck <id,id,...>        덱 직접 지정
   --deck-preset <이름>      덱 프리셋 (${Object.keys(DECK_PRESETS).join(', ')})
-  --disposition-suit <계열> 성향 스냅샷 주입 (품질|성능|배송|감성)
+  --disposition-suit <계열> 논점 스냅샷 주입 (품질|성능|배송|감성)
   --will <N>                적 의지 오버라이드 (YAML 불변, 메모리 사본만)
   --rule <경로>=<값>        밸런스 수치 1개 오버라이드. 여러 번 지정 가능 (ADR-025)
   --rules '<JSON>'          밸런스 수치를 통째로 오버라이드 (--rule 이 이 위를 덮는다)
@@ -136,7 +136,7 @@ function parseArgs(argv: string[]): Args {
     else if (a === '--deck-preset') args.deckPreset = argv[++i]!;
     else if (a === '--will') args.will = parseInt(argv[++i]!, 10);
     else if (a === '--disposition-suit') {
-      // 성향 스냅샷은 런 누적 카운터 기준(GDD §3.5) — 단일 전투 시뮬용 주입 옵션
+      // 논점 스냅샷은 런 누적 카운터 기준(GDD §3.5) — 단일 전투 시뮬용 주입 옵션
       const suit = argv[++i] as Suit;
       args.counters = { [suit]: 1 } as Partial<Record<Suit, number>>;
     }

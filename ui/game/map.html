@@ -15,48 +15,82 @@ body{
 .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
   font-variant-numeric:tabular-nums}
 
-/* ── 운송장 ─────────────────────────────────────────────── */
-.waybill{border:1px solid var(--edge-hi);border-radius:7px;padding:0;overflow:hidden;
-  background:linear-gradient(rgba(232,220,192,.05),rgba(232,220,192,.015)),var(--panel)}
-.wb-top{display:flex;align-items:flex-start;gap:18px;flex-wrap:wrap;padding:12px 16px 11px;
-  border-bottom:1px dashed var(--edge)}
-.wb-id .lb{font-size:10px;color:var(--dim);letter-spacing:1.4px;display:block;margin-bottom:3px}
-.wb-id b{font-size:23px;color:var(--gold);letter-spacing:1px;line-height:1.05;display:block}
-.wb-id .sub{font-size:10.5px;color:var(--dim);letter-spacing:.4px}
-.wb-state{margin-left:auto;display:flex;align-items:center;gap:8px}
+/* ── 운송장 = 종이 한 장 ───────────────────────────────────
+   여기만 색이 뒤집힌다. 화면 전체는 어두운 던전인데 이 블록은 실제로 손에 들린
+   물류 용지라서, 배경이 종이 텍스처(T01)이고 글자는 잉크다. */
+.waybill{
+  --wb-ink:#232a35;          /* 도트프린터 리본 잉크 — 검정에 남색이 섞인다 */
+  --wb-dim:#6d6353;          /* 인쇄 서식의 항목명 */
+  --wb-line:rgba(72,56,34,.38);
+  --wb-red:#a8321f;
+  position:relative;border:0;border-radius:2px;padding:0;overflow:hidden;color:var(--wb-ink);
+  background:
+    /* 카본지 얼룩 두 점 — 종이 위에서만 보이는 한랭 얼룩 */
+    radial-gradient(46% 78% at 87% 12%,rgba(116,110,140,.13),transparent 62%),
+    radial-gradient(38% 70% at 16% 94%,rgba(116,110,140,.11),transparent 66%),
+    url("../assets/paper-waybill.png") center/cover no-repeat,
+    #e0d4b2;
+  box-shadow:inset 0 1px 0 rgba(255,252,240,.4),inset 0 -1px 0 rgba(92,72,42,.28),
+    0 14px 34px rgba(0,0,0,.62),0 2px 5px rgba(0,0,0,.45)}
+/* 천공 — 연속 용지의 스프로킷 구멍. 좌우 세로 띠 */
+.waybill::before,.waybill::after{content:'';position:absolute;top:0;bottom:0;width:16px;
+  background-image:
+    radial-gradient(circle at 50% 50%,rgba(46,36,20,.55) 0 2.3px,
+      rgba(255,250,236,.5) 2.7px 3.5px,transparent 3.7px);
+  background-size:16px 18px;background-repeat:repeat-y;pointer-events:none;z-index:2}
+.waybill::before{left:0;border-right:1px dashed var(--wb-line)}
+.waybill::after{right:0;border-left:1px dashed var(--wb-line)}
+
+.wb-top{display:flex;align-items:flex-start;gap:18px;flex-wrap:wrap;padding:12px 26px 11px;
+  border-bottom:1px dashed var(--wb-line)}
+.wb-id .lb{font-size:10px;color:var(--wb-dim);letter-spacing:1.4px;display:block;margin-bottom:3px}
+.wb-id b{font-size:23px;color:var(--wb-ink);letter-spacing:1px;line-height:1.05;display:block}
+.wb-id .code{height:19px;width:172px;margin:5px 0 4px;opacity:.66;
+  background:repeating-linear-gradient(90deg,var(--wb-ink) 0 2px,transparent 2px 4px,
+    var(--wb-ink) 4px 5px,transparent 5px 9px,var(--wb-ink) 9px 12px,transparent 12px 14px)}
+.wb-id .sub{font-size:10.5px;color:var(--wb-dim);letter-spacing:.4px}
+.wb-state{margin-left:auto;display:flex;align-items:center;gap:14px}
 .wb-state .now{display:flex;flex-direction:column;align-items:flex-end;gap:2px}
-.wb-state .now b{font-size:15px;color:var(--ink);letter-spacing:-.2px}
-.wb-state .now span{font-size:10.5px;color:var(--dim)}
-.wb-state .seal{border:1px solid var(--red);color:#e39d8b;border-radius:4px;padding:5px 9px;
-  font-size:10.5px;letter-spacing:.4px;line-height:1.25;text-align:center;
-  background:rgba(194,69,46,.10)}
+.wb-state .now b{font-size:15px;color:var(--wb-ink);letter-spacing:-.2px}
+.wb-state .now span{font-size:10.5px;color:var(--wb-dim)}
+/* 도장 — 붉은 잉크가 번진 고무 도장. 사람이 찍은 것이니 기울어 있다 */
+.seal{position:relative;border:2px solid rgba(168,50,31,.72);color:var(--wb-red);
+  border-radius:3px;padding:6px 10px;font-size:11.5px;font-weight:800;letter-spacing:1.5px;
+  line-height:1.2;text-align:center;transform:rotate(-8.5deg);opacity:.88;
+  mix-blend-mode:multiply;filter:blur(.22px);
+  text-shadow:0 0 2.5px rgba(168,50,31,.55);
+  box-shadow:inset 0 0 0 1px rgba(168,50,31,.2);
+  background:
+    radial-gradient(58% 66% at 26% 28%,rgba(168,50,31,.14),transparent 72%),
+    radial-gradient(64% 74% at 82% 78%,rgba(168,50,31,.11),transparent 70%)}
 
-.wb-grid{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px dashed var(--edge)}
-.wb-cell{padding:9px 16px;border-right:1px dashed var(--edge);min-width:0}
-.wb-cell:last-child{border-right:0}
-.wb-cell .k{font-size:10px;color:var(--dim);letter-spacing:1px;margin-bottom:3px}
-.wb-cell .v{font-size:12.5px;color:var(--ink);line-height:1.35;
+.wb-grid{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px dashed var(--wb-line)}
+.wb-cell{padding:9px 16px;border-right:1px dashed var(--wb-line);min-width:0}
+.wb-cell:first-child{padding-left:26px}
+.wb-cell:last-child{border-right:0;padding-right:26px}
+.wb-cell .k{font-size:10px;color:var(--wb-dim);letter-spacing:1px;margin-bottom:3px}
+.wb-cell .v{font-size:12.5px;color:var(--wb-ink);line-height:1.35;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.wb-cell .v em{font-style:normal;color:var(--gold)}
-.wb-cell .v2{font-size:10.5px;color:var(--dim);margin-top:2px}
+.wb-cell .v em{font-style:normal;font-weight:800;color:#151b26}
+.wb-cell .v2{font-size:10.5px;color:var(--wb-dim);margin-top:2px}
 
-/* 진행 단계 띠 — 배송 조회의 그 막대 */
-.steps{display:flex;align-items:stretch;padding:9px 16px 10px;gap:0}
+/* 진행 단계 띠 — 배송 조회의 그 막대. 종이 위이므로 잉크 두 색으로만 찍는다 */
+.steps{display:flex;align-items:stretch;padding:9px 26px 11px;gap:0}
 .step{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;position:relative;
-  font-size:10px;color:var(--dim);letter-spacing:-.2px}
+  font-size:10px;color:#6f6552;letter-spacing:-.2px}
 .step::before{content:'';position:absolute;top:5px;left:-50%;width:100%;height:1px;
-  background:var(--edge)}
+  background:rgba(72,56,34,.3)}
 .step:first-child::before{display:none}
-.step i{width:11px;height:11px;border-radius:50%;border:1px solid var(--edge);
-  background:#191510;position:relative;z-index:1;font-style:normal;font-size:8px;
-  line-height:9px;text-align:center;color:#191510}
-.step.past{color:#b8a888}
-.step.past i{background:var(--edge-hi);border-color:var(--edge-hi);color:#1c1408}
-.step.past::before{background:var(--edge-hi)}
-.step.on{color:var(--gold);font-weight:800}
-.step.on i{background:var(--gold);border-color:var(--gold);
-  box-shadow:0 0 0 3px rgba(224,169,75,.22)}
-.step.on::before{background:var(--edge-hi)}
+.step i{width:11px;height:11px;border-radius:50%;border:1px solid rgba(60,48,30,.5);
+  background:rgba(255,250,236,.35);position:relative;z-index:1;font-style:normal;font-size:8px;
+  line-height:9px;text-align:center;color:transparent}
+.step.past{color:#4b4536}
+.step.past i{background:var(--wb-ink);border-color:var(--wb-ink);color:#e8dcc0}
+.step.past::before{background:rgba(60,48,30,.6)}
+.step.on{color:var(--wb-red);font-weight:800}
+.step.on i{background:var(--wb-red);border-color:var(--wb-red);
+  box-shadow:0 0 0 3px rgba(168,50,31,.18)}
+.step.on::before{background:rgba(60,48,30,.6)}
 
 /* 서사 한 줄 — 매번 읽히는 자리라 짧게 (worldview §5.3 간결한 평서체) */
 .leak{display:flex;align-items:center;gap:10px;margin:9px 2px 12px;flex-wrap:wrap}
@@ -137,6 +171,65 @@ button.node:hover .enter{opacity:1}
 .route path.e-ahead{stroke:#5b5041;stroke-width:1.3;stroke-dasharray:4 5}
 .route path.e-miss{stroke:#3d372d;stroke-width:1;stroke-dasharray:2 6}
 
+/* ── 발급 연출 — 런당 첫 지도 방문 1회 (ADR-024 ②) ──────────
+   택배좌는 얼굴을 보이지 않는다. 카운터 너머 장갑 낀 손까지만이다(3막 반전 보호). */
+.issue{position:fixed;inset:0;z-index:80;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:26px;cursor:pointer;
+  background:#070605;animation:iss-in .3s ease both}
+.issue.out{animation:iss-out .42s ease both;pointer-events:none}
+@keyframes iss-in{from{opacity:0}to{opacity:1}}
+@keyframes iss-out{from{opacity:1}to{opacity:0}}
+.issue .plate{position:absolute;inset:0;background:url("../assets/issue-hand.png") center/cover no-repeat;
+  opacity:.72}
+.issue .vig{position:absolute;inset:0;
+  background:radial-gradient(86% 70% at 46% 52%,rgba(7,6,5,0),rgba(7,6,5,.78) 82%)}
+
+/* 건네받는 종이 — 운송장 본문과 같은 텍스처를 쓴다 */
+.slip{position:relative;z-index:1;width:376px;padding:16px 20px 15px;border-radius:2px;
+  color:#232a35;text-align:left;
+  background:url("../assets/paper-waybill.png") center/cover no-repeat,#e0d4b2;
+  box-shadow:0 22px 50px rgba(0,0,0,.75),inset 0 1px 0 rgba(255,252,240,.4);
+  animation:slip-in .85s cubic-bezier(.16,.9,.28,1) .35s both}
+@keyframes slip-in{
+  from{opacity:0;transform:translate(-58vw,64px) rotate(-15deg) scale(.62)}
+  to  {opacity:1;transform:translate(0,0) rotate(-1.6deg) scale(1)}}
+.slip .lb{font-size:9.5px;letter-spacing:1.6px;color:#6d6353}
+.slip b{display:block;font-size:20px;letter-spacing:1px;margin-top:2px}
+.slip .code{height:16px;margin:7px 0 6px;opacity:.66;
+  background:repeating-linear-gradient(90deg,#232a35 0 2px,transparent 2px 4px,
+    #232a35 4px 5px,transparent 5px 9px,#232a35 9px 12px,transparent 12px 14px)}
+.slip .to{font-size:11px;color:#4b4536;border-top:1px dashed rgba(72,56,34,.38);
+  padding:6px 84px 0 0;line-height:1.45}
+/* 도장은 종이 안에 완전히 들어와야 한다 — multiply 라 종이 밖으로 나가면 검게 죽는다 */
+.slip .seal{position:absolute;right:14px;bottom:11px;font-size:12.5px;padding:7px 11px;
+  animation:seal-hit .26s cubic-bezier(.2,1.5,.4,1) 1.9s both}
+@keyframes seal-hit{
+  from{opacity:0;transform:rotate(-8.5deg) scale(2.7)}
+  60% {opacity:.95;transform:rotate(-8.5deg) scale(.94)}
+  to  {opacity:.88;transform:rotate(-8.5deg) scale(1)}}
+.slip.hit{animation:slip-in .85s cubic-bezier(.16,.9,.28,1) .35s both,
+  slip-shake .18s ease 1.92s both}
+@keyframes slip-shake{0%{transform:translate(0,0) rotate(-1.6deg)}
+  40%{transform:translate(0,3px) rotate(-2.4deg)}
+  100%{transform:translate(0,0) rotate(-1.6deg)}}
+
+.issue .lines{position:relative;z-index:1;width:min(560px,86vw);display:flex;
+  flex-direction:column;gap:9px;text-align:center}
+.issue .lines p{font-size:13.5px;line-height:1.6;color:#c8bda6;letter-spacing:-.2px;
+  opacity:0;animation:line-up .45s ease both}
+.issue .lines p.say{color:#efe7d8}
+.issue .lines p.say b{color:#9fb2c8;font-weight:700;margin-right:8px;letter-spacing:.6px}
+.issue .lines p:nth-child(1){animation-delay:1.3s}
+.issue .lines p:nth-child(2){animation-delay:2.3s}
+.issue .lines p:nth-child(3){animation-delay:3.1s}
+@keyframes line-up{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
+.issue .skip{position:absolute;bottom:22px;z-index:1;font-size:10.5px;color:#6f6656;
+  letter-spacing:.6px}
+@media (prefers-reduced-motion:reduce){
+  .issue,.issue.out,.slip,.slip.hit,.slip .seal,.issue .lines p{animation-duration:.01s !important;
+    animation-delay:0s !important}
+}
+
 /* 런 없음 폴백 */
 .norun{max-width:470px;margin:100px auto 0;text-align:center;display:flex;
   flex-direction:column;gap:14px;padding:30px 26px}
@@ -212,6 +305,7 @@ function renderTracking(run) {
         <div class="wb-id">
           <span class="lb">운송장 번호</span>
           <b class="mono">${orderNo}</b>
+          <div class="code" aria-hidden="true"></div>
           <span class="sub">만물마켓 물류 · 1막 구간 조회</span>
         </div>
         <div class="wb-state">
@@ -231,7 +325,7 @@ function renderTracking(run) {
           <div class="v2">파손 주의 · 개봉 시 반품 불가</div></div>
         <div class="wb-cell"><div class="k">조회자</div>
           <div class="v">${esc(RH.penname() || '미등록')}</div>
-          <div class="v2">🧠 ${run.will}/${run.maxWill} · 🪙 ${run.gold} · 🃏 ${run.deck.length}장</div></div>
+          <div class="v2">의지 ${run.will}/${run.maxWill} · 소지금 ${run.gold} · 카드 ${run.deck.length}장</div></div>
       </div>
       <div class="steps">${stepsHtml}</div>
     </div>
@@ -354,6 +448,53 @@ function renderTracking(run) {
   window.addEventListener('load', drawEdges);
   window.addEventListener('resize', drawEdges);
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(drawEdges);
+
+  issueWaybill(run, orderNo);
+}
+
+/** 발급 연출 — 이 운송장을 어디서 얻었는지 한 번만 보여준다 (ADR-024 ②).
+ *  state.js 는 손대지 않는다. run 객체에 waybillIssued 를 얹어 saveRun 으로 남긴다. */
+function issueWaybill(run, orderNo) {
+  if (run.waybillIssued) return;
+  run.waybillIssued = true;      // 표시 시점에 바로 기록한다 — 건너뛰든 새로고침하든 두 번은 없다
+  RH.saveRun(run);
+  // 모션 최소화 환경에서도 대사는 읽혀야 한다 — 연출은 그대로 띄우되
+  // CSS 미디어 쿼리가 애니메이션을 걷어 완성 상태로 바로 세운다
+
+  document.body.insertAdjacentHTML('beforeend', `
+    <div class="issue" id="issue" role="dialog" aria-label="운송장 발급">
+      <div class="plate" aria-hidden="true"></div>
+      <div class="vig" aria-hidden="true"></div>
+      <div class="slip hit">
+        <span class="lb">운송장 번호</span>
+        <b class="mono">${esc(orderNo)}</b>
+        <div class="code" aria-hidden="true"></div>
+        <div class="to">받는 사람 · 6F 지배인실 — 관계자 외 출입 금지</div>
+        <div class="seal">무단<br>조회</div>
+      </div>
+      <div class="lines">
+        <p>창구 너머로 장갑 낀 손이 종이 한 장을 밀어 놓는다.</p>
+        <p class="say"><b>택배좌</b>배송 오류입니다. 종종 있는 일이고요.</p>
+        <p class="say"><b>택배좌</b>조회만 하십시오. 서명은 하지 마시고.</p>
+      </div>
+      <div class="skip">클릭 · Esc — 건너뛰기</div>
+    </div>`);
+
+  const el = document.getElementById('issue');
+  let done = false;
+  const close = () => {
+    if (done) return;
+    done = true;
+    clearTimeout(timer);
+    document.removeEventListener('keydown', onKey);
+    el.classList.add('out');
+    setTimeout(() => el.remove(), 460);
+  };
+  const onKey = (e) => { if (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ') close(); };
+  const timer = setTimeout(close, 5200);
+  el.addEventListener('click', close);
+  document.addEventListener('keydown', onKey);
+  window.RH_MAP_INTRO = { close };   // 자동화(E2E·스크린샷)에서 즉시 걷어낼 수 있게 둔다
 }
 </script>
 <script src="debug.js"></script>
