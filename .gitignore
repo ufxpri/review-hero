@@ -23,7 +23,31 @@ assets/wireframe/
 
 # ComfyUI 생성 결과물 (원본은 ~/ComfyUI/output/)
 assets/generated/
-ui/assets/
+# 생성 더미는 계속 제외하되, **게임이 실제로 쓰는 17장만** 예외로 커밋한다 (5차).
+# 이유: game/assets/ 는 이 파일들로 건 심볼릭 링크다. 원본이 커밋 대상이 아니면 클론에는
+# 링크 대상이 없어 끊기고, 그 상태로 내보낸 실행 파일은 아트가 통째로 빠진 채(이모지 폴백)
+# 조용히 완성된다 — 빌드가 성공해 보이므로 알아채기 어렵다. 사본을 만드는 대신 정본을
+# 그대로 추적해 두 벌이 생기지 않게 한다(YAML 을 design/ 정본에 링크한 것과 같은 방식).
+# 크기: 17장 합계 16MB(전부 표시 해상도 완성본 — 마스터는 아래 _orig/ 로 계속 제외).
+# 목록이 바뀌면 game/assets/ 링크와 이 예외를 같이 손볼 것.
+ui/assets/*
+!ui/assets/enemy-boss.png
+!ui/assets/enemy-elf.png
+!ui/assets/enemy-goblin.png
+!ui/assets/enemy-knight.png
+!ui/assets/enemy-orc.png
+!ui/assets/enemy-thief.png
+!ui/assets/hero-back.png
+!ui/assets/issue-hand.png
+!ui/assets/map-dispatch.png
+!ui/assets/paper-waybill.png
+!ui/assets/scene-arcade.png
+!ui/assets/scene-basement.png
+!ui/assets/scene-boss.png
+!ui/assets/scene-market.png
+!ui/assets/scene-rest.png
+!ui/assets/scene-warehouse.png
+!ui/assets/scene.png
 ui/combat.html
 ui/prologue.html
 
@@ -40,7 +64,11 @@ obj/
 .godot/
 game/.mono/
 
-# 전투 화면(game/scenes/Combat.tscn)이 쓰는 아트는 ui/assets/ 로 건 파일 단위 심볼릭 링크다.
-# 원본이 커밋 대상이 아니므로(위 ui/assets/) 링크와 Godot 임포트 메타도 제외한다 —
-# 링크가 없는 환경에서는 CombatArt.Load() 가 폴백(이모지·단색 배경)으로 굴러간다.
-game/assets/
+# 내보내기 산출물 (game/export_presets.cfg 의 export_path — 저장소 루트 build/).
+# game/ 안에 두면 res:// 로 다시 스캔돼 다음 .pck 에 지난 빌드가 섞인다.
+/build/
+
+# game/assets/ 는 ui/assets/ 로 건 파일 단위 심볼릭 링크(17장) + Godot 임포트 메타다.
+# 위에서 그 17장을 예외로 추적하게 했으므로 링크도 같이 커밋한다 — 클론에서 링크가 살아야
+# 내보낸 실행 파일에 아트가 들어간다. 링크가 끊긴 환경에서도 화면이 죽지는 않는다
+# (CombatArt.Load() 가 이모지·단색 배경 폴백).

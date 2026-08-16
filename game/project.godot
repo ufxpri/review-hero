@@ -19,3 +19,5 @@ project/assembly_name="ReviewHeroGame"
 
 [rendering]
 renderer/rendering_method="mobile"
+; arm64·universal macOS 내보내기 필수 — 꺼져 있으면 export 가 설정 오류로 거부한다 (5차).
+textures/vram_compression/import_etc2_astc=true

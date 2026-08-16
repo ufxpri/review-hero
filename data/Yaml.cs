@@ -150,5 +150,8 @@ internal static class Yaml
         .IgnoreUnmatchedProperties()
         .Build();
 
-    public static T Load<T>(string path) => Deserializer.Deserialize<T>(File.ReadAllText(path));
+    public static T Load<T>(string path) => Parse<T>(File.ReadAllText(path));
+
+    /// <summary>본문 문자열에서 직접 — 내보낸 Godot 빌드는 파일이 .pck 안이라 경로로 못 읽는다(ADR-029).</summary>
+    public static T Parse<T>(string yaml) => Deserializer.Deserialize<T>(yaml);
 }

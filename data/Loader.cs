@@ -10,6 +10,15 @@
 // 전투 엔진(Battle)은 주어진 덱을 그대로 사용하며 현 시뮬은 시작 덱(+ CLI 주입 덱)이 고정이라
 // 실해 없음. irremovable 정보는 런 레이어 착수 대비로 여기서 이미 파싱해 노출한다.
 //
+// ── 입력 경로 두 가지 ──────────────────────────────────
+// ① 경로: LoadAll(designDir) — 저장소의 design/ 을 표식 파일로 찾아 읽는다 (아래 탐색 규칙).
+//    테스트·CLI(sim)·에디터 실행이 쓴다.
+// ② 본문: LoadAllFromText(cardsYaml, enemiesYaml) — **내보낸 실행 파일용**. Godot 은 리소스를
+//    .pck 로 묶고 res:// 로만 열어 주므로 System.IO 로는 못 읽는다. 그렇다고 여기서 res:// 를
+//    알면 data/ 가 Godot 에 묶인다(ADR-029 — engine/data 는 Godot 무의존). 그래서 「읽기」는
+//    Godot 층(game/src/Run/GameData.cs)이 하고 여기는 문자열만 받는다.
+// ①은 파일을 읽어 ②를 부른다 — 검증·변환 코드는 한 벌뿐이다.
+//
 // ── design 디렉터리 찾기 ────────────────────────────────
 // TS 는 `import.meta.url` 로 소스 위치에서 잡았다. C# 은 호출자마다 실행 위치가 다르다 —
 // 테스트는 engine.tests/bin/Debug/net8.0 에서, CLI 는 `dotnet run` 이라 sim/bin/Debug/net8.0 에서,
@@ -51,17 +60,36 @@ public static class Loader
     public static LoadedData LoadAll(string? designDir = null)
     {
         string dir = designDir ?? DesignDir;
-        var cards = LoadCardsFull(Path.Combine(dir, CardsFileName));
-        var enemies = LoadEnemies(Path.Combine(dir, EnemiesFileName));
+        return LoadAllFromText(
+            File.ReadAllText(Path.Combine(dir, CardsFileName)),
+            File.ReadAllText(Path.Combine(dir, EnemiesFileName)));
+    }
+
+    /// <summary>
+    /// 파일 경로 대신 YAML 본문으로 로드한다. 내보낸 Godot 빌드는 데이터가 .pck 안이라
+    /// <see cref="System.IO"/> 로 못 읽는다 — Godot 층이 res:// 로 읽어 온 문자열을 여기로 넘긴다.
+    /// data/ 는 Godot 무의존을 유지해야 하므로(ADR-029) res:// 를 아는 쪽은 여기가 아니다.
+    /// 검증·변환은 경로 버전과 완전히 같은 코드를 탄다.
+    /// </summary>
+    public static LoadedData LoadAllFromText(string cardsYaml, string enemiesYaml)
+    {
+        var cards = LoadCardsFullFromText(cardsYaml);
+        var enemies = LoadEnemiesFromText(enemiesYaml);
         return new LoadedData(cards.Index, cards.StartingDeck, cards.Irremovable, enemies);
     }
 
     /// <summary>카드 인덱스만 필요할 때 (tag 배열 금지 등 검증은 그대로 수행한다)</summary>
     public static CardIndex LoadCards(string yamlPath) => LoadCardsFull(yamlPath).Index;
 
-    public static LoadedCards LoadCardsFull(string yamlPath)
+    /// <inheritdoc cref="LoadCards"/>
+    public static CardIndex LoadCardsFromText(string cardsYaml) => LoadCardsFullFromText(cardsYaml).Index;
+
+    public static LoadedCards LoadCardsFull(string yamlPath) =>
+        LoadCardsFullFromText(File.ReadAllText(yamlPath));
+
+    public static LoadedCards LoadCardsFullFromText(string cardsYaml)
     {
-        var raw = Yaml.Load<RawCardsFile>(yamlPath);
+        var raw = Yaml.Parse<RawCardsFile>(cardsYaml);
         var defs = new List<CardDef>();
 
         // 섹션 순서가 곧 CardIndex.AllIds 순서다 — X03(무작위 카드 생성)이 이 목록을 rng 로 뽑으므로
@@ -82,9 +110,13 @@ public static class Loader
         return new LoadedCards(index, startingDeck, irremovable);
     }
 
-    public static IReadOnlyDictionary<string, EnemyDef> LoadEnemies(string yamlPath)
+    public static IReadOnlyDictionary<string, EnemyDef> LoadEnemies(string yamlPath) =>
+        LoadEnemiesFromText(File.ReadAllText(yamlPath));
+
+    /// <inheritdoc cref="LoadEnemies"/>
+    public static IReadOnlyDictionary<string, EnemyDef> LoadEnemiesFromText(string enemiesYaml)
     {
-        var raw = Yaml.Load<RawEnemiesFile>(yamlPath);
+        var raw = Yaml.Parse<RawEnemiesFile>(enemiesYaml);
         var map = new Dictionary<string, EnemyDef>(StringComparer.Ordinal);
         foreach (var e in raw.Enemies.Concat(raw.Bosses)) map[e.Id] = ConvertEnemy(e);
         return map;

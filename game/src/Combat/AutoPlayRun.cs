@@ -50,7 +50,8 @@ public static partial class AutoPlay
     /// <summary>한 판을 끝까지 굴린다. 성공 = 결과 정산까지 도달.</summary>
     public static bool RunOnce(uint seed)
     {
-        var data = Loader.LoadAll();
+        // GameData 를 거쳐야 내보낸 빌드에서도 res:// 팩을 읽는다 — 직접 Loader 를 부르면 배포 환경에서 죽는다
+        var data = GameData.All;
         var run = RunStore.NewRun(seed);
         Log($"새 원정 시드 {seed} · 덱 {run.Deck.Count}장 · 의지 {run.Will}/{run.MaxWill}");
 
