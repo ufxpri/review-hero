@@ -58,8 +58,15 @@ balance(combat): 팩트 판정 게이지 +2 → +3 상향
 
 ## 개발 메모
 
-- 빌드/테스트 명령: `npm install` → `npm test`(node:test), `npm run typecheck`(tsc --noEmit),
-  시뮬레이터 `npx tsx packages/sim/src/cli.ts --enemy B01 --policy standard --runs 1000 --seed 42 [--json]`
+- **클라이언트는 Godot 4 + C#(.NET 8)로 이관 중이다** (ADR-029). dotnet 은 `$HOME/.dotnet` 에 있으므로
+  명령 앞에 `export PATH="$HOME/.dotnet:$PATH"` 를 붙인다.
+  - 빌드·테스트: `dotnet build` · `dotnet test`(xUnit 65개)
+  - 시뮬레이터: `dotnet run --project sim -- --enemy B01 --runs 1000 --seed 42 [--json]`
+    밸런스 A/B 는 `--rule judge.mult.normal=0.9` (경로는 `engine/Rules.cs` 의 `RulesConfig` 구조)
+  - 프로젝트: `engine/`(규칙 — Godot·fs·network 무의존) · `data/`(YAML 로더) · `sim/`(시뮬 CLI) ·
+    `engine.tests/`(xUnit) · `game/`(Godot, 2차부터)
+- **구 TS 스택**(`packages/*`, `ui/game/*`)은 이관 검증이 끝날 때까지 병존한다:
+  `npm test` · `npm run typecheck` · `npx tsx packages/sim/src/cli.ts …`
 - 패키지 구조: `packages/core`(UI 무의존 전투 상태머신, fs/network 금지) + `packages/sim`(YAML 로드·정책 AI·통계 CLI)
 - 전투/런 로직은 UI 무의존 TS 상태머신 패키지로 분리 (GDD §1.1) — 서버 리플레이 검증에 재사용되므로 `Date.now()`·`Math.random()` 직접 호출 금지, 시드 주입.
 - 서버: Firebase (Auth 구글 로그인 + Firestore + Cloud Functions/Scheduler). 유의점은 ADR-008.

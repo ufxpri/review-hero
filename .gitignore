@@ -30,3 +30,8 @@ ui/prologue.html
 # 게임 페이지 생성 산출물 (tools/ui/build_game.mjs 로 재생성)
 ui/game/engine.js
 ui/game/data.js
+
+# .NET 빌드 산출물 (ADR-029 — Godot/C# 이관)
+bin/
+obj/
+*.user

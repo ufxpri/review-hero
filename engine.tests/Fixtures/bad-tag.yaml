@@ -1,0 +1,19 @@
+# 테스트 픽스처: tag 배열은 로드 시 에러여야 한다 (단일 초점 원칙 — card-system-v2 §4)
+starting_deck:
+  - { id: BAD1, irremovable: true }
+
+past_life:
+  - id: BAD1
+    name: "태그 두 개짜리 카드"
+    suit: 품질
+    tag: [마감, 내구도]
+    cost: 1
+    stars: 1
+    rarity: basic
+    target: enemy
+    text: |
+      이 카드는 로드되면 안 됩니다.
+    effect: { type: damage, value: 5 }
+    ui: "의지 피해 5"
+
+specials: []
