@@ -4,6 +4,8 @@
     <EnableDynamicLoading>true</EnableDynamicLoading>
     <RootNamespace>ReviewHero.Game</RootNamespace>
     <Nullable>enable</Nullable>
+    <!-- Godot.NET.Sdk 는 기본 off — System.Collections.Generic 등을 파일마다 쓰지 않기 위해 켠다 -->
+    <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
   <!-- 규칙은 engine/ 이 소유한다 (ADR-029). 이 프로젝트는 표현과 입력만 맡는다. -->
   <ItemGroup>
