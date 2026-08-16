@@ -1,16 +1,17 @@
 // 서명 — 카드를 낼 때 서명란에 획이 그어진다. 그어지는 것 자체가 「리뷰 게시」다 (worldview §1.1-2).
 //
 // 웹판(combat.html .sig)은 ui/signature.html 에서 등록한 실제 획을 SVG path 로 그렸다.
-// Godot 에는 아직 **서명 등록 화면이 없다** — 그래서 기본 필체(웹판 DEF_LN/DEF_FL 를 그대로
-// 옮긴 베지어)를 쓰되, 나중에 실제 서명을 꽂을 자리는 여기 <see cref="SignatureStore"/> 하나다:
+// Godot 도 같다 — 서명 등록 씬(scenes/Signature.tscn)이 세이브에 획을 넣고,
+// <see cref="SignatureStore"/> 가 **처음 필요할 때 그것을 읽어 온다**.
 //
-//   SignatureStore.Strokes = 저장된 획 목록;   // 점 좌표계는 아무거나 — 여기서 정규화한다
-//
-// 서명 등록 씬이 생기면 그 씬이 RunStore 에 획을 저장하고, 전투 진입 시 위 한 줄만 채우면 된다.
-// (웹판 계약: RH.sig() → { v, box:[660,236], strokes:[[[x,y],…],…] })
+// 지연 로드로 만든 이유: 전투 쪽 코드가 「서명을 불러온다」를 따로 부르지 않아도 되게 하기 위해서다.
+// 카드가 서명란을 만드는 순간 저장본이 알아서 딸려 온다. 등록이 없으면 기본 필체
+// (웹판 DEF_LN/DEF_FL 를 그대로 옮긴 베지어)로 대체된다 — 서명란이 비는 일은 없다.
+// (저장 형식: user://save.json 의 meta.signature = { v, box:[660,236], strokes:[[[x,y],…],…] })
 
 using Godot;
 using ReviewHero.Game.Combat;
+using ReviewHero.Game.Run;
 
 namespace ReviewHero.Game.Fx;
 
@@ -20,10 +21,44 @@ namespace ReviewHero.Game.Fx;
 /// </summary>
 public static class SignatureStore
 {
-    public static IReadOnlyList<Vector2[]>? Strokes { get; set; }
+    private static IReadOnlyList<Vector2[]>? _strokes;
+    private static bool _loaded;
+
+    /// <summary>
+    /// 등록된 획. **처음 읽을 때 세이브에서 지연 로드한다** — 부르는 쪽이 로드를 신경 쓰지 않는다.
+    /// 직접 대입하면 그 값이 우선한다(등록 직후 이 프로세스에 즉시 반영하는 경로).
+    /// </summary>
+    public static IReadOnlyList<Vector2[]>? Strokes
+    {
+        get
+        {
+            if (_loaded) return _strokes;
+            _loaded = true;
+            try
+            {
+                var saved = RunStore.Signature;
+                _strokes = saved is { HasStrokes: true } ? saved.ToVectors() : null;
+            }
+            catch (System.Exception e)
+            {
+                // 서명을 못 읽었다고 카드가 안 나오면 안 된다 — 기본 필체로 떨어진다
+                GD.PushWarning($"[SignatureStore] 등록 서명 로드 실패 — 기본 필체로 간다: {e.Message}");
+                _strokes = null;
+            }
+            return _strokes;
+        }
+        set { _strokes = value; _loaded = true; }
+    }
 
     /// <summary>실제 서명이 등록되어 있는가 (없으면 기본 필체)</summary>
     public static bool HasCustom => Strokes is { Count: > 0 };
+
+    /// <summary>다음 읽기에서 세이브를 다시 보게 한다 (세이브를 갈아엎었을 때)</summary>
+    public static void Invalidate()
+    {
+        _strokes = null;
+        _loaded = false;
+    }
 }
 
 /// <summary>서명란 한 칸. <see cref="Progress"/> 0→1 로 획이 순서대로 그어진다.</summary>
@@ -37,6 +72,12 @@ public partial class SignatureInk : Control
     private readonly List<float> _lengths = new();
     private float _total;
     private float _progress;
+
+    /// <summary>등록 화면이 그은 획으로 대신 그린다 — 저장 전이라 전역 저장본을 건드리면 안 된다</summary>
+    public IReadOnlyList<Vector2[]>? Preview { get; set; }
+
+    /// <summary>지금 그리고 있는 것이 실제 서명인가 (기본 필체의 밑줄 플러리시 판정에 쓴다)</summary>
+    private bool _custom;
 
     /// <summary>마지막 획이 끝난 자리 — 잉크 방울이 떨어지는 곳</summary>
     private Vector2 _blot;
@@ -61,11 +102,22 @@ public partial class SignatureInk : Control
         Build();
     }
 
+    /// <summary>획이 바뀌었을 때 다시 만든다 (등록 화면 미리보기가 매 획마다 부른다)</summary>
+    public void Rebuild()
+    {
+        Build();
+        Progress = 0f;
+    }
+
     private void Build()
     {
         _strokes.Clear();
         _lengths.Clear();
-        var src = SignatureStore.HasCustom ? Normalize(SignatureStore.Strokes!) : DefaultStrokes();
+        _total = 0f;
+        _custom = Preview is { Count: > 0 } || SignatureStore.HasCustom;
+        var src = Preview is { Count: > 0 } p ? Normalize(p)
+            : SignatureStore.HasCustom ? Normalize(SignatureStore.Strokes!)
+            : DefaultStrokes();
         foreach (var s in src)
         {
             if (s.Length < 2) continue;
@@ -90,7 +142,7 @@ public partial class SignatureInk : Control
             if (budget <= 0f) break;
             var pts = _strokes[s];
             // 첫 획은 두껍게(.ln 2.3), 기본 필체의 마지막 밑줄(.fl)은 얇게 — 웹판 그대로
-            bool flourish = !SignatureStore.HasCustom && s == _strokes.Count - 1 && _strokes.Count > 1;
+            bool flourish = !_custom && s == _strokes.Count - 1 && _strokes.Count > 1;
             float w = flourish ? 1.4f : 2.3f;
             var col = CombatArt.Inkc with { A = flourish ? 0.65f : 1f };
 

@@ -66,6 +66,8 @@ public static class UiTheme
     {
         var b = new Button { Text = s, Disabled = !enabled };
         b.AddThemeFontSizeOverride("font_size", size);
+        // 클릭음은 여기 한 곳에서 전 화면을 덮는다 — 전투는 자체 버튼(CBtn)에 따로 심겨 있다
+        b.Pressed += () => Audio.Sfx.Play(Audio.SfxId.Click);
         if (onPressed is not null) b.Pressed += onPressed;
         return b;
     }

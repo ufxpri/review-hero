@@ -22,6 +22,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using ReviewHero.Engine;
+using ReviewHero.Game.Signature;
 
 namespace ReviewHero.Game.Run;
 
@@ -145,6 +146,9 @@ public sealed class RunState
     public CombatMarker? Combat { get; set; }
     public ParcelState Parcel { get; set; } = new();
 
+    /// <summary>운송장 발급 연출을 이미 봤는가 (ADR-024 ②) — 런당 1회</summary>
+    public bool WaybillIssued { get; set; }
+
     /// <summary>ADR-028 대비. 지금은 "default"</summary>
     public string CharacterId { get; set; } = "default";
 
@@ -234,6 +238,12 @@ public sealed class MetaState
 
     public StatsState Stats { get; set; } = new();
 
+    /// <summary>
+    /// 등록한 서명 획 (ADR-020·022). 런이 아니라 **계정 속성**이라 여기 산다 —
+    /// 원정을 새로 시작해도 대장에 올린 서명은 그대로다. 없으면(옛 세이브) 기본 필체로 그어진다.
+    /// </summary>
+    public SignatureData? Signature { get; set; }
+
     /// <summary>ADR-028 대비</summary>
     public string CharacterId { get; set; } = "default";
 }
@@ -309,6 +319,19 @@ public static class RunStore
         set { Data.Penname = value; Save(); }
     }
 
+    /// <summary>등록한 이름이 있는가 — 아직 대장에 오르지 않았다면 등록부터다 (ADR-020)</summary>
+    public static bool Registered => !string.IsNullOrWhiteSpace(Data.Penname);
+
+    /// <summary>
+    /// 등록한 서명 (없으면 null). 이름과 한 번에 받는 한 쌍이라 저장도 나란히 간다.
+    /// 대입하면 즉시 세이브에 내려간다 — 전투는 <see cref="Fx.SignatureStore"/> 를 통해 이걸 읽는다.
+    /// </summary>
+    public static SignatureData? Signature
+    {
+        get => Data.Meta.Signature;
+        set { Data.Meta.Signature = value; Save(); }
+    }
+
     // ── 저장/로드 ────────────────────────────────────
 
     /// <summary>디스크를 다시 읽는다 (테스트의 왕복 검증용 — 평소에는 부를 일이 없다)</summary>
@@ -340,6 +363,8 @@ public static class RunStore
         s.Meta.Badges ??= new List<string>();
         s.Meta.Stats ??= new StatsState();
         s.Meta.Stats.Judgements ??= new JudgementCounts();
+        // 서명 필드가 없는 옛 세이브는 null 그대로 둔다 — 그러면 카드에 기본 필체가 그어진다
+        if (s.Meta.Signature is { } sig) sig.Strokes ??= new List<float[][]>();
         if (string.IsNullOrEmpty(s.Meta.CharacterId)) s.Meta.CharacterId = "default";
         s.Settings ??= new SettingsState();
         if (s.Run is { } r)

@@ -8,6 +8,7 @@
 // 카드 획득분의 도감 등재(RecordSeen)는 CompleteNode 의 deckAdd 경로가 이미 수행한다.
 
 using Godot;
+using ReviewHero.Game.Audio;
 using ReviewHero.Game.Run;
 
 namespace ReviewHero.Game.Nodes;
@@ -66,6 +67,9 @@ public partial class Event : NodeScene
 
     private void Choose(Choice c)
     {
+        Sfx.Play(SfxId.Click);
+        if (c.Gold != 0) Sfx.Play(SfxId.Coin);
+        else if (c.DeckAdd is not null) Sfx.Play(SfxId.CardPick);   // 양피지가 손에 들어온다
         _choices.Visible = false;
         Clear(_result);
 

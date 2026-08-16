@@ -12,6 +12,7 @@
 
 using Godot;
 using ReviewHero.Engine;
+using ReviewHero.Game.Audio;
 using ReviewHero.Game.Run;
 
 namespace ReviewHero.Game.Nodes;
@@ -314,6 +315,7 @@ public abstract partial class NodeScene : Control
             else
                 b.Pressed += () =>
                 {
+                    Sfx.Play(SfxId.Click);
                     picked = idx;
                     foreach (var x in items) if (!x.Disabled) x.Modulate = new Color(0.72f, 0.72f, 0.75f);
                     b.Modulate = Colors.White;
@@ -328,6 +330,7 @@ public abstract partial class NodeScene : Control
         row.AddChild(UiTheme.Btn("그만둔다", CloseOverlay, size: 18));
         ok.Pressed += () =>
         {
+            Sfx.Play(SfxId.Click);
             if (picked < 0) return;
             if (irre.Contains(deck[picked])) return;   // 비활성의 이중 안전장치
             CloseOverlay();

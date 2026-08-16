@@ -7,6 +7,7 @@
 // 즉시 반영하지 않는 덕에 결과 화면에서 타이틀로 나가도 런이 어중간하게 변하지 않는다.
 
 using Godot;
+using ReviewHero.Game.Audio;
 using ReviewHero.Game.Run;
 
 namespace ReviewHero.Game.Nodes;
@@ -66,6 +67,7 @@ public partial class Rest : NodeScene
         var b = UiTheme.Btn($"{title}\n{desc}\n{fx}", null, enabled, 17);
         b.Alignment = HorizontalAlignment.Left;
         b.CustomMinimumSize = new Vector2(0, 92);
+        b.Pressed += () => Sfx.Play(SfxId.Click);
         if (enabled) b.Pressed += onPressed;
         return b;
     }
@@ -86,6 +88,7 @@ public partial class Rest : NodeScene
         idx =>
         {
             string name = GameData.CardName(Run.Deck[idx]);
+            Sfx.Play(SfxId.Crumple);   // 초고가 불 속에서 오그라든다
             ShowResult(
                 $"「{name}」 초고를 불 속에 던졌다. 종이가 오그라들며 파란 불꽃이 잠깐 일었다.\n\n" +
                 "그 문장을 쓰던 밤의 기억도 같이 타 올라갔다. 조금 가벼워졌다.",

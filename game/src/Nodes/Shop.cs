@@ -11,6 +11,7 @@
 // 반영은 RunStore.CompleteNode 한 번(골드·의지·파쇄) + 산 카드 덱 추가로 끝난다.
 
 using Godot;
+using ReviewHero.Game.Audio;
 using ReviewHero.Game.Run;
 
 namespace ReviewHero.Game.Nodes;
@@ -183,6 +184,7 @@ public partial class Shop : NodeScene
     {
         if (it.Sold || ShownGold < it.Price) return;
         it.Sold = true;
+        Sfx.Play(SfxId.Coin);
         _spent += it.Price;
         _bought.Add(it.Id);
         Paint();
@@ -193,6 +195,7 @@ public partial class Shop : NodeScene
     {
         if (_potionSold || ShownGold < PricePotion) return;
         _potionSold = true;
+        Sfx.Play(SfxId.Coin);
         _spent += PricePotion;
         _healed += PotionHeal;
         Paint();
@@ -211,6 +214,7 @@ public partial class Shop : NodeScene
                 if (_shredUsed || ShownGold < PriceShred) return;
                 string id = Deck[idx];
                 _shredUsed = true;
+                Sfx.Play(SfxId.Crumple);   // 위이잉 — 문장이 가루가 된다
                 _shredIdx = idx;
                 _spent += PriceShred;
                 Paint();

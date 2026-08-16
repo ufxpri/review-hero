@@ -1,5 +1,6 @@
 using ReviewHero.Data;
 using ReviewHero.Engine;
+using ReviewHero.Game.Audio;
 using ReviewHero.Game.Run;
 
 namespace ReviewHero.Game.Combat;
@@ -18,13 +19,24 @@ public static partial class AutoPlay
     public static bool Requested()
     {
         foreach (var a in Godot.OS.GetCmdlineUserArgs())
-            if (a == "--autoplay") return true;
+            if (a == "--autoplay" || a == "--sfxdump" || a.StartsWith("--sfxdump=", StringComparison.Ordinal))
+                return true;
         return false;
     }
 
     /// <summary>완주를 돌리고 즉시 종료한다. 실패하면 종료 코드 1.</summary>
     public static void RunAndQuit(Godot.SceneTree tree)
     {
+        // `--sfxdump` 은 완주가 아니라 **소리 검증**이다 (헤드리스에 오디오 장치가 없어
+        // 파형을 WAV 로 떨궈 수치로 본다). 화면 없이 도는 하네스라 여기 같이 태운다.
+        foreach (var a in Godot.OS.GetCmdlineUserArgs())
+        {
+            if (a != "--sfxdump" && !a.StartsWith("--sfxdump=", StringComparison.Ordinal)) continue;
+            int eq = a.IndexOf('=');
+            SfxDump.Start(tree, eq < 0 ? "user://sfx" : a[(eq + 1)..]);
+            return;   // 종료는 SfxProbe 가 검사 결과와 함께 한다
+        }
+
         int code;
         try { code = RunOnce(seed: 42) ? 0 : 1; }
         catch (Exception e)

@@ -18,6 +18,7 @@
 using Godot;
 using ReviewHero.Data;
 using ReviewHero.Engine;
+using ReviewHero.Game.Audio;
 using ReviewHero.Game.Fx;
 using ReviewHero.Game.Run;
 
@@ -63,6 +64,8 @@ public partial class CombatScene : Control
         SceneRouter.Tree = GetTree();
         UiTheme.Apply(this);
         SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
+
+        Sfx.WarmCombat();   // 첫 제출에서 합성하느라 한 프레임 튀지 않게 미리 굽는다
 
         var args = Godot.OS.GetCmdlineUserArgs();
         _shot = CombatEntry.ArgValue(args, "shot") ?? string.Empty;
@@ -679,6 +682,7 @@ public partial class CombatScene : Control
         b.AddThemeStyleboxOverride("hover", CombatArt.Box(bg.Lightened(0.15f), CombatArt.EdgeHi, 6));
         b.AddThemeStyleboxOverride("pressed", CombatArt.Box(bg.Darkened(0.2f), CombatArt.EdgeHi, 6));
         b.AddThemeStyleboxOverride("disabled", CombatArt.Box(bg with { A = 0.4f }, CombatArt.Edge with { A = 0.4f }, 6));
+        b.Pressed += () => Sfx.Play(SfxId.Click);   // 전투 화면의 모든 버튼이 여기를 지난다
         if (onPressed is not null) b.Pressed += onPressed;
         return b;
     }
@@ -708,6 +712,7 @@ public partial class CombatScene : Control
         {
             _pressed = true;
             _pressPos = pos;
+            Sfx.Play(SfxId.CardPick);         // 종이 한 장을 집었다
             _toggleOff = _held == card.Uid;   // 같은 카드를 다시 누르면(끌지 않으면) 선택 해제
             if (!_toggleOff) SelectCard(card.Uid);
             return;
@@ -736,7 +741,7 @@ public partial class CombatScene : Control
         _proxy = null;
         var zone = ZoneAt(pos) ?? _hot;
         if (_held is int uid && zone is not null) PlayOnZone(uid, zone);
-        else Unhold();
+        else { Sfx.Play(SfxId.CardDrop); Unhold(); }   // 아무 데도 못 놓고 도로 내려놓았다
     }
 
     private void OnMotion(Vector2 pos)
@@ -1010,6 +1015,7 @@ public partial class CombatScene : Control
             card.SetSelected(false);
             // 서명은 ClassDB 밖의 속성이라 TweenMethod 로 민다 (TweenProperty 는 등록된 속성만 건드린다)
             var ink = card.Sig;
+            Sfx.Stroke(0.40);   // 획이 그어지는 0.40초 동안 펜촉이 종이를 긁는다
             var t = CreateTween();
             t.TweenMethod(Callable.From<float>(v => { if (IsInstanceValid(ink)) ink.Progress = v; }), 0f, 1f, 0.40f)
                 .SetTrans(Tween.TransitionType.Sine);
@@ -1029,6 +1035,7 @@ public partial class CombatScene : Control
     /// <summary>서명이 끝난 카드가 상품 위로 날아간다 (복제본은 이미 서명이 굳은 상태다)</summary>
     private void FlyAway(CardView card, Vector2 to)
     {
+        Sfx.Play(SfxId.CardThrow);   // 종이가 날아간다
         var (origin, here) = OriginLine(card.Def);
         var fly = new CardView(card.Uid, card.Def, card.Preview, origin, here);
         fly.At(card.GlobalPosition.X, card.GlobalPosition.Y, CardView.W, CardView.H);
@@ -1051,6 +1058,7 @@ public partial class CombatScene : Control
         _fx.Splat(at);
         if (res is SubmitResult r)
         {
+            Sfx.Stamp(r.Judgement, r.Missed);   // 판정별로 도장 소리가 다르다
             var (label, color) = StampOf(r);
             _fx.Stamp(label, color, at - new Vector2(0, 96));   // 좋아요 숫자(−34)와 겹치지 않게 위로
             if (!r.Missed && r.Judgement is Judgement.Origin or Judgement.Fact)
@@ -1086,14 +1094,23 @@ public partial class CombatScene : Control
         var me = new Vector2(140, 300);
         int ew = Mathf.Max(0, st.Enemy.Will), pw = Mathf.Max(0, st.Player.Will);
 
-        if (pre.EnemyWill > ew) _fx.Num($"좋아요 +{pre.EnemyWill - ew}", e - new Vector2(0, 34));
+        if (pre.EnemyWill > ew)
+        {
+            _fx.Num($"좋아요 +{pre.EnemyWill - ew}", e - new Vector2(0, 34));
+            Sfx.Like(pre.EnemyWill - ew);      // 좋아요 수만큼 피치가 오른다
+        }
         if (pre.EnemyWill < ew) _fx.Num($"의지 +{ew - pre.EnemyWill}", e - new Vector2(0, 34), heal: true);
-        if (pre.PlayerWill > pw) _fx.Num($"좋아요 +{pre.PlayerWill - pw}", me);
+        if (pre.PlayerWill > pw)
+        {
+            _fx.Num($"좋아요 +{pre.PlayerWill - pw}", me);
+            Sfx.Play(SfxId.Hurt);              // 내가 맞았다 (반사·적 턴 공통)
+        }
         if (pre.PlayerWill < pw) _fx.Num($"의지 +{pw - pre.PlayerWill}", me, heal: true);
         if (st.Player.Gold != pre.Gold)
         {
             int dg = st.Player.Gold - pre.Gold;
             _fx.Num($"🪙 {(dg > 0 ? "+" : string.Empty)}{dg}", me + new Vector2(0, 34), dg > 0, small: true);
+            Sfx.Play(SfxId.Coin);
         }
         // 별점 추락 — 의지 구간이 한 칸 내려앉으면 별이 하나 떨어진다
         if (st.Enemy.MaxWill > 0
@@ -1134,6 +1151,7 @@ public partial class CombatScene : Control
         t.TweenCallback(Callable.From(() =>
         {
             _fx.Splat(to);
+            Sfx.Play(SfxId.Crumple);
             _fx.Num("초고 폐기", to - new Vector2(0, 18), heal: false, small: true);
             _busy = false;
             Paint();
@@ -1154,6 +1172,7 @@ public partial class CombatScene : Control
         var pre = Take();
         if (!_s.Critical()) { Toast(_s.Status); return; }
         _busy = true;
+        Sfx.Play(SfxId.Crit);   // 도장 + 상승하는 종소리
         var at = ZoneCenter(ZoneKind.Enemy);
         string name = _s.LastCritical is Disposition d ? Types.CriticalName[d] : "베스트 리뷰";
         _fx.Stamp($"베스트 리뷰 · {name}", CombatArt.Gold, at - new Vector2(0, 40), 26);
@@ -1175,6 +1194,7 @@ public partial class CombatScene : Control
     {
         if (_busy || _s.St.Result is not null) return;
         if (!_s.Parcel()) { Toast(_s.Status); return; }
+        Sfx.Play(SfxId.Parcel);   // 테이프를 뜯는다
         RunStore.BumpParcelsOpened();
         Toast(_s.Status);
         _pfx.Burst(new Vector2(300, 320), 24);
@@ -1187,6 +1207,8 @@ public partial class CombatScene : Control
         if (_busy || _s.St.Result is not null) return;
         Unhold();
         var pre = Take();
+        // 「막았다」의 유일한 근거 — 의지는 안 깎였는데 내 장비의 방어가 줄었다면 방어가 대신 맞은 것이다
+        int defPre = _s.St.Player.Equipment.Sum(q => q.Defense);
         _busy = true;
         _s.EndTurn();
 
@@ -1198,6 +1220,10 @@ public partial class CombatScene : Control
             {
                 _fx.Splat(new Vector2(140, 300));
                 _fx.Shake(_shaker);
+            }
+            else if (_s.St.Player.Equipment.Sum(q => q.Defense) < defPre)
+            {
+                Sfx.Play(SfxId.Block);   // 피격보다 짧고 높다
             }
             ShowDiffs(pre);
             _busy = false;
@@ -1245,6 +1271,12 @@ public partial class CombatScene : Control
         foreach (var c in _overlay.GetChildren()) c.QueueFree();
 
         bool death = o.Result is BattleResult.Lose or BattleResult.Timeout;
+        Sfx.Play(o.Result switch
+        {
+            BattleResult.Win => SfxId.Win,
+            BattleResult.Retreat => SfxId.StampFumble,   // 항복 — 김빠지는 쪽이다
+            _ => SfxId.Lose,
+        });
         var scrim = new ColorRect { Color = death ? new Color(0.01f, 0.01f, 0.01f, 0.96f) : new Color(0.02f, 0.016f, 0.012f, 0.72f) };
         scrim.At(0, 0, CombatArt.ScreenW, CombatArt.ScreenH);
         _overlay.AddChild(scrim);
@@ -1439,6 +1471,7 @@ public partial class CombatScene : Control
     private void Toast(string msg)
     {
         if (string.IsNullOrEmpty(msg)) return;
+        Sfx.Play(SfxId.Toast);
         _toast.Text = msg;
         var t = CreateTween();
         t.TweenProperty(_toast, "modulate:a", 1f, 0.15f);

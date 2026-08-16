@@ -126,7 +126,10 @@ public partial class Result : Control
 
     private void Submit()
     {
+        // 마지막 리뷰를 올리는 획 → 게시 결과
+        Audio.Sfx.Stroke(0.45);
         var meta = RunStore.FinalizeRun(_outcome, _stars, Templates[_tplIndex]);
+        Audio.Sfx.Play(_outcome == "clear" ? Audio.SfxId.Win : Audio.SfxId.Lose);
         GD.Print($"[Result] 정산 — 원정 {meta.Runs}회 · 정복 {meta.Wins}회 · 최고 {meta.BestFloor}층 " +
                  $"· 명단 {meta.Expedition.Count}줄 (최신: {meta.Expedition[0].Status})");
         SceneRouter.GoTitle();

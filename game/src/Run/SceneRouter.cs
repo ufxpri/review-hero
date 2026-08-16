@@ -24,6 +24,12 @@ public static class SceneRouter
     public const string Shop = "res://scenes/Shop.tscn";
     public const string Rest = "res://scenes/Rest.tscn";
 
+    /// <summary>서명 등록 — 이름과 서명을 한 번에 받는다 (ADR-020·022)</summary>
+    public const string Signature = "res://scenes/Signature.tscn";
+
+    /// <summary>원정대 명단 — 죽은 대원들의 마지막 리뷰 (worldview §1.7)</summary>
+    public const string Board = "res://scenes/Board.tscn";
+
     /// <summary>현재 씬 트리. 씬 밖(자동 플레이 하네스)에서는 null 일 수 있다</summary>
     public static SceneTree? Tree { get; set; }
 
