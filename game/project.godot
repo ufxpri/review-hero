@@ -1,0 +1,21 @@
+; 이세계 리뷰용사 — Godot 4 클라이언트 (ADR-029)
+; 규칙은 engine/ 이 소유한다. 이 프로젝트는 표현과 입력만 맡는다.
+
+config_version=5
+
+[application]
+config/name="이세계 리뷰용사"
+run/main_scene="res://scenes/Title.tscn"
+config/features=PackedStringArray("4.7", "C#", "Forward Plus")
+
+[display]
+window/size/viewport_width=1344
+window/size/viewport_height=768
+window/stretch/mode="canvas_items"
+window/stretch/aspect="keep"
+
+[dotnet]
+project/assembly_name="ReviewHeroGame"
+
+[rendering]
+renderer/rendering_method="mobile"

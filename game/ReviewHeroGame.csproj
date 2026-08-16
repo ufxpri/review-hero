@@ -1,0 +1,13 @@
+<Project Sdk="Godot.NET.Sdk/4.7.0">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <EnableDynamicLoading>true</EnableDynamicLoading>
+    <RootNamespace>ReviewHero.Game</RootNamespace>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  <!-- 규칙은 engine/ 이 소유한다 (ADR-029). 이 프로젝트는 표현과 입력만 맡는다. -->
+  <ItemGroup>
+    <ProjectReference Include="../engine/ReviewHero.Engine.csproj" />
+    <ProjectReference Include="../data/ReviewHero.Data.csproj" />
+  </ItemGroup>
+</Project>

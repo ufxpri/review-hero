@@ -35,3 +35,7 @@ ui/game/data.js
 bin/
 obj/
 *.user
+
+# Godot
+.godot/
+game/.mono/
