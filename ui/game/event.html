@@ -170,7 +170,9 @@ const EVENTS = [
 ];
 
 // ── nodeCtx — 노드 재입장 시 이벤트가 리롤되지 않게 첫 렌더 결과를 런에 저장 ──
-const cardPool = RH_DATA.cards.filter((c) => c.kind === 'review');
+// 시작 덱(제거 불가)은 풀에서 뺀다 — 사도 못 버리는 최약체라 순수한 함정이 된다
+const cardPool = RH_DATA.cards.filter((c) => c.kind === 'review'
+  && !(RH_DATA.irremovable || []).includes(c.id));
 let ctx = (run.nodeCtx && run.nodeCtx.page === 'event' && run.nodeCtx.nodeId === node.id)
   ? run.nodeCtx : null;
 if (!ctx) {

@@ -1,0 +1,12 @@
+; 배치는 src/Combat/CombatScene.cs 가 코드로 조립한다 — 씬 파일은 루트와 스크립트만 들고 있다.
+; (웹판 combat.html 의 절대 좌표를 1:1 로 옮기는 이관이라 인스펙터 배치보다 코드가 대조하기 쉽다)
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/Combat/CombatScene.cs" id="1"]
+
+[node name="Combat" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1")

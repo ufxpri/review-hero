@@ -128,7 +128,9 @@ $('#chipFloor').textContent = `1막 ${run.floor}층`;
 
 // ── nodeCtx — 재입장 시 진열이 리롤되거나 재고가 부활하지 않게 런에 저장 ──
 function genStock() {
-  const normals = RH_DATA.cards.filter((c) => c.kind === 'review');
+  const irr = new Set(RH_DATA.irremovable || []);
+  // 시작 덱(제거 불가)은 풀에서 뺀다 — 사도 못 버리는 최약체라 순수한 함정이 된다
+  const normals = RH_DATA.cards.filter((c) => c.kind === 'review' && !irr.has(c.id));
   const specials = RH_DATA.cards.filter((c) => c.kind === 'special');
   const pick = (arr, not) => {
     let c; do { c = arr[Math.floor(Math.random() * arr.length)]; } while (not.includes(c.id));

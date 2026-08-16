@@ -61,11 +61,11 @@ public partial class Map : Control
     private Control Hud(RunState run)
     {
         var h = UiTheme.HBox(18);
-        h.AddChild(UiTheme.Text($"1막 {run.Floor}층", 24));
-        h.AddChild(UiTheme.Text($"🧠 의지 {run.Will}/{run.MaxWill}", 20));
-        h.AddChild(UiTheme.Text($"🪙 골드 {run.Gold}", 20));
-        h.AddChild(UiTheme.Text($"🃏 덱 {run.Deck.Count}장", 20));
-        h.AddChild(UiTheme.Text($"⚔ {run.BattlesWon}승", 20));
+        h.AddChild(UiTheme.Text($"1막 {run.Floor}층", 24, wrap: false));
+        h.AddChild(UiTheme.Text($"🧠 의지 {run.Will}/{run.MaxWill}", 20, wrap: false));
+        h.AddChild(UiTheme.Text($"🪙 골드 {run.Gold}", 20, wrap: false));
+        h.AddChild(UiTheme.Text($"🃏 덱 {run.Deck.Count}장", 20, wrap: false));
+        h.AddChild(UiTheme.Text($"⚔ {run.BattlesWon}승", 20, wrap: false));
         var spacer = new Control { SizeFlagsHorizontal = SizeFlags.ExpandFill };
         h.AddChild(spacer);
         h.AddChild(UiTheme.Text($"시드 {run.Seed}", 14, new Color(0.55f, 0.55f, 0.6f)));

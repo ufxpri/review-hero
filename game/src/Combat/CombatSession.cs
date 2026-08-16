@@ -70,6 +70,12 @@ public sealed class CombatSession
     /// <summary>마지막 안내 문구 (오류·성공)</summary>
     public string Status { get; private set; } = string.Empty;
 
+    /// <summary>직전 제출의 엔진 결과 — 화면이 판정 도장을 찍는 근거다 (여기서 판정을 만들지 않는다)</summary>
+    public SubmitResult? LastSubmit { get; private set; }
+
+    /// <summary>직전 크리티컬 리뷰의 논점 (화면 연출용)</summary>
+    public Disposition? LastCritical { get; private set; }
+
     public BattleState St => Battle.State;
 
     public CombatSession(LoadedData data, CombatContext ctx)
@@ -227,6 +233,30 @@ public sealed class CombatSession
         Status = string.Empty;
     }
 
+    /// <summary>
+    /// 「이 카드를 저 상품 위에 놓으면?」 — 지목 상태를 바꾸지 않고 그 대상 기준 미리보기만 얻는다.
+    /// 드래그 중 말풍선이 쓴다. 계산은 전부 엔진이 한다 (ADR-025).
+    /// </summary>
+    public SubmitPreview PreviewOn(int uid, TargetSlot slot, int index) => slot switch
+    {
+        TargetSlot.EnemyEquipment => Battle.PreviewSubmit(uid, index, SelectedMyEq),
+        TargetSlot.MyEquipment => Battle.PreviewSubmit(uid, SelectedEnemyEq, index),
+        _ => Battle.PreviewSubmit(uid, SelectedEnemyEq, SelectedMyEq),
+    };
+
+    /// <summary>손패에서 카드를 내려놓는다 (선택 해제)</summary>
+    public void Unselect()
+    {
+        SelectedCardUid = null;
+        Status = string.Empty;
+    }
+
+    public void CancelGift()
+    {
+        PendingGiftFor = null;
+        Status = string.Empty;
+    }
+
     /// <summary>카드 선택. X04 증정 대기 중이면 이 카드가 증정 대상이 되고 즉시 사용한다</summary>
     public void SelectCard(int uid)
     {
@@ -288,6 +318,7 @@ public sealed class CombatSession
             Status = ex.Message;
             return false;
         }
+        LastSubmit = res;
         string verdict = res.Missed ? "빗나감" : JudgementLabel(res.Judgement);
         Log($"T{St.Turn} 제출 「{def.Name}」→ {TargetLabelFor(def)} · {verdict}{Diff(pre)}");
         Status = $"「{def.Name}」 {verdict}";
@@ -318,7 +349,15 @@ public sealed class CombatSession
     public bool Revise()
     {
         if (SelectedCardUid is not int uid) { Status = "퇴고할 카드를 고르시오"; return false; }
-        var def = SelectedDef();
+        return Revise(uid);
+    }
+
+    /// <summary>초고 폐기함에 끌어다 놓은 카드를 퇴고한다 (지목 상태와 무관하게 그 장을 버린다)</summary>
+    public bool Revise(int uid)
+    {
+        var c = St.Player.Hand.FirstOrDefault(x => x.Uid == uid);
+        var def = c is null ? null : DefOf(c);
+        if (def is null) { Status = "손패에 없는 카드"; return false; }
         try
         {
             Battle.Revise(uid);
@@ -347,8 +386,28 @@ public sealed class CombatSession
             Status = ex.Message;
             return false;
         }
+        LastCritical = d;
         Log($"T{St.Turn} 크리티컬 리뷰 「{Types.CriticalName[d]}」({Types.DispositionLabel[d]}){Diff(pre)}");
         Status = $"크리티컬 — {Types.CriticalName[d]}";
+        return true;
+    }
+
+    /// <summary>
+    /// 항복 — 위로금 6골드를 뜯어내고 물러난다 (ui/game/CONTRACT.md 전투 페이지 계약 승계).
+    /// <b>엔진에 항복 API 는 없다.</b> X07 「전투 이탈」과 달리 이건 카드가 아니라 화면 층의 약속이고,
+    /// 웹판(combat.html doRetreat)도 화면이 처리했다. 여기서 만드는 유일한 수치가 위로금 6이며
+    /// 승리 골드(<see cref="CombatEnd.WinGold"/>)와 같은 층에 산다 — 규칙 엔진을 침범하지 않는다.
+    /// </summary>
+    public const int SurrenderConsolation = 6;
+
+    public bool Surrender()
+    {
+        if (St.Result is not null) return false;
+        if (Enemy.Tier == EnemyTier.Boss) { Status = "보스전은 도망칠 수 없다"; return false; }
+        St.Player.Gold += SurrenderConsolation;
+        St.Result = BattleResult.Retreat;
+        Log($"T{St.Turn} 항복 — 위로금 {SurrenderConsolation}골드를 뜯어내고 물러났다");
+        Status = "항복 — 주문 취소";
         return true;
     }
 

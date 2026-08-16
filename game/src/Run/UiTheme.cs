@@ -46,9 +46,17 @@ public static class UiTheme
 
     // ── 화면 조립을 짧게 쓰는 조각들 ────────────────────
 
-    public static Label Text(string s, int size = 18, Color? color = null)
+    /// <param name="wrap">
+    /// 자동 줄바꿈. **HBox 안의 가로줄에는 false 를 줘라** — 켜져 있으면 최소 폭이 한 글자가 되어
+    /// HUD 칩이 세로로 눌린다(노드 화면에서 실제로 겪은 증상).
+    /// </param>
+    public static Label Text(string s, int size = 18, Color? color = null, bool wrap = true)
     {
-        var l = new Label { Text = s, AutowrapMode = TextServer.AutowrapMode.WordSmart };
+        var l = new Label
+        {
+            Text = s,
+            AutowrapMode = wrap ? TextServer.AutowrapMode.WordSmart : TextServer.AutowrapMode.Off,
+        };
         l.AddThemeFontSizeOverride("font_size", size);
         if (color is { } c) l.AddThemeColorOverride("font_color", c);
         return l;

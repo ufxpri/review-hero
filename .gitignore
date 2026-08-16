@@ -39,3 +39,8 @@ obj/
 # Godot
 .godot/
 game/.mono/
+
+# 전투 화면(game/scenes/Combat.tscn)이 쓰는 아트는 ui/assets/ 로 건 파일 단위 심볼릭 링크다.
+# 원본이 커밋 대상이 아니므로(위 ui/assets/) 링크와 Godot 임포트 메타도 제외한다 —
+# 링크가 없는 환경에서는 CombatArt.Load() 가 폴백(이모지·단색 배경)으로 굴러간다.
+game/assets/

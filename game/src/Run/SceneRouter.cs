@@ -20,6 +20,10 @@ public static class SceneRouter
     /// <summary>전투 씬 — 다른 작업자 소관이라 없을 수 있다 (Exists 로 확인하고 쓴다)</summary>
     public const string Combat = "res://scenes/Combat.tscn";
 
+    public const string Event = "res://scenes/Event.tscn";
+    public const string Shop = "res://scenes/Shop.tscn";
+    public const string Rest = "res://scenes/Rest.tscn";
+
     /// <summary>현재 씬 트리. 씬 밖(자동 플레이 하네스)에서는 null 일 수 있다</summary>
     public static SceneTree? Tree { get; set; }
 
@@ -46,12 +50,21 @@ public static class SceneRouter
     public static void GoResult() => Go(Result);
 
     /// <summary>노드 종류에 맞는 씬으로. 아직 없는 씬이면 지도로 돌려보내 통과 화면을 띄운다</summary>
+    /// <summary>노드 종류별 전용 씬 경로 (전용 씬이 없는 종류면 null)</summary>
+    public static string? SceneFor(MapNode node) => node.Type switch
+    {
+        NodeType.Event => Event,
+        NodeType.Shop => Shop,
+        NodeType.Rest => Rest,
+        _ => node.Type.IsCombat() ? Combat : null,
+    };
+
     public static void GoToNode(MapNode node)
     {
-        if (node.Type.IsCombat() && Exists(Combat)) { Go(Combat); return; }
+        if (SceneFor(node) is { } path && Exists(path)) { Go(path); return; }
         Go(Map);
     }
 
     /// <summary>이 노드를 전용 씬으로 처리할 수 있는가 (지도가 통과 화면을 띄울지 판단한다)</summary>
-    public static bool HasSceneFor(MapNode node) => node.Type.IsCombat() && Exists(Combat);
+    public static bool HasSceneFor(MapNode node) => SceneFor(node) is { } path && Exists(path);
 }
