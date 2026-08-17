@@ -24,6 +24,9 @@ public static class SceneRouter
     public const string Shop = "res://scenes/Shop.tscn";
     public const string Rest = "res://scenes/Rest.tscn";
 
+    /// <summary>프롤로그 슬라이드쇼 — 첫 원정의 입구. 끝나면 게이트가 서명 등록으로 넘긴다 (ADR-022)</summary>
+    public const string Prologue = "res://scenes/Prologue.tscn";
+
     /// <summary>서명 등록 — 이름과 서명을 한 번에 받는다 (ADR-020·022)</summary>
     public const string Signature = "res://scenes/Signature.tscn";
 

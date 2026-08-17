@@ -9,8 +9,10 @@
 //    는 왼쪽 열이, 쌓인 것(수집·명단)은 오른쪽 열이** 맡도록 두 열로 접었다. 스크롤은 없앴다.
 // ② 명단 프리뷰는 <see cref="Roster.Top"/> 를 부른다 — 웹판이 index/board 에 같은 배열을 두 벌
 //    두었다가 어긋난 자리다(Board.cs 머리말 참조).
-// ③ 필명이 없으면 「새 원정」이 서명 등록(scenes/Signature.tscn)으로 간다. 이름은 사람들이 보고
-//    서명은 대장이 대조한다 — 대장에 오르지 않은 채로는 원정이 시작되지 않는다 (ADR-020).
+// ③ 필명이 없으면 「새 원정」이 **프롤로그(scenes/Prologue.tscn) → 서명 등록** 순으로 간다.
+//    이름은 사람들이 보고 서명은 대장이 대조한다 — 대장에 오르지 않은 채로는 원정이 시작되지
+//    않는다 (ADR-020). 등록을 프롤로그 뒤에 두는 이유는 ADR-022.
+//    이미 등록한 사람은 프롤로그를 건너뛰고 곧장 지도로 간다.
 //
 // ── 디버그 (스크린샷 검증용) ────────────────────────────
 //   --rh-hub=meta    쌓인 계정(명성·수집·지난 원정·진행 중인 런)으로 그린다
@@ -58,6 +60,15 @@ public partial class Title : Control
         if (AutoPlay.Requested())
         {
             AutoPlay.RunAndQuit(GetTree());
+            return;
+        }
+
+        // 씬 하나를 곧장 열어 본다 — 내보낸 실행 파일은 --path·-s 를 못 받아서, .pck 안의 화면을
+        // 확인할 길이 타이틀을 거치는 것뿐이다. `-- --rh-go=prologue` 로 프롤로그 본문 로드를 본다.
+        if (CombatEntry.ArgValue(Godot.OS.GetCmdlineUserArgs(), "go") == "prologue")
+        {
+            // 첫 씬의 _Ready 안에서는 트리가 아직 자식을 붙이는 중이라 그 자리에서 갈아탈 수 없다
+            Callable.From(() => SceneRouter.Go(SceneRouter.Prologue)).CallDeferred();
             return;
         }
 
@@ -328,7 +339,7 @@ public partial class Title : Control
         bool run = v.Run is not null;
         var c = Cta(LW, run ? 88 : 72, primary: !run);
         c.AddChild(CombatArt.Text("새 원정", 17, run ? CombatArt.Ink : new Color("ffe9bd")).At(18, 12, 300, 24));
-        c.AddChild(CombatArt.Text(v.Pen is null ? "리뷰어 등록부터 시작합니다" : "만물대장을 들고 던전으로",
+        c.AddChild(CombatArt.Text(v.Pen is null ? "당신이 어떻게 여기 왔는지부터 시작합니다" : "만물대장을 들고 던전으로",
             13, run ? CombatArt.Dim : CtaSub).At(18, 38, LW - 60, 20));
         if (run)
             c.AddChild(CombatArt.Text("⚠ 진행 중인 원정이 사라집니다.", 12, new Color("e08a72")).At(18, 60, 400, 20));
@@ -340,12 +351,15 @@ public partial class Title : Control
 
     private void OnNewRun()
     {
-        // 필명이 없으면 등록이 먼저다 — 등록 화면이 끝나면 스스로 새 런을 깔고 지도로 보낸다
-        if (!RunStore.Registered && SceneRouter.Exists(SceneRouter.Signature))
+        // 필명이 없으면 **프롤로그 → 서명 등록** 순이다 (ADR-022). 이름을 먼저 받으면 「왜 내가
+        // 여기 있는가」를 모른 채 필명부터 짓게 된다 — 프롤로그 P14 의 결론이 곧 등록의 이유다.
+        // 등록 화면이 끝나면 스스로 새 런을 깔고 지도로 보낸다.
+        if (!RunStore.Registered)
         {
-            SceneRouter.Go(SceneRouter.Signature);
-            return;
+            if (SceneRouter.Exists(SceneRouter.Prologue)) { SceneRouter.Go(SceneRouter.Prologue); return; }
+            if (SceneRouter.Exists(SceneRouter.Signature)) { SceneRouter.Go(SceneRouter.Signature); return; }
         }
+        // 이미 등록한 사람에게는 프롤로그를 다시 보이지 않는다 — 2회차를 붙잡지 않는다
         RunStore.NewRun();
         SceneRouter.GoMap();
     }
