@@ -172,7 +172,7 @@ gore, blood, dismemberment
 |---|---|---|---|---|
 | **C01~C06** | 적 히어로 아트 6종 | 4:5 | S20 전투, S11 맵, S13 | P0 |
 | **C07** | 플레이어 아바타 (평가 불가) | 1:1 | S02, S20 | P0 |
-| **C08** | 심사위원 「택배좌」 | 4:5 | S51, S50 | P1 |
+| **C08** | 「택배좌」 | 4:5 | S51, S50 | P1 |
 | **P01~P06** | 장비 아트 6종 | 1:1 | S20 구성품, S31 진열대 | P0 |
 | **I01~I06** | 맵 노드 아이콘 6종 | 1:1 | S11 | P0 |
 | **I07~I10** | 4계열 심볼 | 1:1 | S13, S20, S30 | P0 |
@@ -484,7 +484,7 @@ No color accents, no modern elements, no text.
 | ID | 화면 | 프롬프트 |
 |---|---|---|
 | V04 | S50 만물대장 | `[LEDGER] An immense vertical ledger standing open, pages taller than a cathedral, ruled columns receding upward beyond sight into darkness, every line of every column filled with dense uniform entry marks. Vast, orderly, indifferent.` |
-| C08 | S51 심사위원 「택배좌」 | `[LEDGER] A seated figure in heavy formal robes in engraved-line style, the face left entirely blank and unmarked. On the desk before them rests a single parcel with its shipping slip torn away. Symmetrical front-facing archival portrait.` |
+| C08 | S51 「택배좌」 | `[LEDGER] A seated figure in heavy formal robes in engraved-line style, the face left entirely blank and unmarked. On the desk before them rests a single parcel with its shipping slip torn away. Symmetrical front-facing archival portrait.` |
 | V05 | S52 탈퇴 엔딩 | `[LEDGER] A single ledger page torn cleanly from its binding, lying flat and completely blank — every ruled line present, not one entry written on any of them. Empty space around it. Quiet finality.` |
 
 **포인트**: V05는 엔딩 A의 요약이다 — 평가받지 않을 권리 = **아무것도 기록되지 않은 한 장.**

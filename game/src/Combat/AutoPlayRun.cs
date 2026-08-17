@@ -1,3 +1,4 @@
+using Godot;
 using ReviewHero.Data;
 using ReviewHero.Engine;
 using ReviewHero.Game.Audio;
@@ -92,6 +93,14 @@ public static partial class AutoPlay
         var last = meta.Expedition.Count > 0 ? meta.Expedition[0] : null;
         Log($"정산: 원정 {meta.Runs} · 클리어 {meta.Wins} · 최고 {meta.BestFloor}층 · "
           + $"등재 {meta.Seen.Count}장 · 명단 「{last?.Review}」({last?.Status})");
+
+        // 통계를 눈에 보이게 찍는다. 병합이 빠져도 완주는 통과하므로(실제로 그런 상태였다)
+        // 수치를 내보내지 않으면 회귀가 조용히 지나간다.
+        var st = meta.Stats;
+        int badges = Meta.BadgeDefs.Sync(meta);
+        Log($"통계: 제출 {st.Submissions} · 승 {st.BattlesWon} · 크리 {st.Crits} · "
+          + $"흡수 {st.DefenseAbsorbed} · 회복 {st.WillHealed} → 등재 기록 {meta.Badges.Count}/{Meta.BadgeDefs.Total}건(+{badges})");
+        if (st.Submissions == 0) { Err("전투를 다 치렀는데 제출 수가 0이다 — 통계 병합이 빠졌다"); return false; }
         return true;
     }
 
@@ -110,6 +119,12 @@ public static partial class AutoPlay
         if (result is null) { Err($"전투가 {turns}턴에 끝나지 않았다"); return false; }
 
         var outcome = CombatEnd.Resolve(session, bridge, CombatEntry.RewardRng(cur.Seed));
+
+        // 실제 전투는 CombatScene 이 이 병합을 한다. 하네스가 빠뜨리면 완주해도 통계가 0이라
+        // 등재(업적)가 하나도 오르지 않고, 그 사실이 검증에서 드러나지 않는다.
+        RunStore.MergeBattleStats(session.St.Stats, result.Value.ToString().ToLowerInvariant(),
+                                  Mathf.Max(0, session.St.Player.Will));
+
         Log($"  → {result} ({turns}턴) · 의지 {session.St.Player.Will} · {outcome.GoldLine}");
 
         // NextScene 이 이미 정해졌으면(패배·이탈) 그대로 따른다 — CompleteNode 를 부르면 안 된다.

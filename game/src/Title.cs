@@ -40,7 +40,6 @@ public partial class Title : Control
     private const int RX = LX + LW + 20, RW = 480;     // 772 / 480
 
     /// <summary>업적 총량 — 판정 로직은 다음 단계라 아직 데이터가 없다 (index.html BADGE_TOTAL)</summary>
-    private const int BadgeTotal = 14;
 
     private static readonly Color Ledger = new("cdbfa4");
     private static readonly Color CtaSub = new("cdb98b");
@@ -300,7 +299,7 @@ public partial class Title : Control
         int cards = GameData.Cards.ById.Count;
         c.AddChild(CombatArt.Text(
             $"원정 {N(meta.Runs)}   ·   생환 {N(meta.Wins)}   ·   최고 {(meta.BestFloor > 0 ? $"1막 {meta.BestFloor}층" : "—")}"
-            + $"   ·   등재 {meta.Seen.Count}/{cards}   ·   기록 {meta.Badges.Count}/{BadgeTotal}",
+            + $"   ·   등재 {meta.Seen.Count}/{cards}   ·   기록 {meta.Badges.Count}/{Meta.BadgeDefs.Total}",
             13, CombatArt.Dim).At(16, 90, LW - 32, 20));
         return c;
     }
@@ -395,7 +394,7 @@ public partial class Title : Control
         var items = new (string Icon, string Key, int V, int Total, string Unit)[]
         {
             ("📕", "등재된 리뷰", meta.Seen.Count, GameData.Cards.ById.Count, "종"),
-            ("🏅", "등재 기록", meta.Badges.Count, BadgeTotal, "건"),
+            ("🏅", "등재 기록", meta.Badges.Count, Meta.BadgeDefs.Total, "건"),
         };
         for (int i = 0; i < items.Length; i++)
         {
@@ -410,7 +409,6 @@ public partial class Title : Control
                 t.DrawStyleBox(CombatArt.Box(new Color("c39a52"), null, 2), new Rect2(13, 68, (tw - 26) * ratio, 6));
             };
             t.AddChild(CombatArt.Text($"{icon} {key}", 12, CombatArt.Dim).At(13, 11, tw - 90, 18));
-            t.AddChild(CombatArt.Text("🔒 준비 중", 10, LockDim, HorizontalAlignment.Right).At(tw - 90, 12, 77, 16));
             t.AddChild(CombatArt.Text($"{val}", 21, CombatArt.Ink).At(13, 32, 70, 28));
             t.AddChild(CombatArt.Text($"/{total}{unit}", 11, CombatArt.Dim)
                 .At(15 + CombatArt.Font().GetStringSize($"{val}", HorizontalAlignment.Left, -1, 21).X, 43, 90, 18));
