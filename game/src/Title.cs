@@ -511,10 +511,11 @@ public partial class Title : Control
 
         var items = new (string Icon, string Text, Action? Go)[]
         {
-            ("📕", "만물대장 🔒", null),
+            ("📕", "만물대장", () => SceneRouter.Go(SceneRouter.Codex)),
+            ("🏅", "등재 기록", () => SceneRouter.Go(SceneRouter.Badges)),
             ("👥", "원정대 명단", () => SceneRouter.Go(SceneRouter.Board)),
-            ("🧾", "계정 🔒", null),
-            ("⚙", "설정 🔒", null),
+            ("🧾", "계정", () => SceneRouter.Go(SceneRouter.Account)),
+            ("⚙", "설정", () => SceneRouter.Go(SceneRouter.Settings)),
             ("⏻", "종료", () => GetTree().Quit()),
         };
         float cw = W / (float)items.Length;

@@ -33,6 +33,18 @@ public static class SceneRouter
     /// <summary>원정대 명단 — 죽은 대원들의 마지막 리뷰 (worldview §1.7)</summary>
     public const string Board = "res://scenes/Board.tscn";
 
+    /// <summary>만물대장 도감 — 한 번이라도 손에 넣은 카드 (S50, 원천 meta.Seen)</summary>
+    public const string Codex = "res://scenes/Codex.tscn";
+
+    /// <summary>등재 기록 — 업적 (S53, 원천 meta.Badges·meta.Stats)</summary>
+    public const string Badges = "res://scenes/Badges.tscn";
+
+    /// <summary>계정 — 누적 전적과 필명·서명 (S52)</summary>
+    public const string Account = "res://scenes/Account.tscn";
+
+    /// <summary>설정 (S51)</summary>
+    public const string Settings = "res://scenes/Settings.tscn";
+
     /// <summary>현재 씬 트리. 씬 밖(자동 플레이 하네스)에서는 null 일 수 있다</summary>
     public static SceneTree? Tree { get; set; }
 
