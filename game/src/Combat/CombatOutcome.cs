@@ -136,8 +136,8 @@ public static class CombatEnd
                 {
                     Result = result, Icon = "★", Title = "별이 꺼졌다",
                     Body = result == BattleResult.Timeout
-                        ? "고객센터 상담 시간이 끝났다. 만물대장이 접수 창구를 닫아버렸다."
-                        : "의지가 바닥났다. 만물대장이 더는 당신의 리뷰를 싣지 않는다.",
+                        ? "상담 시간이 다 갔다. 끝맺지 못한 리뷰는 「계류」로 남아 아무것도 깎지 못한다."
+                        : "의지가 바닥났다. 다음 문장을 쓸 힘이 없어, 서명하지 못한 글만 남았다.",
                     GoldLine = string.Empty, GoldDelta = 0, NextScene = next, DebugOnly = run is null,
                 };
             }

@@ -41,7 +41,7 @@ public sealed record PrologueLine(string? Speaker, string Text, string? Owner)
     public bool Continues => Owner is not null && Speaker is null;
 }
 
-/// <summary>클릭 한 번에 넘어가는 단위. 한 슬라이드는 2~11비트다</summary>
+/// <summary>클릭 한 번에 넘어가는 단위. 한 슬라이드는 1~7비트다</summary>
 public sealed record PrologueBeat(IReadOnlyList<PrologueLine> Lines);
 
 public sealed record PrologueSlide(string Key, string Title, bool Impact, IReadOnlyList<PrologueBeat> Beats)
@@ -62,7 +62,7 @@ public static class PrologueDoc
 
     public static IReadOnlyList<PrologueSlide> Slides => _slides ??= Load();
 
-    /// <summary>슬라이드 전체 비트 수 (정본 §2 의 「15장 59비트」와 대조하는 값)</summary>
+    /// <summary>슬라이드 전체 비트 수 (정본 §2 가 명시한 비트 수와 대조하는 값 — 정본이 바뀌면 그쪽을 따른다)</summary>
     public static int BeatCount(IReadOnlyList<PrologueSlide> slides)
     {
         int n = 0;
